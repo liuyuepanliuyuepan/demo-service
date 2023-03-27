@@ -1,0 +1,121 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: crm-service
+
+  main:
+    allow-circular-references: true # 允许循环依赖，因为项目是三层架构，无法避免这个情况。
+
+  # Servlet 配置
+  servlet:
+    # 文件上传相关配置项
+    multipart:
+      max-file-size: 16MB # 单个文件大小
+      max-request-size: 32MB # 设置总上传的文件大小
+  mvc:
+    pathmatch:
+      matching-strategy: ANT_PATH_MATCHER # 解决 SpringFox 与 SpringBoot 2.6.x 不兼容的问题，参见 SpringFoxHandlerProviderBeanPostProcessor 类
+  #    throw-exception-if-no-handler-found: true # 404 错误时抛出异常，方便统一处理
+  #    static-path-pattern: /static/** # 静态资源路径; 注意：如果不配置，则 throw-exception-if-no-handler-found 不生效！！！ TODO 芋艿：不能配置，会导致 swagger 不生效
+
+  # Jackson 配置项
+  jackson:
+    serialization:
+      write-dates-as-timestamps: true # 设置 Date 的格式，使用时间戳
+      write-date-timestamps-as-nanoseconds: false # 设置不使用 nanoseconds 的格式。例如说 1611460870.401，而是直接 1611460870401
+      write-durations-as-timestamps: true # 设置 Duration 的格式，使用时间戳
+      fail-on-empty-beans: false # 允许序列化无属性的 Bean
+
+  # redis缓存配置
+  cache:
+    redis:
+      time-to-live: 3600000
+
+# MyBatis Plus 的配置项
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true # 虽然默认为 true ，但是还是显示去指定下。
+  global-config:
+    db-config:
+      id-type: AUTO # 自增 ID，适合 MySQL 等直接自增的数据库
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+    banner: false
+  type-aliases-package: ${crm.info.base-package}.module.*.entity
+
+--- #################### 监控相关配置 ####################
+
+# 日志文件配置
+logging:
+  file:
+    name: ${user.home}/logs/${spring.application.name}.log # 日志文件名，全路径
+  level:
+    # 配置自己写的 MyBatis Mapper 打印日志
+    cn.klmb.crm.module: debug
+debug: false
+
+--- #################### 快乐萌宝相关配置 ####################
+crm:
+  info:
+    version: 2.0.0
+    base-package: cn.klmb.crm
+  web:
+    admin-ui:
+      url: http://klmb.cn # Admin 管理后台 UI 的地址
+  security:
+    permit-all-urls:
+      # swagger
+      - /swagger-ui.html
+      - /swagger-resources/**
+      - /webjars/**
+      - /*/api-docs
+#      - /admin-ui/** # /resources/admin-ui 目录下的静态资源
+  xss:
+    enable: false
+  #    exclude-urls: # 如下两个 url，仅仅是为了演示，去掉配置也没关系
+  #      - ${spring.boot.admin.context-path}/** # 不处理 Spring Boot Admin 的请求
+  #      - ${management.endpoints.web.base-path}/** # 不处理 Actuator 的请求
+  swagger:
+    enable1: true
+    title: 管理后台
+    description: 提供管理员管理的所有功能
+    version: ${crm.info.version}
+    base-package: ${crm.info.base-package}
+    base-path: # basePath地址，接口调用不符时，需要指定
+  codegen:
+    base-package: ${crm.info.base-package}
+    db-schemas: ${spring.datasource.druid.db-schema}
+debug: false
+
+--- #################### 数据库相关配置 ####################
+
+spring:
+  # 数据源配置项
+  datasource:
+    druid: # Druid 【连接池】相关的全局配置
+      initial-size: 1 # 初始连接数
+      min-idle: 10 # 最小连接池数量
+      max-active: 20 # 最大连接池数量
+      max-wait: 600000 # 配置获取连接等待超时的时间，单位：毫秒
+      time-between-eviction-runs-millis: 60000 # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位：毫秒
+      min-evictable-idle-time-millis: 300000 # 配置一个连接在池中最小生存的时间，单位：毫秒
+      max-evictable-idle-time-millis: 900000 # 配置一个连接在池中最大生存的时间，单位：毫秒
+      validation-query: SELECT 1 FROM DUAL # 配置检测连接是否有效
+      test-while-idle: true
+      test-on-borrow: false
+      test-on-return: false
+      db-schema: crm
+      url: jdbc:mysql://8.131.251.243:3306/${spring.datasource.druid.db-schema}?allowMultiQueries=true&useUnicode=true&useSSL=false&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&autoReconnect=true&nullCatalogMeansCurrent=true # MySQL Connector/J 8.X 连接的示例
+      username: zhixue100
+      password: 7Xi*<VbiuNrf>5r(&}e)
+
+  # Redis 配置。Redisson 默认的配置足够使用，一般不需要进行调优
+  redis:
+    host: 8.131.251.243 # 地址
+    port: 33967 # 端口
+    database: 7 # 数据库索引
+    password: 0QfR11V65BRHFQZwhsOtG136OjuKKfwxr3iYKi415ZfDAHDMMrGjgwJzBevPq9DC # 密码，建议生产环境开启
+#    host: 127.0.0.1 # 地址
+#    port: 6379 # 端口
+#    database: 0 # 数据库索引

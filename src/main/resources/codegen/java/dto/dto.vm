@@ -1,0 +1,96 @@
+package ${basePackage}.module.${table.moduleName}.dto.${table.businessName};
+
+import ${basePackage}.framework.base.core.annotations.DtoFieldQuery;
+import ${basePackage}.framework.base.core.annotations.DtoFieldQuery.Operator;
+import ${basePackage}.framework.base.core.pojo.KlmbBaseQueryDTO;
+#set($existBigDecimal = false)
+#set($existLocalDateTime = false)
+#foreach ($column in $columns)
+#if (!${baseDOFields.contains(${column.javaField})} && ${column.javaType} == "BigDecimal" && !$existBigDecimal)
+#set($existBigDecimal = true)
+import java.math.BigDecimal;
+#end
+#if (!${baseDOFields.contains(${column.javaField})} && ${column.javaType} == "LocalDateTime" && !$existLocalDateTime)
+#set($existLocalDateTime = true)
+import java.time.LocalDateTime;
+#end
+#end
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+
+/**
+ * ${table.classComment} DO
+ *
+ * @author ${table.author}
+ */
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@SuperBuilder
+@Data
+public class ${table.className}QueryDTO extends KlmbBaseQueryDTO {
+
+#foreach ($column in $columns)
+    #if (!${baseDOFields.contains(${column.javaField})})##排除 BaseDO 的字段
+    /**
+     * ${column.columnComment}
+     #if ("$!column.dictType" != "")##处理枚举值
+     *
+     * 枚举 {@link TODO ${column.dictType} 对应的类}
+     #end
+     */
+    #if (${column.listOperationCondition} == "=")
+    @DtoFieldQuery
+    #end
+    #if (${column.listOperationCondition} == "!=")
+    @DtoFieldQuery(queryType = Operator.NE)
+    #end
+    #if (${column.listOperationCondition} == ">")
+    @DtoFieldQuery(queryType = Operator.GT)
+    #end
+    #if (${column.listOperationCondition} == ">=")
+    @DtoFieldQuery(queryType = Operator.GE)
+    #end
+    #if (${column.listOperationCondition} == "<")
+    @DtoFieldQuery(queryType = Operator.LT)
+    #end
+    #if (${column.listOperationCondition} == "<=")
+    @DtoFieldQuery(queryType = Operator.LE)
+    #end
+    #if (${column.listOperationCondition} == "BETWEEN")
+    @DtoFieldQuery(queryType = Operator.BETWEEN)
+    #end
+    #if (${column.listOperationCondition} == "NOT_BETWEEN")
+    @DtoFieldQuery(queryType = Operator.NOT_BETWEEN)
+    #end
+    #if (${column.listOperationCondition} == "LIKE")
+    @DtoFieldQuery(queryType = Operator.LIKE)
+    #end
+    #if (${column.listOperationCondition} == "NOT_LIKE")
+    @DtoFieldQuery(queryType = Operator.NOT_LIKE)
+    #end
+    #if (${column.listOperationCondition} == "LIKE_LEFT")
+    @DtoFieldQuery(queryType = Operator.LIKE_LEFT)
+    #end
+    #if (${column.listOperationCondition} == "LIKE_RIGHT")
+    @DtoFieldQuery(queryType = Operator.LIKE_RIGHT)
+    #end
+    #if (${column.listOperationCondition} == "IS_NULL")
+    @DtoFieldQuery(queryType = Operator.IS_NULL)
+    #end
+    #if (${column.listOperationCondition} == "IS_NOT_NULL")
+    @DtoFieldQuery(queryType = Operator.IS_NOT_NULL)
+    #end
+    #if (${column.listOperationCondition} == "IN")
+    @DtoFieldQuery(queryType = Operator.IN)
+    #end
+    #if (${column.listOperationCondition} == "NOT_IN")
+    @DtoFieldQuery(queryType = Operator.NOT_IN)
+    #end
+    private ${column.javaType} ${column.javaField};
+    #end
+#end
+
+}

@@ -1,0 +1,33 @@
+package ${basePackage}.module.${table.moduleName}.convert.${table.businessName};
+
+import ${basePackage}.framework.base.core.pojo.KlmbPage;
+import ${basePackage}.module.${table.moduleName}.controller.${sceneEnum.basePackage}.${table.businessName}.vo.*;
+import ${basePackage}.module.${table.moduleName}.dto.${table.businessName}.${table.className}QueryDTO;
+import ${basePackage}.module.${table.moduleName}.entity.${table.businessName}.${table.className}DO;
+import java.util.List;
+import org.mapstruct.Mapper;
+import org.mapstruct.factory.Mappers;
+
+/**
+ * ${table.classComment} Convert
+ *
+ * @author ${table.author}
+ */
+@Mapper
+public interface ${table.className}Convert {
+
+    ${table.className}Convert INSTANCE = Mappers.getMapper(${table.className}Convert.class);
+
+    ${table.className}DO convert(${sceneEnum.prefixClass}${table.className}SaveReqVO saveReqVO);
+
+    ${table.className}DO convert(${sceneEnum.prefixClass}${table.className}UpdateReqVO updateReqVO);
+
+    KlmbPage<${sceneEnum.prefixClass}${table.className}RespVO> convert(KlmbPage<${table.className}DO> page);
+
+    List<${sceneEnum.prefixClass}${table.className}RespVO> convert(List<${table.className}DO> list);
+
+    ${sceneEnum.prefixClass}${table.className}RespVO convert(${table.className}DO saveDO);
+
+    ${table.className}QueryDTO convert(${sceneEnum.prefixClass}${table.className}PageReqVO reqVO);
+
+}

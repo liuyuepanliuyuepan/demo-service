@@ -1,0 +1,24 @@
+package ${basePackage}.module.${table.moduleName}.service.${table.businessName};
+
+import ${basePackage}.framework.base.core.service.KlmbBaseServiceImpl;
+import ${basePackage}.module.${table.moduleName}.dao.${table.businessName}.${table.className}Mapper;
+import ${basePackage}.module.${table.moduleName}.dto.${table.businessName}.${table.className}QueryDTO;
+import ${basePackage}.module.${table.moduleName}.entity.${table.businessName}.${table.className}DO;
+import org.springframework.stereotype.Service;
+
+
+/**
+ * ${table.classComment} Service 实现类
+ *
+ * @author ${table.author}
+ */
+@Service
+public class ${table.className}ServiceImpl extends
+        KlmbBaseServiceImpl<${table.className}DO, ${table.className}QueryDTO, ${table.className}Mapper> implements
+        ${table.className}Service {
+
+    public ${table.className}ServiceImpl(${table.className}Mapper mapper) {
+        this.mapper = mapper;
+    }
+
+}

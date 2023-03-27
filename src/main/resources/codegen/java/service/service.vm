@@ -1,0 +1,15 @@
+package ${basePackage}.module.${table.moduleName}.service.${table.businessName};
+
+import ${basePackage}.framework.base.core.service.KlmbBaseService;
+import ${basePackage}.module.${table.moduleName}.dto.${table.businessName}.${table.className}QueryDTO;
+import ${basePackage}.module.${table.moduleName}.entity.${table.businessName}.${table.className}DO;
+
+
+/**
+ * ${table.classComment} Service 接口
+ *
+ * @author ${table.author}
+ */
+public interface ${table.className}Service extends KlmbBaseService<${table.className}DO, ${table.className}QueryDTO> {
+
+}

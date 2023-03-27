@@ -1,0 +1,48 @@
+package ${basePackage}.module.${table.moduleName}.entity.${table.businessName};
+
+import ${BaseDOClassName};
+import com.baomidou.mybatisplus.annotation.TableName;
+#set($existBigDecimal = false)
+#set($existLocalDateTime = false)
+#foreach ($column in $columns)
+#if (!${baseDOFields.contains(${column.javaField})} && ${column.javaType} == "BigDecimal" && !$existBigDecimal)
+#set($existBigDecimal = true)
+import java.math.BigDecimal;
+#end
+#if (!${baseDOFields.contains(${column.javaField})} && ${column.javaType} == "LocalDateTime" && !$existLocalDateTime)
+#set($existLocalDateTime = true)
+import java.time.LocalDateTime;
+#end
+#end
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
+
+
+/**
+ * ${table.classComment} DO
+ *
+ * @author ${table.author}
+ */
+@TableName(value = "${table.tableName.toLowerCase()}", autoResultMap = true)
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+@SuperBuilder
+@Data
+public class ${table.className}DO extends KlmbBaseDO {
+
+#foreach ($column in $columns)
+    #if (!${baseDOFields.contains(${column.javaField})})##排除 BaseDO 的字段
+    /**
+     * ${column.columnComment}
+     #if ("$!column.dictType" != "")##处理枚举值
+     *
+     * 枚举 {@link TODO ${column.dictType} 对应的类}
+     #end
+     */
+    private ${column.javaType} ${column.javaField};
+    #end
+#end
+
+}

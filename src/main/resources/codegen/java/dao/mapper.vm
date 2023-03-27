@@ -1,0 +1,16 @@
+package ${basePackage}.module.${table.moduleName}.dao.${table.businessName};
+
+import ${basePackage}.framework.base.core.dao.KlmbBaseMapper;
+import ${basePackage}.module.${table.moduleName}.dto.${table.businessName}.${table.className}QueryDTO;
+import ${basePackage}.module.${table.moduleName}.entity.${table.businessName}.${table.className}DO;
+import org.apache.ibatis.annotations.Mapper;
+
+/**
+ * ${table.classComment} Mapper
+ *
+ * @author ${table.author}
+ */
+@Mapper
+public interface ${table.className}Mapper extends KlmbBaseMapper<${table.className}DO, ${table.className}QueryDTO> {
+
+}
