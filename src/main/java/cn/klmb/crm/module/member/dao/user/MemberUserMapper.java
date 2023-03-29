@@ -13,16 +13,4 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface MemberUserMapper extends KlmbBaseMapper<MemberUserDO, MemberUserQueryDTO> {
 
-    default MemberUserDO selectByTel(String tel) {
-        return this.selectOne(MemberUserDO::getTel, tel);
-    }
-
-    default MemberUserDO selectByTbName(String tbName) {
-        return this.selectOne(MemberUserDO::getTbName, tbName);
-    }
-
-    default MemberUserDO selectByWxName(String wxName) {
-        return this.selectOne(MemberUserDO::getWxName, wxName);
-    }
-
 }

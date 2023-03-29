@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * @author 超级管理员
  */
-@Api(tags = "0201.客户管理-用户信息")
+@Api(tags = "0203. 客户管理-客户")
 @RestController
 @RequestMapping("/member/user")
 @Validated

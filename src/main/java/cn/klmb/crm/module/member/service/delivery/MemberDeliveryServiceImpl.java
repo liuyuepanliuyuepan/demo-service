@@ -31,7 +31,6 @@ public class MemberDeliveryServiceImpl extends
     @Override
     public boolean saveDO(MemberDeliveryDO memberDeliveryDO) {
         // 校验正确性
-        checkCreateOrUpdate(null, memberDeliveryDO.getMemberUserId());
         return super.saveDO(memberDeliveryDO);
     }
 
@@ -45,8 +44,6 @@ public class MemberDeliveryServiceImpl extends
     private void checkCreateOrUpdate(String bizId, String memberUserId) {
         // 校验收货地址存在
         checkMemberDeliveryExists(bizId);
-        // 校验客户存在
-        memberUserService.checkMemberUserExists(memberUserId);
     }
 
     public void checkMemberDeliveryExists(String bizId) {

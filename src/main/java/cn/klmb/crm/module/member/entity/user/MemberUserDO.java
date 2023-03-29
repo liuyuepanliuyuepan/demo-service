@@ -2,6 +2,7 @@ package cn.klmb.crm.module.member.entity.user;
 
 import cn.klmb.crm.framework.base.core.entity.KlmbBaseDO;
 import com.baomidou.mybatisplus.annotation.TableName;
+import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -21,40 +22,105 @@ import lombok.experimental.SuperBuilder;
 public class MemberUserDO extends KlmbBaseDO {
 
     /**
-     * 名称
+     * 客户名称
      */
     private String name;
     /**
-     * 联系方式
-     */
-    private String tel;
-    /**
-     * 客户级别 1大B，2小B，3C端 {@link cn.klmb.crm.module.member.enums.MemberUserLevelEnum}
+     * 客户级别 1(重点客户)，2(普通用户)，3(非优先客户)
      */
     private Integer level;
     /**
-     * 地址
+     * 客户来源
      */
-    private String address;
+    private Integer source;
     /**
-     * 淘宝名
+     * 下次联系时间
      */
-    private String tbName;
+    private LocalDateTime nextTime;
     /**
-     * 微信名
+     * 成交状态 0 未成交 1 已成交
      */
-    private String wxName;
+    private Integer dealStatus;
+    /**
+     * 成交时间
+     */
+    private LocalDateTime dealTime;
+    /**
+     * 首要联系人ID
+     */
+    private String contactsId;
+    /**
+     * 手机
+     */
+    private String mobile;
+    /**
+     * 电话
+     */
+    private String tel;
+    /**
+     * 网址
+     */
+    private String website;
+    /**
+     * 邮箱
+     */
+    private String email;
     /**
      * 备注
      */
     private String remark;
     /**
-     * 订单数量
+     * 负责人ID
      */
-    private Integer orderCount;
+    private String ownerUserId;
     /**
-     * 累计成交额（单位：分）
+     * 省市区
      */
-    private Long tradeAmount;
+    private String address;
+    /**
+     * 定位信息
+     */
+    private String location;
+    /**
+     * 详细地址
+     */
+    private String detailAddress;
+    /**
+     * 地理位置经度
+     */
+    private String lng;
+    /**
+     * 地理位置纬度
+     */
+    private String lat;
+    /**
+     * 最后跟进时间
+     */
+    private LocalDateTime lastTime;
+    /**
+     * 放入公海时间
+     */
+    private LocalDateTime poolTime;
+    /**
+     * 1 分配 2 领取
+     */
+    private Integer isReceive;
+    /**
+     * 最后一条跟进记录
+     */
+    private String lastContent;
+    /**
+     * 跟进状态(0未跟进1已跟进)
+     */
+    private Integer followup;
+    /**
+     * 上级客户id
+     */
+    private String pid;
+
+    /**
+     * 客户行业
+     */
+    private Integer industry;
 
 }

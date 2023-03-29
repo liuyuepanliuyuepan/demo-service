@@ -12,11 +12,4 @@ import cn.klmb.crm.module.member.entity.user.MemberUserDO;
  */
 public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberUserQueryDTO> {
 
-    /**
-     * 校验用户是否存在
-     *
-     * @param bizId 业务ID
-     */
-    void checkMemberUserExists(String bizId);
-
 }

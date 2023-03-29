@@ -13,16 +13,10 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class MemberUserRespVO extends MemberUserBaseVO {
 
-    @ApiModelProperty(value = "业务id", required = true, example = "7943b068b7754f0fa8ec7f9ea7cf949e")
+    @ApiModelProperty(value = "业务id", required = true, example = "53af90a6a42e441185af511c229cd5d0")
     private String bizId;
 
     @ApiModelProperty(value = "创建时间", required = true)
     private LocalDateTime createTime;
-
-    @ApiModelProperty(value = "订单数量", required = true)
-    private Integer orderCount;
-
-    @ApiModelProperty(value = "累计成交额（单位：分）", required = true)
-    private Long tradeAmount;
 
 }

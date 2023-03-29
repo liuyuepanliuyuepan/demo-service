@@ -21,34 +21,20 @@ import lombok.experimental.SuperBuilder;
 public class MemberUserQueryDTO extends KlmbBaseQueryDTO {
 
     /**
-     * 名称
+     * 客户名称
      */
     @DtoFieldQuery(queryType = Operator.LIKE)
     private String name;
     /**
-     * 联系方式
-     */
-    @DtoFieldQuery(queryType = Operator.LIKE)
-    private String tel;
-    /**
-     * 客户级别 1大B，2小B，3C端 {@link cn.klmb.crm.module.member.enums.MemberUserLevelEnum}
+     * 手机
      */
     @DtoFieldQuery
-    private Integer level;
+    private String mobile;
     /**
-     * 地址
+     * 电话
      */
-    @DtoFieldQuery(queryType = Operator.LIKE)
-    private String address;
-    /**
-     * 淘宝名
-     */
-    @DtoFieldQuery(queryType = Operator.LIKE)
-    private String tbName;
-    /**
-     * 微信名
-     */
-    @DtoFieldQuery(queryType = Operator.LIKE)
-    private String wxName;
+    @DtoFieldQuery
+    private String tel;
+
 
 }
