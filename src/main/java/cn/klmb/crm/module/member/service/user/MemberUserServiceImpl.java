@@ -49,7 +49,7 @@ public class MemberUserServiceImpl extends
 
 
     @Override
-    public KlmbPage<MemberUserDO> pageV1(MemberUserPageReqVO reqVO) {
+    public KlmbPage<MemberUserDO> page(MemberUserPageReqVO reqVO) {
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -60,6 +60,7 @@ public class MemberUserServiceImpl extends
         KlmbPage<MemberUserDO> klmbPage = KlmbPage.<MemberUserDO>builder()
                 .pageNo(reqVO.getPageNo())
                 .pageSize(reqVO.getPageSize())
+                .sortingFields(reqVO.getSortingFields())
                 .build();
         MemberUserQueryDTO queryDTO = MemberUserConvert.INSTANCE.convert(reqVO);
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {

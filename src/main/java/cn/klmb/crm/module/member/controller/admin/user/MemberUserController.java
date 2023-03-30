@@ -1,10 +1,13 @@
 package cn.klmb.crm.module.member.controller.admin.user;
 
+import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
+import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserBatchUpdateReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserDeleteReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
@@ -14,6 +17,7 @@ import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
 import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
+import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -55,7 +59,12 @@ public class MemberUserController {
     public CommonResult<String> save(@Valid @RequestBody MemberUserSaveReqVO saveReqVO) {
         MemberUserDO saveDO = MemberUserConvert.INSTANCE.convert(saveReqVO);
         String bizId = "";
-        saveDO.setOwnerUserId(saveDO.getCreator());
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        saveDO.setOwnerUserId(userId);
         saveDO.setDealStatus(0);
         if (memberUserService.saveDO(saveDO)) {
             bizId = saveDO.getBizId();
@@ -77,7 +86,7 @@ public class MemberUserController {
 
     @PostMapping(value = "/batch-delete")
     @ApiOperation(value = "批量删除客户")
-    @PreAuthorize("@ss.hasPermission('member:user:batch-delete')")
+    @PreAuthorize("@ss.hasPermission('member:user:delete')")
     public CommonResult<Boolean> deleteByBizIds(@RequestBody MemberUserDeleteReqVO reqVO) {
         memberUserService.removeByBizIds(reqVO.getBizIds());
         return success(true);
@@ -85,7 +94,7 @@ public class MemberUserController {
 
     @PostMapping("/setDealStatus")
     @ApiOperation("修改客户成交状态")
-    @PreAuthorize("@ss.hasPermission('member:user:setDealStatus')")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> setDealStatus(
             @RequestBody MemberUserBatchUpdateReqVO updateReqVO) {
         memberUserService.setDealStatus(updateReqVO.getDealStatus(), updateReqVO.getBizIds());
@@ -120,11 +129,11 @@ public class MemberUserController {
         return success(MemberUserConvert.INSTANCE.convert(saveDO));
     }
 
-    @GetMapping({"/pageV1"})
+    @GetMapping({"/page"})
     @ApiOperation(value = "分页查询")
-    @PreAuthorize("@ss.hasPermission('member:user:pageV1')")
+    @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<KlmbPage<MemberUserRespVO>> pageV1(@Valid MemberUserPageReqVO reqVO) {
-        KlmbPage<MemberUserDO> page = memberUserService.pageV1(reqVO);
+        KlmbPage<MemberUserDO> page = memberUserService.page(reqVO);
         return success(MemberUserConvert.INSTANCE.convert(page));
     }
 
@@ -135,8 +144,5 @@ public class MemberUserController {
         return success(true);
     }
 
-//设为首要联系人
-
-    //查询客户下联系人
 
 }

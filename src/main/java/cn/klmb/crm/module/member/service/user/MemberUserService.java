@@ -22,7 +22,7 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      * @param reqVO 查询条件
      * @return 表单分页列表
      */
-    KlmbPage<MemberUserDO> pageV1(MemberUserPageReqVO reqVO);
+    KlmbPage<MemberUserDO> page(MemberUserPageReqVO reqVO);
 
     /**
      * 修改客户成交状态
