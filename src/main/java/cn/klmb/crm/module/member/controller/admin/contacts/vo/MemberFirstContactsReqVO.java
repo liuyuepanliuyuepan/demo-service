@@ -11,10 +11,10 @@ import lombok.ToString;
 public class MemberFirstContactsReqVO {
 
     @ApiModelProperty("联系人ID")
-    private Integer contactsId;
+    private String contactsId;
 
     @ApiModelProperty("客户ID")
-    private Integer customerId;
+    private String customerId;
 
     @ApiModelProperty("商机ID(暂时不用传)")
     private Integer businessId;
