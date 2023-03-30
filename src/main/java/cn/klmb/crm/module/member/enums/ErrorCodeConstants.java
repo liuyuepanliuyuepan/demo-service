@@ -14,6 +14,7 @@ public interface ErrorCodeConstants {
     // ========== 客户信息 1003000000 ==========
     ErrorCode MEMBER_USER_NOT_EXISTS = new ErrorCode(1003000001, "客户不存在");
     ErrorCode MEMBER_USER_TEL_EXISTS = new ErrorCode(1003000002, "客户联系方式【{}】已经存在");
+    ErrorCode USER_STAR_NOT_EXISTS = new ErrorCode(1003000003, "用户客户标星关系不存在");
 
     // ========== 客户信息 1003001000 ==========
     ErrorCode MEMBER_DELIVERY_NOT_EXISTS = new ErrorCode(1003001001, "客户收货地址不存在");

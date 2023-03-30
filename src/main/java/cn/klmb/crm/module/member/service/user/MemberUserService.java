@@ -30,5 +30,12 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      * @param dealStatus 状态
      * @param bizIds     bizIds
      */
-    public void setDealStatus(Integer dealStatus, List<String> bizIds);
+    void setDealStatus(Integer dealStatus, List<String> bizIds);
+
+    /**
+     * 客户标星
+     *
+     * @param bizId
+     */
+    void star(String bizId);
 }

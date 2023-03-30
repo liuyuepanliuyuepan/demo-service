@@ -128,6 +128,13 @@ public class MemberUserController {
         return success(MemberUserConvert.INSTANCE.convert(page));
     }
 
+    @PostMapping("/star/{bizId}")
+    @ApiOperation("客户标星")
+    public CommonResult<Boolean> star(@PathVariable("bizId") String bizId) {
+        memberUserService.star(bizId);
+        return success(true);
+    }
+
 //设为首要联系人
 
     //查询客户下联系人

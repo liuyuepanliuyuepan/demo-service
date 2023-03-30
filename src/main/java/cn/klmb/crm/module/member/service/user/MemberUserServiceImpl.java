@@ -13,12 +13,16 @@ import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
 import cn.klmb.crm.module.member.dao.user.MemberUserMapper;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
+import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
+import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.user.SysUserService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 
@@ -34,8 +38,12 @@ public class MemberUserServiceImpl extends
 
     private final SysUserService sysUserService;
 
-    public MemberUserServiceImpl(SysUserService sysUserService, MemberUserMapper mapper) {
+    private final MemberUserStarService memberUserStarService;
+
+    public MemberUserServiceImpl(SysUserService sysUserService, MemberUserMapper mapper,
+            MemberUserStarService memberUserStarService) {
         this.sysUserService = sysUserService;
+        this.memberUserStarService = memberUserStarService;
         this.mapper = mapper;
     }
 
@@ -75,6 +83,22 @@ public class MemberUserServiceImpl extends
             KlmbPage<MemberUserDO> page = super.page(queryDTO, klmbPage);
             return page;
         }
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
+            List<MemberUserStarDO> memberUserStarDOS = memberUserStarService.list(
+                    new LambdaQueryWrapper<MemberUserStarDO>().eq(MemberUserStarDO::getUserId,
+                            userId));
+            if (CollUtil.isNotEmpty(memberUserStarDOS)) {
+                List<String> customerIds = memberUserStarDOS.stream()
+                        .map(MemberUserStarDO::getCustomerId)
+                        .collect(Collectors.toList());
+                queryDTO.setBizIds(customerIds);
+                KlmbPage<MemberUserDO> page = super.page(queryDTO, klmbPage);
+                return page;
+            } else {
+                klmbPage.setContent(Collections.EMPTY_LIST);
+                return klmbPage;
+            }
+        }
         klmbPage.setContent(Collections.EMPTY_LIST);
         return klmbPage;
     }
@@ -89,6 +113,28 @@ public class MemberUserServiceImpl extends
             }
         });
         super.updateBatchByBizId(memberUserDOS);
-
     }
+
+    @Override
+    public void star(String bizId) {
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        LambdaQueryWrapper<MemberUserStarDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(MemberUserStarDO::getCustomerId, bizId);
+        wrapper.eq(MemberUserStarDO::getUserId, userId);
+        wrapper.eq(MemberUserStarDO::getDeleted, false);
+        MemberUserStarDO star = memberUserStarService.getOne(wrapper);
+        if (star == null) {
+            star = new MemberUserStarDO();
+            star.setCustomerId(bizId);
+            star.setUserId(userId);
+            memberUserStarService.save(star);
+        } else {
+            memberUserStarService.removeById(star.getId());
+        }
+    }
+
+
 }
