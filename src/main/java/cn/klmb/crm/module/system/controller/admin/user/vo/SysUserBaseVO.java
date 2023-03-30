@@ -52,4 +52,10 @@ public class SysUserBaseVO {
     @ApiModelProperty(value = "头像地址")
     private String avatar;
 
+    /**
+     * 上级ID
+     */
+    @ApiModelProperty(value = "上级ID")
+    private String parentId;
+
 }

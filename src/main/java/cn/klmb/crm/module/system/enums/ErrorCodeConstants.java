@@ -19,6 +19,9 @@ public interface ErrorCodeConstants {
     ErrorCode CONFIG_GET_VALUE_ERROR_IF_INVISIBLE = new ErrorCode(1001000004,
             "获取参数配置失败，原因：不允许获取不可见配置");
 
+    //企业信息已到期
+    ErrorCode SYSTEM_NO_SUCH_PARAMENT_ERROR = new ErrorCode(1001000005, "参数不存在!");
+
     // ========== 定时任务 1001001000 ==========
     ErrorCode JOB_NOT_EXISTS = new ErrorCode(1001001000, "定时任务不存在");
     ErrorCode JOB_HANDLER_EXISTS = new ErrorCode(1001001001, "定时任务的处理器已经存在");

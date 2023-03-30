@@ -16,6 +16,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.common.enums.CommonStatusEnum;
 import cn.klmb.crm.framework.common.util.collection.CollectionUtils;
+import cn.klmb.crm.framework.common.util.data.RecursionUtil;
 import cn.klmb.crm.module.system.dao.user.SysUserMapper;
 import cn.klmb.crm.module.system.dto.user.SysUserQueryDTO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
@@ -246,6 +247,18 @@ public class SysUserServiceImpl extends
      */
     private String encodePassword(String password) {
         return passwordEncoder.encode(password);
+    }
+
+
+    /**
+     * 查询该用户下级的用户
+     *
+     * @param userId 用户ID 0代表全部
+     * @return data
+     */
+    @Override
+    public List<String> queryChildUserId(String userId) {
+        return RecursionUtil.getChildList(list(), "parentId", userId, "bizId", "bizId");
     }
 
 }

@@ -87,4 +87,9 @@ public class SysUserDO extends KlmbBaseDO {
      */
     private LocalDateTime loginDate;
 
+    /**
+     * 上级ID
+     */
+    private String parentId;
+
 }

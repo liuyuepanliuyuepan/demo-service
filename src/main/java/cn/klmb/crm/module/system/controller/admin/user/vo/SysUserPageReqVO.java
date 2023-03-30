@@ -44,4 +44,10 @@ public class SysUserPageReqVO extends PageParam {
     @ApiModelProperty(value = "部门编号", example = "1", notes = "同时筛选子部门")
     private String deptId;
 
+    /**
+     * 上级ID
+     */
+    @ApiModelProperty(value = "上级ID")
+    private String parentId;
+
 }

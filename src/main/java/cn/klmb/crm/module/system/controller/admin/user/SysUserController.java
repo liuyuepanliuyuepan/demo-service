@@ -208,6 +208,16 @@ public class SysUserController {
         return success(pageResult);
     }
 
+
+    @GetMapping(value = "/query-child-userId/{userId}")
+    @ApiOperation(value = "查询该用户下级的用户")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "userId", value = "用户id", dataTypeClass = String.class, paramType = "path")})
+    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    public CommonResult<List<String>> queryChildUserId(@PathVariable String userId) {
+        return success(sysUserService.queryChildUserId(userId));
+    }
+
 //    @GetMapping({"/page-scroll"})
 //    @ApiOperation(value = "滚动分页查询", notes = "只支持根据bizId顺序进行正、倒序查询", hidden = true)
 //    @ApiImplicitParams({

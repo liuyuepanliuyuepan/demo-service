@@ -3,6 +3,7 @@ package cn.klmb.crm.module.system.service.user;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.module.system.dto.user.SysUserQueryDTO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import java.util.List;
 
 /**
  * 系统用户
@@ -66,6 +67,14 @@ public interface SysUserService extends KlmbBaseService<SysUserDO, SysUserQueryD
      * @return 当前登录用户部门ID
      */
     String getLoginUserDeptId();
+
+    /**
+     * 查询该用户下级的用户
+     *
+     * @param userId 用户ID 0代表全部
+     * @return data
+     */
+    List<String> queryChildUserId(String userId);
 
 }
 

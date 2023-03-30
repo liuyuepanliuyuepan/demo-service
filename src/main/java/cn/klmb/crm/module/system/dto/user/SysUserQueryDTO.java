@@ -105,4 +105,9 @@ public class SysUserQueryDTO extends KlmbBaseQueryDTO {
      */
     private List<String> roleIds;
 
+    /**
+     * 上级ID
+     */
+    private String parentId;
+
 }

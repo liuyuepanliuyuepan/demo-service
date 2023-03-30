@@ -3,6 +3,7 @@ package cn.klmb.crm.module.member.dto.user;
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery;
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery.Operator;
 import cn.klmb.crm.framework.base.core.pojo.KlmbBaseQueryDTO;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -35,6 +36,18 @@ public class MemberUserQueryDTO extends KlmbBaseQueryDTO {
      */
     @DtoFieldQuery
     private String tel;
+
+    /**
+     * 负责人
+     */
+    @DtoFieldQuery
+    private String ownerUserId;
+
+    /**
+     * 负责人id列表
+     */
+    @DtoFieldQuery(queryType = Operator.IN, fieldName = "ownerUserId")
+    private List<String> ownerUserIds;
 
 
 }
