@@ -2,11 +2,11 @@ package cn.klmb.crm.module.member.controller.admin.user;
 
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
-import cn.hutool.core.util.CharUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserBatchUpdateReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserDeleteReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserRespVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSaveReqVO;
@@ -19,7 +19,6 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import java.util.Collections;
-import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -30,7 +29,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -80,17 +78,17 @@ public class MemberUserController {
     @PostMapping(value = "/batch-delete")
     @ApiOperation(value = "批量删除客户")
     @PreAuthorize("@ss.hasPermission('member:user:batch-delete')")
-    public CommonResult<Boolean> deleteByBizIds(@RequestBody List<String> bizIds) {
-        memberUserService.removeByBizIds(bizIds);
+    public CommonResult<Boolean> deleteByBizIds(@RequestBody MemberUserDeleteReqVO reqVO) {
+        memberUserService.removeByBizIds(reqVO.getBizIds());
         return success(true);
     }
 
     @PostMapping("/setDealStatus")
     @ApiOperation("修改客户成交状态")
     @PreAuthorize("@ss.hasPermission('member:user:setDealStatus')")
-    public CommonResult<Boolean> setDealStatus(@RequestParam("dealStatus") Integer dealStatus,
-            @RequestParam("ids") String id) {
-        memberUserService.setDealStatus(dealStatus, StrUtil.splitTrim(id, CharUtil.COMMA));
+    public CommonResult<Boolean> setDealStatus(
+            @RequestBody MemberUserBatchUpdateReqVO updateReqVO) {
+        memberUserService.setDealStatus(updateReqVO.getDealStatus(), updateReqVO.getBizIds());
         return success(true);
     }
 
@@ -130,6 +128,8 @@ public class MemberUserController {
         return success(MemberUserConvert.INSTANCE.convert(page));
     }
 
+//设为首要联系人
 
+    //查询客户下联系人
 
 }
