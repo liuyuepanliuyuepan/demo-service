@@ -14,14 +14,10 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class MemberUserPageReqVO extends PageParam {
 
-    @ApiModelProperty(value = "客户名称", example = "张三")
-    private String name;
-
-    @ApiModelProperty(value = "手机")
-    private String mobile;
-
-    @ApiModelProperty(value = "电话")
-    private String tel;
+    /**
+     * 关键字查询
+     */
+    private String keyword;
 
     @ApiModelProperty(value = "场景ID(1全部,2自己负责的,3下属负责的,4关注的,默认传1)")
     @NotNull(message = "场景ID不能为空！")

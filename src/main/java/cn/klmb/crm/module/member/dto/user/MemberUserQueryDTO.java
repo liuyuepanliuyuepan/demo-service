@@ -2,6 +2,7 @@ package cn.klmb.crm.module.member.dto.user;
 
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery;
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery.Operator;
+import cn.klmb.crm.framework.base.core.annotations.DtoKeywordQuery;
 import cn.klmb.crm.framework.base.core.pojo.KlmbBaseQueryDTO;
 import java.util.List;
 import lombok.Data;
@@ -24,17 +25,18 @@ public class MemberUserQueryDTO extends KlmbBaseQueryDTO {
     /**
      * 客户名称
      */
-    @DtoFieldQuery(queryType = Operator.LIKE)
+    @DtoKeywordQuery
     private String name;
+
     /**
      * 手机
      */
-    @DtoFieldQuery
+    @DtoKeywordQuery
     private String mobile;
     /**
      * 电话
      */
-    @DtoFieldQuery
+    @DtoKeywordQuery
     private String tel;
 
     /**
