@@ -144,5 +144,11 @@ public class MemberUserDO extends KlmbBaseDO {
     @TableField(exist = false)
     private String contactsMobile;
 
+    /**
+     * 是否标星
+     */
+    @TableField(exist = false)
+    private Boolean star;
+
 
 }

@@ -40,4 +40,10 @@ public class MemberUserRespVO extends MemberUserBaseVO {
     @ApiModelProperty(value = "首要联系人手机")
     private String contactsMobile;
 
+    /**
+     * 是否标星
+     */
+    @ApiModelProperty(value = "是否标星")
+    private Boolean star;
+
 }

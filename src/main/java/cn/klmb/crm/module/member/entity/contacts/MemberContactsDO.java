@@ -72,6 +72,11 @@ public class MemberContactsDO extends KlmbBaseDO {
      */
     private String parentContactsId;
 
+    /**
+     * 联系人性别
+     */
+    private Integer sex;
+
     @TableField(exist = false)
     private String customerName;
 
@@ -93,6 +98,13 @@ public class MemberContactsDO extends KlmbBaseDO {
      */
     @TableField(exist = false)
     private Boolean isFirstContacts;
+
+
+    /**
+     * 是否标星
+     */
+    @TableField(exist = false)
+    private Boolean star;
 
 
 }

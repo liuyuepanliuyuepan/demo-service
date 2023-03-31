@@ -57,4 +57,11 @@ public class MemberContactsBaseVO {
     @ApiModelProperty(value = "直属上级id")
     private String parentContactsId;
 
+
+    /**
+     * 联系人性别
+     */
+    @ApiModelProperty(value = "联系人性别(1男，2女，3未知)")
+    private Integer sex;
+
 }

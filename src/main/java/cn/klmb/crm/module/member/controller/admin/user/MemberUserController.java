@@ -19,11 +19,14 @@ import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
 import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
+import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
+import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.user.SysUserService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -56,15 +59,19 @@ public class MemberUserController {
 
     private final MemberUserService memberUserService;
 
-    private  final MemberContactsService  memberContactsService;
+    private final MemberContactsService memberContactsService;
 
     private final SysUserService sysUserService;
 
+    private final MemberUserStarService memberUserStarService;
+
     public MemberUserController(MemberUserService memberUserService,
-            MemberContactsService memberContactsService, SysUserService sysUserService) {
+            MemberContactsService memberContactsService, SysUserService sysUserService,
+            MemberUserStarService memberUserStarService) {
         this.memberUserService = memberUserService;
         this.memberContactsService = memberContactsService;
         this.sysUserService = sysUserService;
+        this.memberUserStarService = memberUserStarService;
     }
 
     @PostMapping(value = "/save")
@@ -139,16 +146,28 @@ public class MemberUserController {
     @ApiImplicitParam(name = "bizId", value = "业务id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<MemberUserRespVO> getByBizId(@PathVariable String bizId) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
         MemberUserDO saveDO = memberUserService.getByBizId(bizId);
-        MemberContactsDO memberContactsDO = memberContactsService.getByBizId(saveDO.getContactsId());
-        if(ObjectUtil.isNotNull(memberContactsDO)){
+        MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                saveDO.getContactsId());
+        if (ObjectUtil.isNotNull(memberContactsDO)) {
             saveDO.setContactsName(memberContactsDO.getName());
             saveDO.setContactsMobile(memberContactsDO.getMobile());
         }
         SysUserDO sysUserDO = sysUserService.getByBizId(saveDO.getOwnerUserId());
-        if(ObjectUtil.isNotNull(sysUserDO)){
+        if (ObjectUtil.isNotNull(sysUserDO)) {
             saveDO.setOwnerUserName(sysUserDO.getNickname());
         }
+        List<MemberUserStarDO> starDOList = memberUserStarService.list(
+                new LambdaQueryWrapper<MemberUserStarDO>().eq(
+                                MemberUserStarDO::getCustomerId, bizId)
+                        .eq(MemberUserStarDO::getUserId, userId)
+                        .eq(MemberUserStarDO::getDeleted, false));
+        saveDO.setStar(CollUtil.isNotEmpty(starDOList));
         return success(MemberUserConvert.INSTANCE.convert(saveDO));
     }
 
@@ -156,19 +175,31 @@ public class MemberUserController {
     @ApiOperation(value = "分页查询")
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<KlmbPage<MemberUserRespVO>> pageV1(@Valid MemberUserPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
         KlmbPage<MemberUserDO> page = memberUserService.page(reqVO);
         List<MemberUserDO> content = page.getContent();
-        if(CollUtil.isNotEmpty(content)){
-            content.forEach(e ->{
-                MemberContactsDO memberContactsDO = memberContactsService.getByBizId(e.getContactsId());
-                if(ObjectUtil.isNotNull(memberContactsDO)){
+        if (CollUtil.isNotEmpty(content)) {
+            content.forEach(e -> {
+                MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                        e.getContactsId());
+                if (ObjectUtil.isNotNull(memberContactsDO)) {
                     e.setContactsName(memberContactsDO.getName());
                     e.setContactsMobile(memberContactsDO.getMobile());
                 }
                 SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
-                if(ObjectUtil.isNotNull(sysUserDO)){
+                if (ObjectUtil.isNotNull(sysUserDO)) {
                     e.setOwnerUserName(sysUserDO.getNickname());
                 }
+                List<MemberUserStarDO> starDOList = memberUserStarService.list(
+                        new LambdaQueryWrapper<MemberUserStarDO>().eq(
+                                        MemberUserStarDO::getCustomerId, e.getBizId())
+                                .eq(MemberUserStarDO::getUserId, userId)
+                                .eq(MemberUserStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(starDOList));
             });
         }
         return success(MemberUserConvert.INSTANCE.convert(page));

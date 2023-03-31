@@ -14,11 +14,14 @@ import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
 import cn.klmb.crm.module.member.dao.contacts.MemberContactsMapper;
 import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
+import cn.klmb.crm.module.member.entity.contactsstar.MemberContactsStarDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
+import cn.klmb.crm.module.member.service.contactsstar.MemberContactsStarService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.user.SysUserService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.util.Collections;
 import java.util.List;
@@ -39,10 +42,14 @@ public class MemberContactsServiceImpl extends
 
     private final MemberUserService memberUserService;
 
+    private final MemberContactsStarService memberContactsStarService;
+
     public MemberContactsServiceImpl(MemberContactsMapper mapper, SysUserService sysUserService,
-            MemberUserService memberUserService) {
+            MemberUserService memberUserService,
+            MemberContactsStarService memberContactsStarService) {
         this.sysUserService = sysUserService;
         this.memberUserService = memberUserService;
+        this.memberContactsStarService = memberContactsStarService;
         this.mapper = mapper;
     }
 
@@ -108,6 +115,27 @@ public class MemberContactsServiceImpl extends
                 new LambdaUpdateWrapper<MemberUserDO>().set(MemberUserDO::getContactsId,
                                 reqVO.getContactsId())
                         .eq(MemberUserDO::getBizId, reqVO.getCustomerId()));
+    }
+
+    @Override
+    public void star(String bizId) {
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        LambdaQueryWrapper<MemberContactsStarDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(MemberContactsStarDO::getContactsId, bizId);
+        wrapper.eq(MemberContactsStarDO::getUserId, userId);
+        wrapper.eq(MemberContactsStarDO::getDeleted, false);
+        MemberContactsStarDO star = memberContactsStarService.getOne(wrapper);
+        if (star == null) {
+            star = new MemberContactsStarDO();
+            star.setContactsId(bizId);
+            star.setUserId(userId);
+            memberContactsStarService.save(star);
+        } else {
+            memberContactsStarService.removeById(star.getId());
+        }
     }
 
 }

@@ -43,4 +43,10 @@ public class MemberContactsRespVO extends MemberContactsBaseVO {
     @ApiModelProperty(value = "是否首要联系人")
     private Boolean isFirstContacts;
 
+    /**
+     * 是否标星
+     */
+    @ApiModelProperty(value = "是否标星")
+    private Boolean star;
+
 }

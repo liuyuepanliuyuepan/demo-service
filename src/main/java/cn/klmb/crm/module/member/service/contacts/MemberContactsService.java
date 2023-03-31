@@ -33,4 +33,12 @@ public interface MemberContactsService extends
      */
     void setContacts(MemberFirstContactsReqVO reqVO);
 
+
+    /**
+     * 联系人标星
+     *
+     * @param bizId
+     */
+    void star(String bizId);
+
 }

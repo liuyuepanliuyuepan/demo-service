@@ -17,12 +17,15 @@ import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsUpda
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
+import cn.klmb.crm.module.member.entity.contactsstar.MemberContactsStarDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
+import cn.klmb.crm.module.member.service.contactsstar.MemberContactsStarService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.user.SysUserService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -59,11 +62,16 @@ public class MemberContactsController {
 
     private final SysUserService sysUserService;
 
+    private final MemberContactsStarService memberContactsStarService;
+
+
     public MemberContactsController(MemberContactsService memberContactsService,
-            MemberUserService memberUserService, SysUserService sysUserService) {
+            MemberUserService memberUserService, SysUserService sysUserService,
+            MemberContactsStarService memberContactsStarService) {
         this.memberContactsService = memberContactsService;
         this.memberUserService = memberUserService;
         this.sysUserService = sysUserService;
+        this.memberContactsStarService = memberContactsStarService;
     }
 
     @PostMapping(value = "/save")
@@ -110,6 +118,11 @@ public class MemberContactsController {
             @ApiImplicitParam(name = "bizId", value = "业务id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('member:contacts:query')")
     public CommonResult<MemberContactsRespVO> getByBizId(@PathVariable String bizId) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
         MemberContactsDO saveDO = memberContactsService.getByBizId(bizId);
         MemberUserDO memberUserDO = memberUserService.getByBizId(saveDO.getCustomerId());
         if (ObjectUtil.isNotNull(memberUserDO)) {
@@ -125,6 +138,12 @@ public class MemberContactsController {
         if (ObjectUtil.isNotNull(sysUserDO)) {
             saveDO.setOwnerUserName(sysUserDO.getNickname());
         }
+        List<MemberContactsStarDO> starDOList = memberContactsStarService.list(
+                new LambdaQueryWrapper<MemberContactsStarDO>().eq(
+                                MemberContactsStarDO::getContactsId, bizId)
+                        .eq(MemberContactsStarDO::getUserId, userId)
+                        .eq(MemberContactsStarDO::getDeleted, false));
+        saveDO.setStar(CollUtil.isNotEmpty(starDOList));
         return success(MemberContactsConvert.INSTANCE.convert(saveDO));
     }
 
@@ -132,6 +151,11 @@ public class MemberContactsController {
     @ApiOperation(value = "分页查询")
     @PreAuthorize("@ss.hasPermission('member:contacts:query')")
     public CommonResult<KlmbPage<MemberContactsRespVO>> page(@Valid MemberContactsPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
         KlmbPage<MemberContactsDO> page = memberContactsService.page(reqVO);
         List<MemberContactsDO> content = page.getContent();
         if (CollUtil.isNotEmpty(content)) {
@@ -139,7 +163,8 @@ public class MemberContactsController {
                 MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
                 if (ObjectUtil.isNotNull(memberUserDO)) {
                     e.setCustomerName(memberUserDO.getName());
-                    e.setIsFirstContacts(StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                    e.setIsFirstContacts(
+                            StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
                 }
                 if (StrUtil.isNotBlank(e.getParentContactsId())) {
                     MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
@@ -150,6 +175,12 @@ public class MemberContactsController {
                 if (ObjectUtil.isNotNull(sysUserDO)) {
                     e.setOwnerUserName(sysUserDO.getNickname());
                 }
+                List<MemberContactsStarDO> starDOList = memberContactsStarService.list(
+                        new LambdaQueryWrapper<MemberContactsStarDO>().eq(
+                                        MemberContactsStarDO::getContactsId, e.getBizId())
+                                .eq(MemberContactsStarDO::getUserId, userId)
+                                .eq(MemberContactsStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(starDOList));
 
             });
         }
@@ -169,6 +200,14 @@ public class MemberContactsController {
     public CommonResult<Boolean> setContacts(@RequestBody MemberFirstContactsReqVO reqVO) {
         memberContactsService.setContacts(reqVO);
         return CommonResult.success(true);
+    }
+
+
+    @PostMapping("/star/{bizId}")
+    @ApiOperation("联系人标星")
+    public CommonResult<Boolean> star(@PathVariable("bizId") String bizId) {
+        memberContactsService.star(bizId);
+        return success(true);
     }
 
 
