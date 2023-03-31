@@ -4,6 +4,7 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsSaveReqVO;
+import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsSimpleRespVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsUpdateReqVO;
 import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
@@ -32,5 +33,8 @@ public interface MemberContactsConvert {
     MemberContactsRespVO convert(MemberContactsDO saveDO);
 
     MemberContactsQueryDTO convert(MemberContactsPageReqVO reqVO);
+
+    List<MemberContactsSimpleRespVO> convert01(List<MemberContactsDO> beans);
+
 
 }

@@ -15,8 +15,10 @@ import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserDeleteReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserRespVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSaveReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSimpleRespVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
 import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
+import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
@@ -174,7 +176,7 @@ public class MemberUserController {
     @GetMapping({"/page"})
     @ApiOperation(value = "分页查询")
     @PreAuthorize("@ss.hasPermission('member:user:query')")
-    public CommonResult<KlmbPage<MemberUserRespVO>> pageV1(@Valid MemberUserPageReqVO reqVO) {
+    public CommonResult<KlmbPage<MemberUserRespVO>> page(@Valid MemberUserPageReqVO reqVO) {
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -207,9 +209,20 @@ public class MemberUserController {
 
     @PostMapping("/star/{bizId}")
     @ApiOperation("客户标星")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> star(@PathVariable("bizId") String bizId) {
         memberUserService.star(bizId);
         return success(true);
+    }
+
+    @GetMapping({"/list-all-simple"})
+    @ApiOperation(value = "列表精简信息")
+    @PreAuthorize("@ss.hasPermission('member:user:query')")
+    public CommonResult<List<MemberUserSimpleRespVO>> listAllSimple(
+            @Valid MemberUserPageReqVO reqVO) {
+        MemberUserQueryDTO queryDTO = MemberUserConvert.INSTANCE.convert(reqVO);
+        List<MemberUserDO> entities = memberUserService.list(queryDTO);
+        return success(MemberUserConvert.INSTANCE.convert01(entities));
     }
 
 

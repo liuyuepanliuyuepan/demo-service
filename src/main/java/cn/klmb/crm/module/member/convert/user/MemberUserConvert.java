@@ -4,6 +4,7 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserRespVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSaveReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSimpleRespVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
@@ -32,5 +33,7 @@ public interface MemberUserConvert {
     MemberUserRespVO convert(MemberUserDO saveDO);
 
     MemberUserQueryDTO convert(MemberUserPageReqVO reqVO);
+
+    List<MemberUserSimpleRespVO> convert01(List<MemberUserDO> beans);
 
 }

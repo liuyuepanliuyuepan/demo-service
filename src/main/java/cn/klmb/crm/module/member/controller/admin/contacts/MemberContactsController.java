@@ -13,9 +13,11 @@ import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsDele
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsSaveReqVO;
+import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsSimpleRespVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsUpdateReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
+import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.contactsstar.MemberContactsStarDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
@@ -197,6 +199,7 @@ public class MemberContactsController {
 
     @PostMapping("/setContacts")
     @ApiOperation(value = "设置首要联系人")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> setContacts(@RequestBody MemberFirstContactsReqVO reqVO) {
         memberContactsService.setContacts(reqVO);
         return CommonResult.success(true);
@@ -205,9 +208,20 @@ public class MemberContactsController {
 
     @PostMapping("/star/{bizId}")
     @ApiOperation("联系人标星")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> star(@PathVariable("bizId") String bizId) {
         memberContactsService.star(bizId);
         return success(true);
+    }
+
+    @GetMapping({"/list-all-simple"})
+    @ApiOperation(value = "列表精简信息")
+    @PreAuthorize("@ss.hasPermission('member:user:query')")
+    public CommonResult<List<MemberContactsSimpleRespVO>> listAllSimple(
+            @Valid MemberContactsPageReqVO reqVO) {
+        MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
+        List<MemberContactsDO> entities = memberContactsService.list(queryDTO);
+        return success(MemberContactsConvert.INSTANCE.convert01(entities));
     }
 
 
