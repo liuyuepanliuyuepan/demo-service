@@ -33,7 +33,7 @@ public class MemberUserDO extends KlmbBaseDO {
     /**
      * 客户来源
      */
-    private Integer source;
+    private String source;
     /**
      * 下次联系时间
      */
@@ -122,7 +122,7 @@ public class MemberUserDO extends KlmbBaseDO {
     /**
      * 客户行业
      */
-    private Integer industry;
+    private String industry;
 
 
     /**

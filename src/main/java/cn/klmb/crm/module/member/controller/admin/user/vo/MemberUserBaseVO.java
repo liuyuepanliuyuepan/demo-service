@@ -23,7 +23,7 @@ public class MemberUserBaseVO {
     private Integer level;
 
     @ApiModelProperty(value = "客户来源")
-    private Integer source;
+    private String source;
 
     @ApiModelProperty(value = "下次联系时间")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
@@ -96,5 +96,5 @@ public class MemberUserBaseVO {
      * 客户行业
      */
     @ApiModelProperty(value = "客户行业")
-    private Integer industry;
+    private String industry;
 }
