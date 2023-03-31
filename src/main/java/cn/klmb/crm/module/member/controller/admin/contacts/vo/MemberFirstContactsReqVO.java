@@ -2,11 +2,13 @@ package cn.klmb.crm.module.member.controller.admin.contacts.vo;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 
 @ApiModel("管理后台 - 首要联系人 Request VO")
 @Data
+@Builder
 @ToString(callSuper = true)
 public class MemberFirstContactsReqVO {
 

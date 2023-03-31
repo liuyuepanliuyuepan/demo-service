@@ -54,6 +54,31 @@ public class MemberContactsServiceImpl extends
         this.mapper = mapper;
     }
 
+
+    @Override
+    public String saveContacts(MemberContactsDO entity) {
+        String bizId = "";
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        entity.setOwnerUserId(userId);
+        if (super.saveDO(entity)) {
+            bizId = entity.getBizId();
+        }
+        //查询该联系人是否在客户的首位联系人
+        MemberUserDO memberUserDO = memberUserService.getOne(
+                new LambdaQueryWrapper<MemberUserDO>().eq(MemberUserDO::getBizId,
+                        entity.getCustomerId()).eq(MemberUserDO::getDeleted, false));
+        if (ObjectUtil.isNotNull(memberUserDO) && StrUtil.isBlank(memberUserDO.getContactsId())) {
+            this.setContacts(MemberFirstContactsReqVO.builder().contactsId(bizId)
+                    .customerId(entity.getCustomerId()).build());
+        }
+        return bizId;
+    }
+
+
     @Override
     public KlmbPage<MemberContactsDO> page(MemberContactsPageReqVO reqVO) {
         String userId = reqVO.getUserId();

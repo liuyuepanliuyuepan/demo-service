@@ -41,4 +41,13 @@ public interface MemberContactsService extends
      */
     void star(String bizId);
 
+
+    /**
+     * 新建联系人
+     *
+     * @param saveDO 实体
+     * @return 实体
+     */
+    String saveContacts(MemberContactsDO saveDO);
+
 }

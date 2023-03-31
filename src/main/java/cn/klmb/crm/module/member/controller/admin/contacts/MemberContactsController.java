@@ -81,17 +81,7 @@ public class MemberContactsController {
     @PreAuthorize("@ss.hasPermission('member:contacts:save')")
     public CommonResult<String> save(@Valid @RequestBody MemberContactsSaveReqVO saveReqVO) {
         MemberContactsDO saveDO = MemberContactsConvert.INSTANCE.convert(saveReqVO);
-        String bizId = "";
-        //获取当前用户id
-        String userId = WebFrameworkUtils.getLoginUserId();
-        if (StrUtil.isBlank(userId)) {
-            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
-        }
-        saveDO.setOwnerUserId(userId);
-        if (memberContactsService.saveDO(saveDO)) {
-            bizId = saveDO.getBizId();
-        }
-        return success(bizId);
+        return success(memberContactsService.saveContacts(saveDO));
     }
 
     @DeleteMapping(value = "/delete/{bizId}")
