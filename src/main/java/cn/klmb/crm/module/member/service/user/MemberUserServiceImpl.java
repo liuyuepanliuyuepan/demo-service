@@ -51,10 +51,7 @@ public class MemberUserServiceImpl extends
     @Override
     public KlmbPage<MemberUserDO> page(MemberUserPageReqVO reqVO) {
         //获取当前用户id
-        String userId = WebFrameworkUtils.getLoginUserId();
-        if (StrUtil.isBlank(userId)) {
-            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
-        }
+        String userId = reqVO.getUserId();
         List<String> childUserIds = sysUserService.queryChildUserId(
                 userId);
         KlmbPage<MemberUserDO> klmbPage = KlmbPage.<MemberUserDO>builder()
@@ -87,7 +84,7 @@ public class MemberUserServiceImpl extends
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
             List<MemberUserStarDO> memberUserStarDOS = memberUserStarService.list(
                     new LambdaQueryWrapper<MemberUserStarDO>().eq(MemberUserStarDO::getUserId,
-                            userId));
+                            userId).eq(MemberUserStarDO::getDeleted, false));
             if (CollUtil.isNotEmpty(memberUserStarDOS)) {
                 List<String> customerIds = memberUserStarDOS.stream()
                         .map(MemberUserStarDO::getCustomerId)

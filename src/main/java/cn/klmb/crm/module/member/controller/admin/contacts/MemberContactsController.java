@@ -158,6 +158,7 @@ public class MemberContactsController {
         if (StrUtil.isBlank(userId)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
+        reqVO.setUserId(userId);
         KlmbPage<MemberContactsDO> page = memberContactsService.page(reqVO);
         List<MemberContactsDO> content = page.getContent();
         if (CollUtil.isNotEmpty(content)) {
@@ -219,7 +220,13 @@ public class MemberContactsController {
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<List<MemberContactsSimpleRespVO>> listAllSimple(
             @Valid MemberContactsPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
         MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
+        queryDTO.setOwnerUserId(userId);
         List<MemberContactsDO> entities = memberContactsService.list(queryDTO);
         return success(MemberContactsConvert.INSTANCE.convert01(entities));
     }

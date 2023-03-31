@@ -25,6 +25,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 
@@ -55,11 +56,7 @@ public class MemberContactsServiceImpl extends
 
     @Override
     public KlmbPage<MemberContactsDO> page(MemberContactsPageReqVO reqVO) {
-        //获取当前用户id
-        String userId = WebFrameworkUtils.getLoginUserId();
-        if (StrUtil.isBlank(userId)) {
-            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
-        }
+        String userId = reqVO.getUserId();
         List<String> childUserIds = sysUserService.queryChildUserId(
                 userId);
         KlmbPage<MemberContactsDO> klmbPage = KlmbPage.<MemberContactsDO>builder()
@@ -89,22 +86,23 @@ public class MemberContactsServiceImpl extends
             KlmbPage<MemberContactsDO> page = super.page(queryDTO, klmbPage);
             return page;
         }
-//        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
-//            List<MemberUserStarDO> memberUserStarDOS = memberUserStarService.list(
-//                    new LambdaQueryWrapper<MemberUserStarDO>().eq(MemberUserStarDO::getUserId,
-//                            userId));
-//            if (CollUtil.isNotEmpty(memberUserStarDOS)) {
-//                List<String> customerIds = memberUserStarDOS.stream()
-//                        .map(MemberUserStarDO::getCustomerId)
-//                        .collect(Collectors.toList());
-//                queryDTO.setBizIds(customerIds);
-//                KlmbPage<MemberUserDO> page = super.page(queryDTO, klmbPage);
-//                return page;
-//            } else {
-//                klmbPage.setContent(Collections.EMPTY_LIST);
-//                return klmbPage;
-//            }
-//        }
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
+            List<MemberContactsStarDO> memberContactsStarDOS = memberContactsStarService.list(
+                    new LambdaQueryWrapper<MemberContactsStarDO>().eq(
+                            MemberContactsStarDO::getUserId,
+                            userId).eq(MemberContactsStarDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(memberContactsStarDOS)) {
+                List<String> contactsIds = memberContactsStarDOS.stream()
+                        .map(MemberContactsStarDO::getContactsId)
+                        .collect(Collectors.toList());
+                queryDTO.setBizIds(contactsIds);
+                KlmbPage<MemberContactsDO> page = super.page(queryDTO, klmbPage);
+                return page;
+            } else {
+                klmbPage.setContent(Collections.EMPTY_LIST);
+                return klmbPage;
+            }
+        }
         klmbPage.setContent(Collections.EMPTY_LIST);
         return klmbPage;
     }

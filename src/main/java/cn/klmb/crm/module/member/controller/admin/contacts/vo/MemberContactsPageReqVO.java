@@ -27,5 +27,11 @@ public class MemberContactsPageReqVO extends PageParam {
     @ApiModelProperty(value = "客户id")
     private String customerId;
 
+    /**
+     * 当前用户id
+     */
+    @ApiModelProperty(value = "当前用户id(无需传值)")
+    private String userId;
+
 
 }

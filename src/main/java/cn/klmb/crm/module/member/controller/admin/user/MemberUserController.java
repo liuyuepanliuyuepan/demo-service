@@ -182,6 +182,7 @@ public class MemberUserController {
         if (StrUtil.isBlank(userId)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
+        reqVO.setUserId(userId);
         KlmbPage<MemberUserDO> page = memberUserService.page(reqVO);
         List<MemberUserDO> content = page.getContent();
         if (CollUtil.isNotEmpty(content)) {
@@ -220,7 +221,13 @@ public class MemberUserController {
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<List<MemberUserSimpleRespVO>> listAllSimple(
             @Valid MemberUserPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
         MemberUserQueryDTO queryDTO = MemberUserConvert.INSTANCE.convert(reqVO);
+        queryDTO.setOwnerUserId(userId);
         List<MemberUserDO> entities = memberUserService.list(queryDTO);
         return success(MemberUserConvert.INSTANCE.convert01(entities));
     }
