@@ -3,6 +3,8 @@ package cn.klmb.crm.module.member.controller.admin.contacts;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
@@ -15,13 +17,18 @@ import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsUpda
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
+import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
+import cn.klmb.crm.module.member.service.user.MemberUserService;
+import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
+import cn.klmb.crm.module.system.service.user.SysUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import java.util.Collections;
+import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -48,8 +55,15 @@ public class MemberContactsController {
 
     private final MemberContactsService memberContactsService;
 
-    public MemberContactsController(MemberContactsService memberContactsService) {
+    private final MemberUserService memberUserService;
+
+    private final SysUserService sysUserService;
+
+    public MemberContactsController(MemberContactsService memberContactsService,
+            MemberUserService memberUserService, SysUserService sysUserService) {
         this.memberContactsService = memberContactsService;
+        this.memberUserService = memberUserService;
+        this.sysUserService = sysUserService;
     }
 
     @PostMapping(value = "/save")
@@ -97,6 +111,20 @@ public class MemberContactsController {
     @PreAuthorize("@ss.hasPermission('member:contacts:query')")
     public CommonResult<MemberContactsRespVO> getByBizId(@PathVariable String bizId) {
         MemberContactsDO saveDO = memberContactsService.getByBizId(bizId);
+        MemberUserDO memberUserDO = memberUserService.getByBizId(saveDO.getCustomerId());
+        if (ObjectUtil.isNotNull(memberUserDO)) {
+            saveDO.setCustomerName(memberUserDO.getName());
+        }
+        if (StrUtil.isNotBlank(saveDO.getParentContactsId())) {
+            MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                    saveDO.getParentContactsId());
+            saveDO.setParentContactsName(memberContactsDO.getName());
+        }
+
+        SysUserDO sysUserDO = sysUserService.getByBizId(saveDO.getOwnerUserId());
+        if (ObjectUtil.isNotNull(sysUserDO)) {
+            saveDO.setOwnerUserName(sysUserDO.getNickname());
+        }
         return success(MemberContactsConvert.INSTANCE.convert(saveDO));
     }
 
@@ -105,6 +133,26 @@ public class MemberContactsController {
     @PreAuthorize("@ss.hasPermission('member:contacts:query')")
     public CommonResult<KlmbPage<MemberContactsRespVO>> page(@Valid MemberContactsPageReqVO reqVO) {
         KlmbPage<MemberContactsDO> page = memberContactsService.page(reqVO);
+        List<MemberContactsDO> content = page.getContent();
+        if (CollUtil.isNotEmpty(content)) {
+            content.forEach(e -> {
+                MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
+                if (ObjectUtil.isNotNull(memberUserDO)) {
+                    e.setCustomerName(memberUserDO.getName());
+                    e.setIsFirstContacts(StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                }
+                if (StrUtil.isNotBlank(e.getParentContactsId())) {
+                    MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                            e.getParentContactsId());
+                    e.setParentContactsName(memberContactsDO.getName());
+                }
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+
+            });
+        }
         return success(MemberContactsConvert.INSTANCE.convert(page));
     }
 

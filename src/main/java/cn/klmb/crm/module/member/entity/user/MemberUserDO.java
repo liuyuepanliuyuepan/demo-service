@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.member.entity.user;
 
 import cn.klmb.crm.framework.base.core.entity.KlmbBaseDO;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.LocalDateTime;
 import lombok.Data;
@@ -122,5 +123,26 @@ public class MemberUserDO extends KlmbBaseDO {
      * 客户行业
      */
     private Integer industry;
+
+
+    /**
+     * 负责人
+     */
+    @TableField(exist = false)
+    private String ownerUserName;
+
+
+    /**
+     * 首要联系人
+     */
+    @TableField(exist = false)
+    private String contactsName;
+
+    /**
+     * 首要联系人手机
+     */
+    @TableField(exist = false)
+    private String contactsMobile;
+
 
 }

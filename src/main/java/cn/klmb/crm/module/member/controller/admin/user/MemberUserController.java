@@ -3,6 +3,8 @@ package cn.klmb.crm.module.member.controller.admin.user;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
@@ -15,14 +17,19 @@ import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserRespVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSaveReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
 import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
+import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
+import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
+import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
+import cn.klmb.crm.module.system.service.user.SysUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import java.util.Collections;
+import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -49,8 +56,15 @@ public class MemberUserController {
 
     private final MemberUserService memberUserService;
 
-    public MemberUserController(MemberUserService memberUserService) {
+    private  final MemberContactsService  memberContactsService;
+
+    private final SysUserService sysUserService;
+
+    public MemberUserController(MemberUserService memberUserService,
+            MemberContactsService memberContactsService, SysUserService sysUserService) {
         this.memberUserService = memberUserService;
+        this.memberContactsService = memberContactsService;
+        this.sysUserService = sysUserService;
     }
 
     @PostMapping(value = "/save")
@@ -126,6 +140,15 @@ public class MemberUserController {
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<MemberUserRespVO> getByBizId(@PathVariable String bizId) {
         MemberUserDO saveDO = memberUserService.getByBizId(bizId);
+        MemberContactsDO memberContactsDO = memberContactsService.getByBizId(saveDO.getContactsId());
+        if(ObjectUtil.isNotNull(memberContactsDO)){
+            saveDO.setContactsName(memberContactsDO.getName());
+            saveDO.setContactsMobile(memberContactsDO.getMobile());
+        }
+        SysUserDO sysUserDO = sysUserService.getByBizId(saveDO.getOwnerUserId());
+        if(ObjectUtil.isNotNull(sysUserDO)){
+            saveDO.setOwnerUserName(sysUserDO.getNickname());
+        }
         return success(MemberUserConvert.INSTANCE.convert(saveDO));
     }
 
@@ -134,6 +157,20 @@ public class MemberUserController {
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<KlmbPage<MemberUserRespVO>> pageV1(@Valid MemberUserPageReqVO reqVO) {
         KlmbPage<MemberUserDO> page = memberUserService.page(reqVO);
+        List<MemberUserDO> content = page.getContent();
+        if(CollUtil.isNotEmpty(content)){
+            content.forEach(e ->{
+                MemberContactsDO memberContactsDO = memberContactsService.getByBizId(e.getContactsId());
+                if(ObjectUtil.isNotNull(memberContactsDO)){
+                    e.setContactsName(memberContactsDO.getName());
+                    e.setContactsMobile(memberContactsDO.getMobile());
+                }
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if(ObjectUtil.isNotNull(sysUserDO)){
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+            });
+        }
         return success(MemberUserConvert.INSTANCE.convert(page));
     }
 

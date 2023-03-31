@@ -13,11 +13,14 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class MemberContactsRespVO extends MemberContactsBaseVO {
 
-    @ApiModelProperty(value = "业务id", required = true, example = "7920dbf7192b4e09976121352193d8e8")
+    @ApiModelProperty(value = "业务id")
     private String bizId;
 
-    @ApiModelProperty(value = "创建时间", required = true)
+    @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
+
+    @ApiModelProperty(value = "更新时间")
+    private LocalDateTime updateTime;
 
     @ApiModelProperty(value = "客户名称")
     private String customerName;
@@ -27,5 +30,17 @@ public class MemberContactsRespVO extends MemberContactsBaseVO {
      */
     @ApiModelProperty(value = "直属上级")
     private String parentContactsName;
+
+    /**
+     * 负责人
+     */
+    @ApiModelProperty(value = "负责人")
+    private String ownerUserName;
+
+    /**
+     * 是否首要联系人
+     */
+    @ApiModelProperty(value = "是否首要联系人")
+    private Boolean isFirstContacts;
 
 }

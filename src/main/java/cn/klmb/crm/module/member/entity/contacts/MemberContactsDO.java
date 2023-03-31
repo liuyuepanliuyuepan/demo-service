@@ -81,5 +81,18 @@ public class MemberContactsDO extends KlmbBaseDO {
     @TableField(exist = false)
     private String parentContactsName;
 
+    /**
+     * 负责人
+     */
+    @TableField(exist = false)
+    private String ownerUserName;
+
+
+    /**
+     * 是否首要联系人
+     */
+    @TableField(exist = false)
+    private Boolean isFirstContacts;
+
 
 }

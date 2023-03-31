@@ -13,10 +13,31 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class MemberUserRespVO extends MemberUserBaseVO {
 
-    @ApiModelProperty(value = "业务id", required = true, example = "53af90a6a42e441185af511c229cd5d0")
+    @ApiModelProperty(value = "业务id")
     private String bizId;
 
-    @ApiModelProperty(value = "创建时间", required = true)
+    @ApiModelProperty(value = "创建时间")
     private LocalDateTime createTime;
+
+    @ApiModelProperty(value = "更新时间")
+    private LocalDateTime updateTime;
+
+    /**
+     * 负责人
+     */
+    @ApiModelProperty(value = "负责人")
+    private String ownerUserName;
+
+    /**
+     * 首要联系人
+     */
+    @ApiModelProperty(value = "首要联系人")
+    private String contactsName;
+
+    /**
+     * 首要联系人手机
+     */
+    @ApiModelProperty(value = "首要联系人手机")
+    private String contactsMobile;
 
 }
