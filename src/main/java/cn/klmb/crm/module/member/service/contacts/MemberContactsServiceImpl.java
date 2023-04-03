@@ -72,8 +72,10 @@ public class MemberContactsServiceImpl extends
                 new LambdaQueryWrapper<MemberUserDO>().eq(MemberUserDO::getBizId,
                         entity.getCustomerId()).eq(MemberUserDO::getDeleted, false));
         if (ObjectUtil.isNotNull(memberUserDO) && StrUtil.isBlank(memberUserDO.getContactsId())) {
-            this.setContacts(MemberFirstContactsReqVO.builder().contactsId(bizId)
-                    .customerId(entity.getCustomerId()).build());
+            MemberFirstContactsReqVO reqVO = new MemberFirstContactsReqVO();
+            reqVO.setContactsId(bizId);
+            reqVO.setCustomerId(entity.getCustomerId());
+            this.setContacts(reqVO);
         }
         return bizId;
     }
