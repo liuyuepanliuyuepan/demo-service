@@ -78,6 +78,8 @@ public class MemberTeamServiceImpl extends
             LocalDateTime parse = LocalDateTime.parse(memberTeamSaveBO.getTime(),
                     DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN));
             memberTeamSaveBO.setExpiresTime(parse);
+        } else {
+            memberTeamSaveBO.setExpiresTime(null);
         }
         if (memberTeamSaveBO.getPower() != 1 && memberTeamSaveBO.getPower() != 2) {
             throw exception(ErrorCodeConstants.SYSTEM_NO_VALID);
