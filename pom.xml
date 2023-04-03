@@ -229,6 +229,11 @@
       <version>${aliyun-java-sdk-dysmsapi.version}</version>
     </dependency>
     <!-- SMS SDK end -->
+    <dependency>
+      <artifactId>fastjson</artifactId>
+      <groupId>com.alibaba</groupId>
+      <version>1.2.59</version>
+    </dependency>
   </dependencies>
 
   <build>
