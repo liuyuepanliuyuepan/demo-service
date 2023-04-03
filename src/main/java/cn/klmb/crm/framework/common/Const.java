@@ -15,4 +15,10 @@ public class Const implements Serializable {
     public static final int AUTH_DATA_RECURSION_NUM = 20;
 
 
+    /**
+     * 批量保存的条数
+     */
+    public static final int BATCH_SAVE_SIZE = 200;
+
+
 }

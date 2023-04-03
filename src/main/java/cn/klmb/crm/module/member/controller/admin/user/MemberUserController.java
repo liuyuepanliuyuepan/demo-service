@@ -10,6 +10,8 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserBatchUpdateReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserDeleteReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
@@ -23,9 +25,11 @@ import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
+import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -33,6 +37,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import java.util.Collections;
 import java.util.List;
 import javax.validation.Valid;
@@ -67,13 +72,16 @@ public class MemberUserController {
 
     private final MemberUserStarService memberUserStarService;
 
+    private final MemberTeamService memberTeamService;
+
     public MemberUserController(MemberUserService memberUserService,
             MemberContactsService memberContactsService, SysUserService sysUserService,
-            MemberUserStarService memberUserStarService) {
+            MemberUserStarService memberUserStarService, MemberTeamService memberTeamService) {
         this.memberUserService = memberUserService;
         this.memberContactsService = memberContactsService;
         this.sysUserService = sysUserService;
         this.memberUserStarService = memberUserStarService;
+        this.memberTeamService = memberTeamService;
     }
 
     @PostMapping(value = "/save")
@@ -230,6 +238,33 @@ public class MemberUserController {
         queryDTO.setOwnerUserId(userId);
         List<MemberUserDO> entities = memberUserService.list(queryDTO);
         return success(MemberUserConvert.INSTANCE.convert01(entities));
+    }
+
+
+    @GetMapping("/getMembers/{customerId}")
+    @ApiOperation("获取团队成员")
+    @PreAuthorize("@ss.hasPermission('member:user:get')")
+    public CommonResult<List<MembersTeamSelectVO>> getMembers(
+            @PathVariable("customerId") @ApiParam("客户ID") String customerId) {
+        CrmEnum crmEnum = CrmEnum.CUSTOMER;
+        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, customerId);
+        return CommonResult.success(members);
+    }
+
+    @PostMapping("/addMembers")
+    @ApiOperation("新增团队成员")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
+    public CommonResult<Boolean> addMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+        memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/updateMembers")
+    @ApiOperation("编辑团队成员")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
+    public CommonResult<Boolean> updateMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+        memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+        return CommonResult.success(true);
     }
 
 
