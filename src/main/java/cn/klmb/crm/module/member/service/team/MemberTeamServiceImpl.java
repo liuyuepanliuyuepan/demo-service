@@ -208,7 +208,7 @@ public class MemberTeamServiceImpl extends
             selectVO.setNickName(sysUserDO.getNickname());
             if (ObjectUtil.isNotNull(teamMember.getExpiresTime())) {
                 selectVO.setExpiresTime(teamMember.getExpiresTime()
-                        .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATE_PATTERN)));
+                        .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
             }
             selectVOS.add(selectVO);
         }
