@@ -163,4 +163,20 @@ public class MemberContactsServiceImpl extends
         }
     }
 
+    @Override
+    public void removeByBizIds(List<String> bizIds) {
+        super.removeByBizIds(bizIds);
+        //判断客户中是否存在删除的联系人
+        List<MemberUserDO> memberUserDOS = memberUserService.list(
+                new LambdaQueryWrapper<MemberUserDO>().eq(MemberUserDO::getDeleted, false)
+                        .in(MemberUserDO::getContactsId, bizIds));
+        if (CollUtil.isNotEmpty(memberUserDOS)) {
+            memberUserDOS.forEach(e -> {
+                e.setContactsId(null);
+            });
+            memberUserService.updateBatchById(memberUserDOS);
+        }
+
+    }
+
 }

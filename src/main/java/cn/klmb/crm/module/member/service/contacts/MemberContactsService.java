@@ -6,6 +6,7 @@ import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPage
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
 import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
+import java.util.List;
 
 
 /**
@@ -49,5 +50,13 @@ public interface MemberContactsService extends
      * @return 实体
      */
     String saveContacts(MemberContactsDO saveDO);
+
+
+    /**
+     * 根据业务id列表删除(逻辑删除)
+     *
+     * @param bizIds 业务id列表
+     */
+    void removeByBizIds(List<String> bizIds);
 
 }
