@@ -12,5 +12,4 @@ import cn.klmb.crm.module.member.entity.teamactivity.MemberTeamActivityDO;
  */
 public interface MemberTeamActivityService extends
         KlmbBaseService<MemberTeamActivityDO, MemberTeamActivityQueryDTO> {
-
 }
