@@ -22,6 +22,7 @@ import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
 import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
+import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
@@ -100,6 +101,9 @@ public class MemberUserController {
         if (memberUserService.saveDO(saveDO)) {
             bizId = saveDO.getBizId();
         }
+        memberTeamService.saveDO(
+                MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.CUSTOMER.getType())
+                        .typeId(bizId).build());
         return success(bizId);
     }
 

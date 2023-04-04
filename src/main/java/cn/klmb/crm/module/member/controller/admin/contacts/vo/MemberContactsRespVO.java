@@ -49,4 +49,10 @@ public class MemberContactsRespVO extends MemberContactsBaseVO {
     @ApiModelProperty(value = "是否标星")
     private Boolean star;
 
+    /**
+     * 详细地址
+     */
+    @ApiModelProperty(value = "详细地址")
+    private String detailAddress;
+
 }

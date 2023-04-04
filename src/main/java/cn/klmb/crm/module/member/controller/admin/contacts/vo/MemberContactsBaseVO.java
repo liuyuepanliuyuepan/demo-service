@@ -64,4 +64,10 @@ public class MemberContactsBaseVO {
     @ApiModelProperty(value = "联系人性别(1男，2女，3未知)")
     private Integer sex;
 
+    /**
+     * 详细地址
+     */
+    @ApiModelProperty(value = "详细地址")
+    private String detailAddress;
+
 }

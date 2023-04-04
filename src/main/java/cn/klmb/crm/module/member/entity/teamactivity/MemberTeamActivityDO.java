@@ -1,8 +1,11 @@
 package cn.klmb.crm.module.member.entity.teamactivity;
 
 import cn.klmb.crm.framework.base.core.entity.KlmbBaseDO;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -65,5 +68,18 @@ public class MemberTeamActivityDO extends KlmbBaseDO {
      * 签到地址
      */
     private String address;
+
+
+    /**
+     * 图片ids
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> imgIds;
+
+    /**
+     * 文件ids
+     */
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> fileIds;
 
 }

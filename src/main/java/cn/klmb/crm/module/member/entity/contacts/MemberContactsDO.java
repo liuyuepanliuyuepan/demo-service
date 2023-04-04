@@ -107,4 +107,10 @@ public class MemberContactsDO extends KlmbBaseDO {
     private Boolean star;
 
 
+    /**
+     * 详细地址
+     */
+    private String detailAddress;
+
+
 }

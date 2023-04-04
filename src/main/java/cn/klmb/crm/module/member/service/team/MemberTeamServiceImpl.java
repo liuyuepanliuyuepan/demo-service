@@ -118,7 +118,6 @@ public class MemberTeamServiceImpl extends
                 memberTeamDO.setExpiresTime(memberTeamSaveBO.getExpiresTime());
                 memberTeamDO.setUserId(memberId);
                 teamMembers.add(memberTeamDO);
-                //addTermMessage(crmEnum, id, (String) objects[1], memberId, 1);
             }
             if (memberTeamSaveBO.getChangeType() != null && crmEnum == CrmEnum.CUSTOMER) {
                 if (memberTeamSaveBO.getChangeType().contains(1)) {

@@ -4,6 +4,9 @@ import static cn.klmb.crm.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH
 
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
+import java.util.List;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -13,19 +16,22 @@ import org.springframework.format.annotation.DateTimeFormat;
 @Data
 public class MemberTeamActivityBaseVO {
 
-    @ApiModelProperty(value = "活动类型 1 跟进记录 2 创建记录 3 商机阶段变更 4 外勤签到", example = "1")
+    @ApiModelProperty(value = "活动类型 1 跟进记录 2 创建记录 3 商机阶段变更 4 外勤签到")
     private Integer type;
 
     @ApiModelProperty(value = "跟进类型(例如打电话)")
     private Integer category;
 
-    @ApiModelProperty(value = "活动类型 1 线索 2 客户 3 联系人 4 产品 5 商机 6 合同 7回款 8日志 9审批 10日程 11任务 12 发邮件", example = "2")
+    @ApiModelProperty(value = "活动类型 1 线索 2 客户 3 联系人 4 产品 5 商机 6 合同 7回款 8日志 9审批 10日程 11任务 12 发邮件")
+    @NotNull(message = "活动类型不能为空！")
     private Integer activityType;
 
-    @ApiModelProperty(value = "活动类型Id", example = "27397")
+    @ApiModelProperty(value = "活动类型的bizId")
+    @NotBlank(message = "活动类型的bizId！")
     private String activityTypeId;
 
     @ApiModelProperty(value = "活动内容")
+    @NotBlank(message = "活动内容不能为空！")
     private String content;
 
     @ApiModelProperty(value = "关联商机")
@@ -38,13 +44,25 @@ public class MemberTeamActivityBaseVO {
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime nextTime;
 
-    @ApiModelProperty(value = "经度")
+    @ApiModelProperty(value = "经度(type为4外勤签到时必传)")
     private String lng;
 
-    @ApiModelProperty(value = "纬度")
+    @ApiModelProperty(value = "纬度(type为4外勤签到时必传)")
     private String lat;
 
-    @ApiModelProperty(value = "签到地址")
+    @ApiModelProperty(value = "签到地址(type为4外勤签到时必传)")
     private String address;
+
+    /**
+     * 图片ids
+     */
+    @ApiModelProperty(value = "图片ids")
+    private List<String> imgIds;
+
+    /**
+     * 文件ids
+     */
+    @ApiModelProperty(value = "文件ids")
+    private List<String> fileIds;
 
 }

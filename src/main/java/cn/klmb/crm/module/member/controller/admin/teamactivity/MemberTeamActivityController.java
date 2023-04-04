@@ -112,7 +112,6 @@ public class MemberTeamActivityController {
         return success(MemberTeamActivityConvert.INSTANCE.convert(page));
     }
 
-    //添加跟进记录
 
 
 }
