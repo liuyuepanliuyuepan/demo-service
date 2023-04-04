@@ -191,25 +191,36 @@ public class MemberTeamServiceImpl extends
                 selectVO.setExpiresTime(null);
                 selectVO.setPower(3);
                 if (StrUtil.isNotBlank(sysUserDO.getDeptId())) {
-                    SysDeptDO sysDeptDO = sysDeptService.getByBizId(sysUserDO.getDeptId());
-                    selectVO.setDeptName(sysDeptDO.getName());
+                    if (StrUtil.equals(sysUserDO.getDeptId(), "0")) {
+                        selectVO.setDeptName("admin");
+                    } else {
+                        SysDeptDO sysDeptDO = sysDeptService.getByBizId(sysUserDO.getDeptId());
+                        selectVO.setDeptName(sysDeptDO.getName());
+                    }
                 }
                 selectVOS.add(selectVO);
             }
-            MembersTeamSelectVO selectVO = new MembersTeamSelectVO();
-            SysUserDO sysUserDO = sysUserService.getByBizId(teamMember.getUserId());
-            selectVO.setUserId(teamMember.getUserId());
-            selectVO.setPower(teamMember.getPower());
-            if (StrUtil.isNotBlank(sysUserDO.getDeptId())) {
-                SysDeptDO sysDeptDO = sysDeptService.getByBizId(sysUserDO.getDeptId());
-                selectVO.setDeptName(sysDeptDO.getName());
+            if (ObjectUtil.notEqual(teamMember.getUserId(), ownerUserId)) {
+                MembersTeamSelectVO selectVO = new MembersTeamSelectVO();
+                SysUserDO sysUserDO = sysUserService.getByBizId(teamMember.getUserId());
+                selectVO.setUserId(teamMember.getUserId());
+                selectVO.setPower(teamMember.getPower());
+                if (StrUtil.isNotBlank(sysUserDO.getDeptId())) {
+                    if (StrUtil.equals(sysUserDO.getDeptId(), "0")) {
+                        selectVO.setDeptName("admin");
+                    } else {
+                        SysDeptDO sysDeptDO = sysDeptService.getByBizId(sysUserDO.getDeptId());
+                        selectVO.setDeptName(sysDeptDO.getName());
+                    }
+                }
+                selectVO.setNickName(sysUserDO.getNickname());
+                if (ObjectUtil.isNotNull(teamMember.getExpiresTime())) {
+                    selectVO.setExpiresTime(teamMember.getExpiresTime()
+                            .format(DateTimeFormatter.ofPattern(
+                                    DatePattern.NORM_DATETIME_PATTERN)));
+                }
+                selectVOS.add(selectVO);
             }
-            selectVO.setNickName(sysUserDO.getNickname());
-            if (ObjectUtil.isNotNull(teamMember.getExpiresTime())) {
-                selectVO.setExpiresTime(teamMember.getExpiresTime()
-                        .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
-            }
-            selectVOS.add(selectVO);
         }
         return selectVOS;
     }
