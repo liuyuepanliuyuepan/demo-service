@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.common.Const;
 import cn.klmb.crm.framework.common.util.servlet.ApplicationContextHolder;
+import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.dao.team.MemberTeamMapper;
@@ -28,6 +29,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
@@ -223,6 +225,49 @@ public class MemberTeamServiceImpl extends
             }
         }
         return selectVOS;
+    }
+
+    @Override
+    public void deleteMember(CrmEnum crmEnum, MemberTeamSaveBO memberTeamSaveBO) {
+        for (String bizId : memberTeamSaveBO.getBizIds()) {
+            if (memberTeamSaveBO.getChangeType() != null && crmEnum == CrmEnum.CUSTOMER) {
+                if (memberTeamSaveBO.getChangeType().contains(1)) {
+                    LambdaQueryWrapper<MemberContactsDO> queryWrapper = new LambdaQueryWrapper<>();
+                    queryWrapper.eq(MemberContactsDO::getCustomerId, bizId);
+                    queryWrapper.select(MemberContactsDO::getBizId);
+                    List<String> customerIds = ApplicationContextHolder.getBean(
+                                    MemberContactsService.class)
+                            .listObjs(queryWrapper, TypeUtils::castToString);
+                    deleteMember(CrmEnum.CONTACTS,
+                            new MemberTeamSaveBO(customerIds, memberTeamSaveBO));
+                }
+            }
+            deleteMembers(crmEnum, bizId, memberTeamSaveBO.getUserIds());
+        }
+    }
+
+    private void deleteMembers(CrmEnum crmEnum, String typeId, List<String> memberIds) {
+        Object[] objects = getTypeName(crmEnum, typeId);
+        if (objects.length == 0) {
+            return;
+        }
+        if (memberIds.contains(objects[0])) {
+            throw exception(
+                    cn.klmb.crm.module.member.enums.ErrorCodeConstants.MEMBER_TEAM_DELETE_ERROR);
+        }
+        lambdaUpdate()
+                .eq(MemberTeamDO::getType, crmEnum.getType())
+                .eq(MemberTeamDO::getTypeId, typeId)
+                .in(MemberTeamDO::getUserId, memberIds).remove();
+    }
+
+    @Override
+    public void exitTeam(CrmEnum crmEnum, String typeId) {
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        deleteMembers(crmEnum, typeId, Collections.singletonList(userId));
     }
 
 

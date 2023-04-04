@@ -271,5 +271,23 @@ public class MemberUserController {
         return CommonResult.success(true);
     }
 
+    @PostMapping("/deleteMembers")
+    @ApiOperation("删除团队成员")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
+    public CommonResult<Boolean> deleteMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+        memberTeamService.deleteMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/exitTeam/{customerId}")
+    @ApiOperation("退出团队")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "customerId", value = "客户id", dataTypeClass = String.class, paramType = "path")})
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
+    public CommonResult<Boolean> exitTeam(@PathVariable("customerId") String customerId) {
+        memberTeamService.exitTeam(CrmEnum.CUSTOMER, customerId);
+        return CommonResult.success(true);
+    }
+
 
 }

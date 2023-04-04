@@ -19,4 +19,7 @@ public interface ErrorCodeConstants {
     // ========== 客户信息 1003001000 ==========
     ErrorCode MEMBER_DELIVERY_NOT_EXISTS = new ErrorCode(1003001001, "客户收货地址不存在");
 
+    // ========== 客户信息 1004000000 ==========
+    ErrorCode MEMBER_TEAM_DELETE_ERROR = new ErrorCode(1004000001, "负责人不能退出团队！");
+
 }

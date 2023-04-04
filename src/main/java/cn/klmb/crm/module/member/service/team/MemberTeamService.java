@@ -35,4 +35,21 @@ public interface MemberTeamService extends KlmbBaseService<MemberTeamDO, MemberT
      */
     List<MembersTeamSelectVO> getMembers(CrmEnum crmEnum, String typeId);
 
+    /**
+     * 删除团队成员
+     *
+     * @param crmEnum          对应类型
+     * @param memberTeamSaveBO data
+     */
+    void deleteMember(CrmEnum crmEnum, MemberTeamSaveBO memberTeamSaveBO);
+
+
+    /**
+     * 退出团队
+     *
+     * @param crmEnum 对应类型
+     * @param typeId  对应类型ID
+     */
+    void exitTeam(CrmEnum crmEnum, String typeId);
+
 }
