@@ -53,11 +53,7 @@ public class MemberTeamActivityController {
     @PreAuthorize("@ss.hasPermission('member:team-activity:save')")
     public CommonResult<String> save(@Valid @RequestBody MemberTeamActivitySaveReqVO saveReqVO) {
         MemberTeamActivityDO saveDO = MemberTeamActivityConvert.INSTANCE.convert(saveReqVO);
-        String bizId = "";
-        if (memberTeamActivityService.saveDO(saveDO)) {
-            bizId = saveDO.getBizId();
-        }
-        return success(bizId);
+        return success((memberTeamActivityService.saveActivityDO(saveDO)));
     }
 
     @DeleteMapping(value = "/delete/{bizId}")

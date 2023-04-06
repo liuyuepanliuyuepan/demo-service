@@ -23,7 +23,6 @@ public class MemberContactsBaseVO {
     private String customerId;
 
     @ApiModelProperty(value = "下次联系时间")
-    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime nextTime;
 
     @ApiModelProperty(value = "手机")

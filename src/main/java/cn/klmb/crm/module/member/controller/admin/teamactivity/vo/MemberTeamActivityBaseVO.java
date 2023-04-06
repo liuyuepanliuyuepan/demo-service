@@ -1,14 +1,11 @@
 package cn.klmb.crm.module.member.controller.admin.teamactivity.vo;
 
-import static cn.klmb.crm.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
-
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
 import java.util.List;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
 
 /**
  * crm团队成员活动 Base VO，提供给添加、修改、详细的子 VO 使用 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
@@ -41,7 +38,6 @@ public class MemberTeamActivityBaseVO {
     private String contactsIds;
 
     @ApiModelProperty(value = "下次联系时间")
-    @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime nextTime;
 
     @ApiModelProperty(value = "经度(type为4外勤签到时必传)")
