@@ -210,4 +210,9 @@ public interface ErrorCodeConstants {
     ErrorCode OAUTH2_CODE_NOT_EXISTS = new ErrorCode(1002022000, "code 不存在");
     ErrorCode OAUTH2_CODE_EXPIRE = new ErrorCode(1002022000, "code 已过期");
 
+    ErrorCode NOTIFY_TEMPLATE_NOT_EXISTS = new ErrorCode(1002026000, "站内信模版不存在");
+    ErrorCode NOTIFY_TEMPLATE_CODE_DUPLICATE = new ErrorCode(1002026001, "已经存在编码为【{}】的站内信模板");
+    ErrorCode NOTIFY_SEND_TEMPLATE_PARAM_MISS = new ErrorCode(1002025000, "模板参数({})缺失");
+
+
 }
