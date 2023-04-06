@@ -2,6 +2,7 @@ package cn.klmb.crm.module.member.controller.admin.bis;
 
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
@@ -13,6 +14,7 @@ import cn.klmb.crm.module.member.convert.bis.MemberBisConvert;
 import cn.klmb.crm.module.member.dto.bis.MemberBisQueryDTO;
 import cn.klmb.crm.module.member.entity.bis.MemberBisDO;
 import cn.klmb.crm.module.member.service.bis.MemberBisService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -108,6 +110,22 @@ public class MemberBisController {
         MemberBisQueryDTO queryDTO = MemberBisConvert.INSTANCE.convert(reqVO);
         KlmbPage<MemberBisDO> page = memberBisService.page(queryDTO, klmbPage);
         return success(MemberBisConvert.INSTANCE.convert(page));
+    }
+
+    @GetMapping(value = "/detail_v1/{customerId}")
+    @ApiOperation(value = "根据客户id查询工商信息详情")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "customerId", value = "客户id", dataTypeClass = String.class, paramType = "path")})
+    @PreAuthorize("@ss.hasPermission('member:bis:query')")
+    public CommonResult<MemberBisRespVO> getByCustomerId(@PathVariable String customerId) {
+        MemberBisDO saveDO = null;
+        MemberBisDO memberBisDO = memberBisService.getOne(
+                new LambdaQueryWrapper<MemberBisDO>().eq(MemberBisDO::getCustomerId, customerId)
+                        .eq(MemberBisDO::getDeleted, false));
+        if (ObjectUtil.isNotNull(memberBisDO)) {
+            saveDO = memberBisService.getByBizId(memberBisDO.getBizId());
+        }
+        return success(MemberBisConvert.INSTANCE.convert(saveDO));
     }
 
 }
