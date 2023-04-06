@@ -4,6 +4,7 @@ import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
+import cn.klmb.crm.framework.job.util.XxlJobUtil;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplatePageReqVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplateRespVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplateSaveReqVO;
@@ -109,5 +110,15 @@ public class SysNotifyTemplateController {
         return success(sysNotifySendService.sendSingleNotifyToAdmin(sendReqVO.getUserId(),
                 sendReqVO.getTemplateCode(), sendReqVO.getTemplateParams()));
     }
+
+
+    @PostMapping("/remove")
+    @Parameter(name = "id", description = "id", required = true)
+    @Operation(summary = "删除任务")
+    @PreAuthorize("@ss.hasPermission('system:notify-template:post')")
+    public CommonResult<String> remove(@RequestParam("id") Integer id) {
+        return success(XxlJobUtil.remove(id));
+    }
+
 
 }
