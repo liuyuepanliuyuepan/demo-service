@@ -4,16 +4,15 @@ import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.e
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.XXL_JOB_INTERFACE_CALL_ERROR;
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.XXL_JOB_NOT_GAIN_GROUP_ID;
 
+import cn.klmb.crm.framework.job.config.XxlJobProperties;
 import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.util.XxlJobRemotingUtil;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-@Component
+//@Component
 public class XxlJobUtil {
 
     public static final int SUCCESS_CODE = 200;
@@ -24,10 +23,12 @@ public class XxlJobUtil {
     private static final String START_URL = "/jobinfo/start";
     private static final String ADD_AND_START_URL = "/jobinfo/add-and-start";
     private static final String GET_GROUP_ID = "/jobgroup/get-group-id";
-    private static String adminAddresses;
-    private static String appname;
-    private static Integer groupId;
-    private static String accessToken;
+
+    private final XxlJobProperties xxlJobProperties;
+
+    public XxlJobUtil(XxlJobProperties xxlJobProperties) {
+        this.xxlJobProperties = xxlJobProperties;
+    }
 
     /**
      * 添加任务
@@ -37,9 +38,9 @@ public class XxlJobUtil {
      * @author kritofgo
      * @date 2022/05/27 17:37
      **/
-    public static String add(XxlJobInfo jobInfo) {
-        jobInfo.setJobGroup(groupId);
-        return doPost(adminAddresses + ADD_URL, jobInfo, String.class);
+    public String add(XxlJobInfo jobInfo) {
+        jobInfo.setJobGroup(xxlJobProperties.getGroupId());
+        return doPost(xxlJobProperties.getAdminAddresses() + ADD_URL, jobInfo, String.class);
     }
 
     /**
@@ -48,15 +49,16 @@ public class XxlJobUtil {
      * @author kritofgo
      * @date 2022/05/27 17:37
      **/
-    public static void initGroupId() {
+    public void initGroupId() {
         // 查询对应groupId:
         Map<String, Object> param = new HashMap<>(4);
-        param.put("appname", appname);
-        Integer groupId = doPost(adminAddresses + GET_GROUP_ID, param, Integer.class);
+        param.put("appname", xxlJobProperties.getAppname());
+        Integer groupId = doPost(xxlJobProperties.getAdminAddresses() + GET_GROUP_ID, param,
+                Integer.class);
         if (groupId == null) {
-            throw exception(XXL_JOB_NOT_GAIN_GROUP_ID, appname);
+            throw exception(XXL_JOB_NOT_GAIN_GROUP_ID, xxlJobProperties.getAppname());
         }
-        XxlJobUtil.groupId = groupId;
+        xxlJobProperties.setGroupId(groupId);
     }
 
     /**
@@ -68,11 +70,11 @@ public class XxlJobUtil {
      * @author kritofgo
      * @date 2022/05/27 17:38
      **/
-    public static String update(int id, String cron) {
+    public String update(int id, String cron) {
         Map<String, Object> param = new HashMap<>(4);
         param.put("id", id);
         param.put("jobCron", cron);
-        return doPost(adminAddresses + UPDATE_URL, param, String.class);
+        return doPost(xxlJobProperties.getAdminAddresses() + UPDATE_URL, param, String.class);
     }
 
     /**
@@ -83,10 +85,10 @@ public class XxlJobUtil {
      * @author kritofgo
      * @date 2022/05/27 17:39
      **/
-    public static String remove(int id) {
+    public String remove(int id) {
         Map<String, Object> param = new HashMap<>(4);
         param.put("id", id);
-        return doPost(adminAddresses + REMOVE_URL, param, String.class);
+        return doPost(xxlJobProperties.getAdminAddresses() + REMOVE_URL, param, String.class);
     }
 
     /**
@@ -97,10 +99,10 @@ public class XxlJobUtil {
      * @author kritofgo
      * @date 2022/05/27 17:40
      **/
-    public static String pause(int id) {
+    public String pause(int id) {
         Map<String, Object> param = new HashMap<>(4);
         param.put("id", id);
-        return doPost(adminAddresses + PAUSE_URL, param, String.class);
+        return doPost(xxlJobProperties.getAdminAddresses() + PAUSE_URL, param, String.class);
     }
 
     /**
@@ -111,10 +113,10 @@ public class XxlJobUtil {
      * @author kritofgo
      * @date 2022/05/27 17:40
      **/
-    public static String start(int id) {
+    public String start(int id) {
         Map<String, Object> param = new HashMap<>();
         param.put("id", id);
-        return doPost(adminAddresses + START_URL, param, String.class);
+        return doPost(xxlJobProperties.getAdminAddresses() + START_URL, param, String.class);
     }
 
     /**
@@ -125,34 +127,21 @@ public class XxlJobUtil {
      * @author kritofgo
      * @date 2022/05/27 20:10
      **/
-    public static String addAndStart(XxlJobInfo jobInfo) {
-        jobInfo.setJobGroup(groupId);
-        return doPost(adminAddresses + ADD_AND_START_URL, jobInfo, String.class);
+    public String addAndStart(XxlJobInfo jobInfo) {
+        jobInfo.setJobGroup(xxlJobProperties.getGroupId());
+        return doPost(xxlJobProperties.getAdminAddresses() + ADD_AND_START_URL, jobInfo,
+                String.class);
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T doPost(String url, Object json, Class<T> clazz) {
-        ReturnT<T> returnT = XxlJobRemotingUtil.postBody(url, accessToken, 3, json, clazz);
+    public <T> T doPost(String url, Object json, Class<T> clazz) {
+        ReturnT<T> returnT = XxlJobRemotingUtil.postBody(url, xxlJobProperties.getAccessToken(), 3,
+                json, clazz);
         if (returnT.getCode() != SUCCESS_CODE) {
             throw exception(XXL_JOB_INTERFACE_CALL_ERROR,
                     returnT.getCode(), returnT.getMsg());
         }
         return returnT.getContent();
-    }
-
-    @Value("${xxl.job.admin.addresses}")
-    public void setAdminAddresses(String adminAddresses) {
-        XxlJobUtil.adminAddresses = adminAddresses;
-    }
-
-    @Value("${xxl.job.accessToken}")
-    public void setAccessToken(String accessToken) {
-        XxlJobUtil.accessToken = accessToken;
-    }
-
-    @Value("${xxl.job.executor.appname}")
-    public void setAppname(String appname) {
-        XxlJobUtil.appname = appname;
     }
 
     @PostConstruct

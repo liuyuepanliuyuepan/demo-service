@@ -34,4 +34,6 @@ public class XxlJobProperties {
 
     @Value("${xxl.job.executor.logretentiondays}")
     private int logRetentionDays;
+
+    private Integer groupId;
 }
