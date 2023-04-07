@@ -23,7 +23,6 @@ import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -107,13 +106,11 @@ public class MemberTeamActivityController {
             List<String> imgIds = convert.getImgIds();
             if (CollUtil.isNotEmpty(imgIds)) {
                 List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(imgIds);
-                convert.setImgUrls(sysFileDOS.stream().map(SysFileDO::getUrl)
-                        .collect(Collectors.toList()));
+                convert.setImgInfo(sysFileDOS);
             }
             if (CollUtil.isNotEmpty(fileIds)) {
                 List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(fileIds);
-                convert.setFileUrls(sysFileDOS.stream().map(SysFileDO::getUrl)
-                        .collect(Collectors.toList()));
+                convert.setFileInfo(sysFileDOS);
             }
         }
         return success(convert);
@@ -139,13 +136,11 @@ public class MemberTeamActivityController {
                         List<String> fileIds = e.getFileIds();
                         if (CollUtil.isNotEmpty(imgIds)) {
                             List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(imgIds);
-                            e.setImgUrls(sysFileDOS.stream().map(SysFileDO::getUrl)
-                                    .collect(Collectors.toList()));
+                            e.setImgInfo(sysFileDOS);
                         }
                         if (CollUtil.isNotEmpty(fileIds)) {
                             List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(fileIds);
-                            e.setFileUrls(sysFileDOS.stream().map(SysFileDO::getUrl)
-                                    .collect(Collectors.toList()));
+                            e.setFileInfo(sysFileDOS);
                         }
 
                     }

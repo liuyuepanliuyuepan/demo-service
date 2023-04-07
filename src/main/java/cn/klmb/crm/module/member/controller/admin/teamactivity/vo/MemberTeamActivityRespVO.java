@@ -1,5 +1,6 @@
 package cn.klmb.crm.module.member.controller.admin.teamactivity.vo;
 
+import cn.klmb.crm.module.system.entity.file.SysFileDO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
@@ -21,15 +22,15 @@ public class MemberTeamActivityRespVO extends MemberTeamActivityBaseVO {
     private LocalDateTime createTime;
 
     /**
-     * 图片url
+     * 图片详细信息
      */
-    @ApiModelProperty(value = "图片url")
-    private List<String> imgUrls;
+    @ApiModelProperty(value = "图片详细信息")
+    private List<SysFileDO> imgInfo;
 
     /**
-     * 文件url
+     * 文件详细信息
      */
-    @ApiModelProperty(value = "文件url")
-    private List<String> fileUrls;
+    @ApiModelProperty(value = "文件详细信息")
+    private List<SysFileDO> fileInfo;
 
 }
