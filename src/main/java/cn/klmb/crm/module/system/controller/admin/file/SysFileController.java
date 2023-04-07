@@ -16,6 +16,8 @@ import cn.klmb.crm.module.system.service.file.SysFileService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -136,6 +139,16 @@ public class SysFileController {
         SysFileQueryDTO queryDTO = SysFileConvert.INSTANCE.convert(reqVO);
         KlmbPage<SysFileDO> page = sysFileService.page(queryDTO, klmbPage);
         return success(SysFileConvert.INSTANCE.convert(page));
+    }
+
+    @GetMapping("/get")
+    @Operation(summary = "根据bizId获得文件信息")
+    @Parameter(name = "bizId", description = "业务id", required = true)
+    @PreAuthorize("@ss.hasPermission('system:notify-template:query')")
+    public CommonResult<SysFileRespVO> getFileInfo(
+            @RequestParam("bizId") String bizId) {
+        SysFileDO sysFileDO = sysFileService.getByBizId(bizId);
+        return success(SysFileConvert.INSTANCE.convert(sysFileDO));
     }
 
 }
