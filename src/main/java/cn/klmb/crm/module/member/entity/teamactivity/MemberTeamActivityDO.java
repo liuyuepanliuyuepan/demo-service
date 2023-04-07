@@ -31,7 +31,7 @@ public class MemberTeamActivityDO extends KlmbBaseDO {
     /**
      * 跟进类型(例如打电话)
      */
-    private Integer category;
+    private String category;
     /**
      * 活动类型 1 线索 2 客户 3 联系人 4 产品 5 商机 6 合同 7回款 8日志 9审批 10日程 11任务 12 发邮件
      */
