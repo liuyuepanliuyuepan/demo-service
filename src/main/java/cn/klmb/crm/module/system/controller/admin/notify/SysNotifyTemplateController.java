@@ -4,6 +4,10 @@ import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
+import cn.klmb.crm.framework.job.entity.XxlJobInfo;
+import cn.klmb.crm.framework.job.entity.XxlJobResponseInfo;
+import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
+import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplatePageReqVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplateRespVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplateSaveReqVO;
@@ -18,6 +22,7 @@ import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import javax.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,16 +44,20 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/sys/notify-template")
 @Validated
+@Slf4j
 public class SysNotifyTemplateController {
 
     private final SysNotifyTemplateService sysNotifyTemplateService;
 
     private final SysNotifySendService sysNotifySendService;
 
+    private final XxlJobApiUtils xxlJobApiUtils;
+
     public SysNotifyTemplateController(SysNotifyTemplateService sysNotifyTemplateService,
-            SysNotifySendService sysNotifySendService) {
+            SysNotifySendService sysNotifySendService, XxlJobApiUtils xxlJobApiUtils) {
         this.sysNotifyTemplateService = sysNotifyTemplateService;
         this.sysNotifySendService = sysNotifySendService;
+        this.xxlJobApiUtils = xxlJobApiUtils;
     }
 
     @PostMapping("/create")
@@ -110,13 +119,30 @@ public class SysNotifyTemplateController {
                 sendReqVO.getTemplateCode(), sendReqVO.getTemplateParams()));
     }
 
-//    @PostMapping("/remove")
-//    @Parameter(name = "id", description = "id", required = true)
-//    @Operation(summary = "删除任务")
-//    @PreAuthorize("@ss.hasPermission('system:notify-template:post')")
-////    public CommonResult<String> remove(@RequestParam("id") Integer id) {
-////        return success(XxlJobUtil.remove(id));
-////    }
+    @PostMapping("/remove")
+    @Parameter(name = "id", description = "id", required = true)
+    @Operation(summary = "删除任务")
+    @PreAuthorize("@ss.hasPermission('system:notify-template:post')")
+    public CommonResult<Boolean> remove(@RequestParam("id") Integer id) {
+        xxlJobApiUtils.deleteTask(id);
+        return success(true);
+    }
+
+    @GetMapping("/select-all-task")
+    @Operation(summary = "查询所有的task")
+    @PreAuthorize("@ss.hasPermission('system:notify-template:query')")
+    public CommonResult<XxlJobTaskManagerInfo> selectAllTask(XxlJobInfo xxlJobInfo) {
+        XxlJobTaskManagerInfo xxlJobTaskManagerInfo = xxlJobApiUtils.selectAllTask(xxlJobInfo);
+        return success(xxlJobTaskManagerInfo);
+    }
+
+
+    @PostMapping("/create-task")
+    @Operation(summary = "创建任务管理")
+    @PreAuthorize("@ss.hasPermission('system:notify-template:query')")
+    public CommonResult<XxlJobResponseInfo> createTask(@RequestBody XxlJobInfo xxlJobInfo) {
+        return success(xxlJobApiUtils.createTask(xxlJobInfo));
+    }
 
 
 }

@@ -240,6 +240,11 @@
       <groupId>com.xuxueli</groupId>
       <version>2.3.0</version>
     </dependency>
+    <dependency>
+      <artifactId>okhttp</artifactId>
+      <groupId>com.squareup.okhttp3</groupId>
+      <version>3.8.1</version>
+    </dependency>
   </dependencies>
 
   <build>

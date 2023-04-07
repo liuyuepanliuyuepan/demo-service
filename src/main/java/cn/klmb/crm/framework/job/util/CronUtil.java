@@ -1,164 +1,93 @@
 package cn.klmb.crm.framework.job.util;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Objects;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
-/**
- * @author liuyuepan
- * @date 2023-04-06
- */
 public class CronUtil {
 
-    private static final SimpleDateFormat sdf = new SimpleDateFormat("ss mm HH dd MM ? yyyy");
 
     /**
-     * 年 （可选） 留空 允许的特殊字符：留空, 1970-2099 , - * /
-     */
-    private String year;
-    /**
-     * 星期 可以用数字1-7表示（1 ＝ 星期日）或用字符口串“SUN, MON, TUE, WED, THU, FRI and SAT”表示 允许的特殊字符：1-7 或者 SUN-SAT ,
-     * - * ? / L C #
-     */
-    private String week;
-    /**
-     * 月  可以用0-11 或用字符串  “JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV and DEC” 表示
-     * 允许的特殊字符：1-12 或者 JAN-DEC , - * /
-     */
-    private String month;
-    /**
-     * 日 可以用数字1-31 中的任一一个值，但要注意一些特别的月份 允许的特殊字符：1-31 , - * ? / L W C
-     */
-    private String day;
-    /**
-     * 时 可以用数字0-23表示 允许的特殊字符：0-23, - * /
-     */
-    private String hour;
-    /**
-     * 分 可以用数字0－59 表示 允许的特殊字符：0-59,- * /
-     */
-    private String minutes;
-    /**
-     * 秒 可以用数字0－59 表示 允许的特殊字符：0-59,- * /
-     */
-    private String seconds;
-
-    /***
-     *  日期转换cron表达式 例如 "0 07 10 15 1 ? 2016"
-     * @param date 时间点
-     * @return
-     */
-    public static String getCron(Date date) {
-        String formatTimeStr = null;
-        if (Objects.nonNull(date)) {
-            formatTimeStr = sdf.format(date);
-        }
-        return formatTimeStr;
-    }
-
-    /**
-     * 获取指定日期的cron表达式
+     * 仅一次
      *
-     * @param year    年
-     * @param week    星期 可以用数字1-7表示（1 ＝ 星期日）或用字符口串“SUN, MON, TUE, WED, THU, FRI and SAT”表示
-     * @param month   月 可以用0-11 或用字符串  “JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV and
-     *                DEC” 表示
-     * @param day     日 可以用数字1-31 中的任一一个值，但要注意一些特别的月份
-     * @param hour    时 可以用数字0-23表示
-     * @param minutes 分 可以用数字0－59 表示
-     * @param seconds 秒 可以用数字0－59 表示
+     * @param dateStr 2022-03-31 09:51:05
      * @return
      */
-    public static String getCron(String year, String week, String month, String day, String hour,
-            String minutes, String seconds) {
-        return seconds + " " + minutes + " " + hour + " " + day + " " + month + " " + week + " "
-                + year;
+    public static String onlyOnce(String dateStr) {
+        LocalDateTime time = LocalDateTime.parse(dateStr,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String cronStr = time.format(DateTimeFormatter.ofPattern("ss mm HH dd MM ? yyyy"));
+        return cronStr;
     }
 
     /**
-     * 获取指定日期的cron表达式
+     * 每天
      *
-     * @param week    星期 可以用数字1-7表示（1 ＝ 星期日）或用字符口串“SUN, MON, TUE, WED, THU, FRI and SAT”表示
-     * @param month   月 可以用0-11 或用字符串  “JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV and
-     *                DEC” 表示
-     * @param day     日 可以用数字1-31 中的任一一个值，但要注意一些特别的月份
-     * @param hour    时 可以用数字0-23表示
-     * @param minutes 分 可以用数字0－59 表示
-     * @param seconds 秒 可以用数字0－59 表示
+     * @param timeStr 09:51:05
      * @return
      */
-    public static String getCron(String week, String month, String day, String hour, String minutes,
-            String seconds) {
-        return getCron("*", week, month, day, hour, minutes, seconds);
+    public static String everyDay(String timeStr) {
+        LocalTime time = LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String cronStr = time.format(DateTimeFormatter.ofPattern("ss mm HH * * ?"));
+        return cronStr;
     }
 
     /**
-     * 获取指定日期的cron表达式
+     * 每周
      *
-     * @param month   月 可以用0-11 或用字符串  “JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG, SEP, OCT, NOV and
-     *                DEC” 表示
-     * @param day     日 可以用数字1-31 中的任一一个值，但要注意一些特别的月份
-     * @param hour    时 可以用数字0-23表示
-     * @param minutes 分 可以用数字0－59 表示
-     * @param seconds 秒 可以用数字0－59 表示
+     * @param timeStr 09:51:05
+     * @param week    1代表周日 7代表周六 可选值：1、2、3、4、5、6、7、1-5、1-7
      * @return
      */
-    static String getCron(String month, String day, String hour, String minutes, String seconds) {
-        return getCron("?", month, day, hour, minutes, seconds);
+    public static String everyWeek(String timeStr, String week) {
+        LocalTime time = LocalTime.parse(timeStr, DateTimeFormatter.ofPattern("HH:mm:ss"));
+        String cronStr = time.format(DateTimeFormatter.ofPattern("ss mm HH ? * " + week));
+        return cronStr;
     }
 
     /**
-     * 获取指定范围的Cron表达式 例如 13-14 30-31 11-12 20-21 04-05 1-2 2021-2022
+     * 每月
      *
-     * @param year    年 使用（year1-year2） year1<=year2
-     * @param week    星期 使用（week1-week2） 可以用数字1-7表示（1 ＝ 星期日）或用字符口串“SUN, MON, TUE, WED, THU, FRI and
-     *                SAT”表示
-     * @param month   月 使用（month1-month2） 可以用0-11 或用字符串  “JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG,
-     *                SEP, OCT, NOV and DEC” 表示
-     * @param day     日  使用（day1-day2） 可以用数字1-31 中的任一一个值，但要注意一些特别的月份
-     * @param hour    时 使用（hour1-hour2） 可以用数字0-23表示
-     * @param minutes 分  使用（minutes1-minutes2） 可以用数字0－59 表示
-     * @param seconds 秒  使用（seconds1-seconds2） 可以用数字0－59 表示
+     * @param dateStr 2022-03-31 09:51:05
      * @return
      */
-    public static String getCronByRange(String year, String week, String month, String day,
-            String hour, String minutes, String seconds) {
-        return seconds + " " + minutes + " " + hour + " " + day + " " + month + " " + week + " "
-                + year;
+    public static String everyMonth(String dateStr) {
+        LocalDateTime time = LocalDateTime.parse(dateStr,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String cronStr = time.format(DateTimeFormatter.ofPattern("ss mm HH dd * ?"));
+        return cronStr;
     }
 
     /**
-     * 获取指定范围的Cron表达式 例如 13-14 30-31 11-12 20-21 04-05 1-2
+     * 每年
      *
-     * @param week    星期 使用（week1-week2） 可以用数字1-7表示（1 ＝ 星期日）或用字符口串“SUN, MON, TUE, WED, THU, FRI and
-     *                SAT”表示
-     * @param month   月 使用（month1-month2） 可以用0-11 或用字符串  “JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG,
-     *                SEP, OCT, NOV and DEC” 表示
-     * @param day     日  使用（day1-day2） 可以用数字1-31 中的任一一个值，但要注意一些特别的月份
-     * @param hour    时 使用（hour1-hour2） 可以用数字0-23表示
-     * @param minutes 分  使用（minutes1-minutes2） 可以用数字0－59 表示
-     * @param seconds 秒  使用（seconds1-seconds2） 可以用数字0－59 表示
+     * @param dateStr 2022-03-31 09:51:05
      * @return
      */
-    public static String getCronByRange(String week, String month, String day, String hour,
-            String minutes, String seconds) {
-        return getCron("*", week, month, day, hour, minutes, seconds);
+    public static String everyYear(String dateStr) {
+        LocalDateTime time = LocalDateTime.parse(dateStr,
+                DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        String cronStr = time.format(DateTimeFormatter.ofPattern("ss mm HH dd MM *"));
+        return cronStr;
     }
 
-    /**
-     * 获取指定范围的Cron表达式  例如 13-14 30-31 11-12 20-21 04-05
-     *
-     * @param month   月 使用（month1-month2） 可以用0-11 或用字符串  “JAN, FEB, MAR, APR, MAY, JUN, JUL, AUG,
-     *                SEP, OCT, NOV and DEC” 表示
-     * @param day     日  使用（day1-day2） 可以用数字1-31 中的任一一个值，但要注意一些特别的月份
-     * @param hour    时 使用（hour1-hour2） 可以用数字0-23表示
-     * @param minutes 分  使用（minutes1-minutes2） 可以用数字0－59 表示
-     * @param seconds 秒  使用（seconds1-seconds2） 可以用数字0－59 表示
-     * @return
-     */
-    static String getCronByRange(String month, String day, String hour, String minutes,
-            String seconds) {
-        return getCron("?", month, day, hour, minutes, seconds);
+    public void test() {
+        //仅一次   05 06 11 31 03 ? 2022
+        String onlyOnce = onlyOnce("2022-03-31 11:06:05");
+        System.out.println(onlyOnce);
+        //每天    05 51 09 * * ?
+        String everyDay = everyDay("09:51:05");
+        System.out.println(everyDay);
+        //每周    05 51 09 ? * 1
+        String everyWeek = everyWeek("09:51:05", "1");
+        System.out.println(everyWeek);
+        //每月    05 51 09 31 * ?
+        String everyMonth = everyMonth("2022-03-31 09:51:05");
+        System.out.println(everyMonth);
+        //每年    05 51 09 31 03 *
+        String everyYear = everyYear("2022-03-31 09:51:05");
+        System.out.println(everyYear);
+
     }
+
 }
-

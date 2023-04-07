@@ -121,8 +121,12 @@ spring:
 #    database: 0 # 数据库索引
 xxl:
   job:
+    login:
+      address: http://8.131.251.243:8088/xxl-job-admin
+      username: admin
+      password: klmb0518
     admin:
-      addresses: http://8.131.251.243:3306/xxl-job-admin
+      addresses: http://8.131.251.243:8088/xxl-job-admin
       ### 执行器通讯TOKEN [选填]：非空时启用；
     accessToken: ba13ee108eb299a07bca20ea5a2efce2
     executor:
