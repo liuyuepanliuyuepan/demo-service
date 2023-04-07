@@ -3,6 +3,7 @@ package cn.klmb.crm.module.member.controller.admin.teamactivity.vo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,5 +19,17 @@ public class MemberTeamActivityRespVO extends MemberTeamActivityBaseVO {
 
     @ApiModelProperty(value = "创建时间", required = true)
     private LocalDateTime createTime;
+
+    /**
+     * 图片url
+     */
+    @ApiModelProperty(value = "图片url")
+    private List<String> imgUrls;
+
+    /**
+     * 文件url
+     */
+    @ApiModelProperty(value = "文件url")
+    private List<String> fileUrls;
 
 }

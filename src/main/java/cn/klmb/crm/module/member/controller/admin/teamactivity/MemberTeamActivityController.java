@@ -2,6 +2,8 @@ package cn.klmb.crm.module.member.controller.admin.teamactivity;
 
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
@@ -13,11 +15,15 @@ import cn.klmb.crm.module.member.convert.teamactivity.MemberTeamActivityConvert;
 import cn.klmb.crm.module.member.dto.teamactivity.MemberTeamActivityQueryDTO;
 import cn.klmb.crm.module.member.entity.teamactivity.MemberTeamActivityDO;
 import cn.klmb.crm.module.member.service.teamactivity.MemberTeamActivityService;
+import cn.klmb.crm.module.system.entity.file.SysFileDO;
+import cn.klmb.crm.module.system.service.file.SysFileService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -44,8 +50,12 @@ public class MemberTeamActivityController {
 
     private final MemberTeamActivityService memberTeamActivityService;
 
-    public MemberTeamActivityController(MemberTeamActivityService memberTeamActivityService) {
+    private final SysFileService sysFileService;
+
+    public MemberTeamActivityController(MemberTeamActivityService memberTeamActivityService,
+            SysFileService sysFileService) {
         this.memberTeamActivityService = memberTeamActivityService;
+        this.sysFileService = sysFileService;
     }
 
     @PostMapping(value = "/save")
@@ -91,7 +101,22 @@ public class MemberTeamActivityController {
     @PreAuthorize("@ss.hasPermission('member:team-activity:query')")
     public CommonResult<MemberTeamActivityRespVO> getByBizId(@PathVariable String bizId) {
         MemberTeamActivityDO saveDO = memberTeamActivityService.getByBizId(bizId);
-        return success(MemberTeamActivityConvert.INSTANCE.convert(saveDO));
+        MemberTeamActivityRespVO convert = MemberTeamActivityConvert.INSTANCE.convert(saveDO);
+        if (ObjectUtil.isNotNull(convert)) {
+            List<String> fileIds = convert.getFileIds();
+            List<String> imgIds = convert.getImgIds();
+            if (CollUtil.isNotEmpty(imgIds)) {
+                List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(imgIds);
+                convert.setImgUrls(sysFileDOS.stream().map(SysFileDO::getUrl)
+                        .collect(Collectors.toList()));
+            }
+            if (CollUtil.isNotEmpty(fileIds)) {
+                List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(fileIds);
+                convert.setFileUrls(sysFileDOS.stream().map(SysFileDO::getUrl)
+                        .collect(Collectors.toList()));
+            }
+        }
+        return success(convert);
     }
 
     @GetMapping({"/page"})
@@ -105,7 +130,29 @@ public class MemberTeamActivityController {
                 .build();
         MemberTeamActivityQueryDTO queryDTO = MemberTeamActivityConvert.INSTANCE.convert(reqVO);
         KlmbPage<MemberTeamActivityDO> page = memberTeamActivityService.page(queryDTO, klmbPage);
-        return success(MemberTeamActivityConvert.INSTANCE.convert(page));
+        KlmbPage<MemberTeamActivityRespVO> convert = MemberTeamActivityConvert.INSTANCE.convert(
+                page);
+        if (ObjectUtil.isNotNull(convert) && CollUtil.isNotEmpty(convert.getContent())) {
+            List<MemberTeamActivityRespVO> content = convert.getContent();
+            content.forEach(e -> {
+                        List<String> imgIds = e.getImgIds();
+                        List<String> fileIds = e.getFileIds();
+                        if (CollUtil.isNotEmpty(imgIds)) {
+                            List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(imgIds);
+                            e.setImgUrls(sysFileDOS.stream().map(SysFileDO::getUrl)
+                                    .collect(Collectors.toList()));
+                        }
+                        if (CollUtil.isNotEmpty(fileIds)) {
+                            List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(fileIds);
+                            e.setFileUrls(sysFileDOS.stream().map(SysFileDO::getUrl)
+                                    .collect(Collectors.toList()));
+                        }
+
+                    }
+
+            );
+        }
+        return success(convert);
     }
 
 
