@@ -245,6 +245,11 @@
       <groupId>com.squareup.okhttp3</groupId>
       <version>3.8.1</version>
     </dependency>
+    <dependency>
+      <artifactId>spring-boot-starter-websocket</artifactId>
+      <groupId>org.springframework.boot</groupId>
+    </dependency>
+
   </dependencies>
 
   <build>
