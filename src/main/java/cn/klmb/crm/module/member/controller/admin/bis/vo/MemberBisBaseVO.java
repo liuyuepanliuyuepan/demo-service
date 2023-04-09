@@ -30,4 +30,16 @@ public class MemberBisBaseVO {
     @ApiModelProperty(value = "客户id")
     private String customerId;
 
+    /**
+     * 发票类型(1普票，2专票)
+     */
+    @ApiModelProperty(value = "发票类型(1普票，2专票)")
+    private Integer ticketType;
+
+    /**
+     * 基本户
+     */
+    @ApiModelProperty(value = "基本户")
+    private String bba;
+
 }
