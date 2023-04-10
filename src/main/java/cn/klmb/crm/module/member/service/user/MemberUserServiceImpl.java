@@ -189,7 +189,7 @@ public class MemberUserServiceImpl extends
             xxlJobInfo.setExecutorHandler("customerContactReminderHandler");
             xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(nextTime));
             List<String> list = Arrays.asList(saveDO.getOwnerUserId(),
-                    CrmEnum.CUSTOMER.getRemarks(), saveDO.getBizId());
+                    (CrmEnum.CUSTOMER.getType().toString()), saveDO.getBizId());
             xxlJobInfo.setExecutorParam(CollUtil.join(list, COMMA));
             XxlJobResponseInfo task = xxlJobApiUtils.createTask(xxlJobInfo);
             xxlJobApiUtils.startTask(Integer.parseInt(task.getContent()));
