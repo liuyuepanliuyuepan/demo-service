@@ -22,6 +22,9 @@ public class WebSocketServer {
     //虽然@Component默认是单例模式的，但springboot还是会为每个websocket连接初始化一个bean，所以可以用一个静态set保存起来。
     //  注：底下WebSocket是当前类名
     private static final CopyOnWriteArraySet<WebSocketServer> webSockets = new CopyOnWriteArraySet<>();
+
+    private static CopyOnWriteArraySet<WebSocketServer> webSocketSet = new CopyOnWriteArraySet<WebSocketServer>();
+
     // 用来存在线连接用户信息
     private static final ConcurrentHashMap<String, Session> sessionPool = new ConcurrentHashMap<String, Session>();
     //与某个客户端的连接会话，需要通过它来给客户端发送数据
@@ -124,6 +127,14 @@ public class WebSocketServer {
             }
         }
 
+    }
+
+    public static CopyOnWriteArraySet<WebSocketServer> getWebSocketSet() {
+        return webSocketSet;
+    }
+
+    public static void setWebSocketSet(CopyOnWriteArraySet<WebSocketServer> webSocketSet) {
+        WebSocketServer.webSocketSet = webSocketSet;
     }
 
 }

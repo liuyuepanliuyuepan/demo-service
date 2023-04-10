@@ -38,4 +38,13 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      * @param bizId
      */
     void star(String bizId);
+
+
+    /**
+     * 新建客户
+     *
+     * @param saveDO 实体
+     * @return 实体
+     */
+    String saveCustomer(MemberUserDO saveDO);
 }

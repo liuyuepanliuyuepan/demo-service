@@ -22,7 +22,6 @@ import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
 import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
-import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
@@ -90,21 +89,7 @@ public class MemberUserController {
     @PreAuthorize("@ss.hasPermission('member:user:save')")
     public CommonResult<String> save(@Valid @RequestBody MemberUserSaveReqVO saveReqVO) {
         MemberUserDO saveDO = MemberUserConvert.INSTANCE.convert(saveReqVO);
-        String bizId = "";
-        //获取当前用户id
-        String userId = WebFrameworkUtils.getLoginUserId();
-        if (StrUtil.isBlank(userId)) {
-            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
-        }
-        saveDO.setOwnerUserId(userId);
-        saveDO.setDealStatus(0);
-        if (memberUserService.saveDO(saveDO)) {
-            bizId = saveDO.getBizId();
-        }
-        memberTeamService.saveDO(
-                MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.CUSTOMER.getType())
-                        .typeId(bizId).build());
-        return success(bizId);
+        return success(memberUserService.saveCustomer(saveDO));
     }
 
 

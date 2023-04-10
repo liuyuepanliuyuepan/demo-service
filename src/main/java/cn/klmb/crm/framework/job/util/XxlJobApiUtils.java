@@ -106,11 +106,14 @@ public class XxlJobApiUtils {
         //注意这里需要先创建执行器，然后拿到执行器的id赋值给JobGroup
         form.put("jobGroup", xxlJobInfo.getJobGroup() + "");
         form.put("jobDesc", xxlJobInfo.getJobDesc());
-        form.put("executorRouteStrategy", "ROUND");
+        form.put("executorRouteStrategy", "FIRST");
         form.put("scheduleConf", xxlJobInfo.getScheduleConf());
         form.put("glueType", "BEAN");
         form.put("executorHandler", xxlJobInfo.getExecutorHandler());
         form.put("executorBlockStrategy", "SERIAL_EXECUTION");
+        form.put("scheduleType", "CRON");
+        form.put("misfireStrategy", "DO_NOTHING");
+        form.put("alarmEmail", "liu_yue_pan@163.com");
         form.put("author", "liuyuepan");
 
         clientConfig.setUrl(xxlJobLoginAddress + "/jobinfo/update");
@@ -187,19 +190,17 @@ public class XxlJobApiUtils {
 
         //创建任务管理参数
         Map<String, String> form = new HashMap<>();
-
         form.put("jobGroup", xxlJobInfo.getJobGroup() + "");
         form.put("jobDesc", xxlJobInfo.getJobDesc());
-        form.put("executorRouteStrategy", "ROUND");
         form.put("scheduleConf", xxlJobInfo.getScheduleConf());
         form.put("glueType", "BEAN");
         form.put("executorHandler", xxlJobInfo.getExecutorHandler());
         form.put("executorBlockStrategy", "SERIAL_EXECUTION");
         form.put("scheduleType", "CRON");
         form.put("misfireStrategy", "DO_NOTHING");
-
+        form.put("alarmEmail", "liu_yue_pan@163.com");
+        form.put("executorRouteStrategy", "FIRST");
         form.put("author", "liuyuepan");
-
         //创建任务管理
         clientConfig.setUrl(xxlJobLoginAddress + "/jobinfo/add");
         String result = HttpClientUtils.doFormRequest(clientConfig, form, cookie);

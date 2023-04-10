@@ -2,11 +2,13 @@ package cn.klmb.crm.module.system.controller.admin.notify;
 
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.date.DatePattern;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobResponseInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
+import cn.klmb.crm.framework.job.util.CronUtil;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplatePageReqVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplateRespVO;
@@ -21,6 +23,8 @@ import cn.klmb.crm.module.system.service.notify.SysNotifyTemplateService;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -141,6 +145,9 @@ public class SysNotifyTemplateController {
     @Operation(summary = "创建任务管理")
     @PreAuthorize("@ss.hasPermission('system:notify-template:query')")
     public CommonResult<XxlJobResponseInfo> createTask(@RequestBody XxlJobInfo xxlJobInfo) {
+        xxlJobInfo.setScheduleConf(
+                CronUtil.onlyOnce(LocalDateTime.now().format(DateTimeFormatter.ofPattern(
+                        DatePattern.NORM_DATETIME_PATTERN))));
         return success(xxlJobApiUtils.createTask(xxlJobInfo));
     }
 

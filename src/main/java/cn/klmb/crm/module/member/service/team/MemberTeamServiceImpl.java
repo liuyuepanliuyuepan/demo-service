@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,7 +54,7 @@ public class MemberTeamServiceImpl extends
     private final SysDeptService sysDeptService;
 
     public MemberTeamServiceImpl(MemberTeamMapper mapper, SysUserService sysUserService,
-            MemberUserService memberUserService, SysDeptService sysDeptService) {
+            @Lazy MemberUserService memberUserService, SysDeptService sysDeptService) {
         this.sysUserService = sysUserService;
         this.memberUserService = memberUserService;
         this.sysDeptService = sysDeptService;
