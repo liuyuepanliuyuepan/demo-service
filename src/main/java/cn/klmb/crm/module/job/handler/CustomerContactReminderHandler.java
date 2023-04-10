@@ -90,8 +90,8 @@ public class CustomerContactReminderHandler {
                         bizId);
                 webSocketServer.sendOneMessage(userId,
                         JSONUtil.toJsonStr(JSONUtil.parse(sysNotifyMessageDO)));
-                //任务执行结束后销毁
-                xxlJobApiUtils.deleteTask(XxlJobHelper.getJobId());
+                // 任务执行结束后销毁
+//                xxlJobApiUtils.deleteTask(XxlJobHelper.getJobId());
             }
         }
         return ReturnT.SUCCESS;
