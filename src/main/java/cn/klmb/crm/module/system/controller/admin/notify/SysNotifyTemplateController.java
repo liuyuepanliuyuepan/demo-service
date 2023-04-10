@@ -10,6 +10,7 @@ import cn.klmb.crm.framework.job.entity.XxlJobResponseInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.job.util.CronUtil;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
+import cn.klmb.crm.framework.mq.message.WebSocketServer;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplatePageReqVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplateRespVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.template.SysNotifyTemplateSaveReqVO;
@@ -25,6 +26,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -57,11 +59,15 @@ public class SysNotifyTemplateController {
 
     private final XxlJobApiUtils xxlJobApiUtils;
 
+    private final WebSocketServer webSocketServer;
+
     public SysNotifyTemplateController(SysNotifyTemplateService sysNotifyTemplateService,
-            SysNotifySendService sysNotifySendService, XxlJobApiUtils xxlJobApiUtils) {
+            SysNotifySendService sysNotifySendService, XxlJobApiUtils xxlJobApiUtils,
+            WebSocketServer webSocketServer) {
         this.sysNotifyTemplateService = sysNotifyTemplateService;
         this.sysNotifySendService = sysNotifySendService;
         this.xxlJobApiUtils = xxlJobApiUtils;
+        this.webSocketServer = webSocketServer;
     }
 
     @PostMapping("/create")
@@ -149,6 +155,15 @@ public class SysNotifyTemplateController {
                 CronUtil.onlyOnce(LocalDateTime.now().format(DateTimeFormatter.ofPattern(
                         DatePattern.NORM_DATETIME_PATTERN))));
         return success(xxlJobApiUtils.createTask(xxlJobInfo));
+    }
+
+    @PostMapping("/send-message")
+    @Operation(summary = "发送消息")
+    @Parameter(name = "userId", description = "用户id", required = true)
+    @PermitAll
+    public CommonResult<Boolean> sendMessage(@RequestParam("userId") String userId) {
+        webSocketServer.sendOneMessage(userId, "11111111");
+        return success(true);
     }
 
 

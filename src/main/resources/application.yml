@@ -70,7 +70,9 @@ crm:
       - /swagger-resources/**
       - /webjars/**
       - /*/api-docs
-#      - /admin-ui/** # /resources/admin-ui 目录下的静态资源
+      #      - /admin-ui/** # /resources/admin-ui 目录下的静态资源
+      # websocket
+      - /websocket/**
   xss:
     enable: false
   #    exclude-urls: # 如下两个 url，仅仅是为了演示，去掉配置也没关系

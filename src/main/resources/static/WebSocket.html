@@ -15,7 +15,7 @@ UserId：<input id="text" type="text" value="${uid!!}"/>
   var websocket = null;
   //判断当前浏览器是否支持WebSocket
   if ('WebSocket' in window) {
-    websocket = new WebSocket("ws://127.0.0.1:8080/websocket/ws/" + "${uid!!}");
+    websocket = new WebSocket("ws://127.0.0.1:8080/websocket/ws/ed17601336954badad7cb11e1e1fa7c3");
   } else {
     alert('Not support websocket')
   }

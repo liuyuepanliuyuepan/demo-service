@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>test rabbitmq</title>
+  <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
+  <script src="http://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
+  <script src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
+</head>
+
+
+<body>
+<pre>
+    headers:
+    <textarea cols="50" id="headers" rows="5">
+{}
+    </textarea>
+
+    <hr/>
+
+    <hr/>
+    接收课程信息topic消息
+    sub: /exchange/course.topic/course.{courseId}
+
+    subscribe: <input id="subscribe" type="text"/>
+    <button onclick="subscribe()">订阅消息</button><button onclick="unsubscribe()">取消订阅</button>
+
+
+    <hr/>
+    <button onclick="openWebSocket()">开启WebSocket连接</button>
+    <button onclick="closeWebSocket()">关闭WebSocket连接</button>
+    <hr/>
+    <div id="message"></div>
+</body>
+
+<script src="http://cdn.bootcss.com/stomp.js/2.3.3/stomp.min.js"></script>
+<script src="https://cdn.bootcss.com/sockjs-client/1.1.4/sockjs.min.js"></script>
+<script type="text/javascript">
+
+  // 开启连接
+  function openWebSocket() {
+    // 建立连接对象（还未发起连接）
+    var socket = new SockJS("http://localhost:8080/websocket/1");
+
+    // 获取 STOMP 子协议的客户端对象
+    var stompClient = Stomp.over(socket);
+    stompClient.heartbeat.outgoing = 30000; // 客户端每10000ms发送一次心跳检测
+    stompClient.heartbeat.incoming = 30000; // client每30000ms接收server端的心跳检测
+    var headers = {};
+    // 向服务器发起websocket连接并发送CONNECT帧
+    stompClient.connect(
+        headers,
+        function connectCallback(frame) {
+          // 连接成功时（服务器响应 CONNECTED 帧）的回调方法
+          setMessageInnerHTML("连接成功");
+        },
+        function errorCallBack(error) {
+          // 连接失败时（服务器响应 ERROR 帧）的回调方法
+          setMessageInnerHTML("连接失败");
+        }
+    );
+  }
+
+  //订阅消息
+  function subscribe() {
+    var subscribe = document.getElementById('subscribe').value;
+    var headers = document.getElementById('headers').value;
+    sub = stompClient.subscribe(subscribe, function (response) {
+      setMessageInnerHTML("你接收到的消息为:" + response.body);
+      // var msg = "是否接收消息？";
+      // if (confirm(msg) == true) {
+      //   response.ack();
+      //   sub.unsubscribe();
+      //   return true;
+      // } else {
+      //   response.nack({'requeue': true});
+      //   return false;
+      // }
+    }, JSON.parse(headers));
+    setMessageInnerHTML("已成功订阅 " + subscribe);
+  }
+
+  //将消息显示在网页上
+  function setMessageInnerHTML(innerHTML) {
+    document.getElementById('message').innerHTML += innerHTML + '<br/>';
+  }
+
+  var sub;
+
+  // 取消订阅消息
+  function unsubscribe() {
+    sub.unsubscribe();
+    setMessageInnerHTML("取消订阅");
+  }
+
+  // 关闭连接
+  function closeWebSocket() {
+    stompClient.disconnect();
+    setMessageInnerHTML("断开连接");
+  }
+
+
+</script>
+
+</html>

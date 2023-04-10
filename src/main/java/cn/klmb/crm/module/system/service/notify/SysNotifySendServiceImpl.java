@@ -8,6 +8,7 @@ import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.NOTIFY_SEND_TEM
 import cn.klmb.crm.framework.common.enums.CommonStatusEnum;
 import cn.klmb.crm.framework.common.enums.UserTypeEnum;
 import cn.klmb.crm.module.system.entity.notify.SysNotifyTemplateDO;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Map;
 import java.util.Objects;
@@ -68,9 +69,9 @@ public class SysNotifySendServiceImpl implements SysNotifySendService {
 
     @VisibleForTesting
     public SysNotifyTemplateDO validateNotifyTemplate(String templateCode) {
-        // 获得站内信模板。考虑到效率，从缓存中获取
-        SysNotifyTemplateDO template = notifyTemplateService.getNotifyTemplateByCodeFromCache(
-                templateCode);
+        SysNotifyTemplateDO template = notifyTemplateService.getOne(
+                new LambdaQueryWrapper<SysNotifyTemplateDO>().eq(SysNotifyTemplateDO::getCode,
+                        templateCode));
         // 站内信模板不存在
         if (template == null) {
             throw exception(NOTICE_NOT_FOUND);

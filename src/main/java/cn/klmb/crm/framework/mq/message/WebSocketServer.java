@@ -14,8 +14,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-@ServerEndpoint("/websocket/{userId}")  // 接口路径 ws://localhost:8087/webSocket/userId;
-
+@ServerEndpoint("/websocket/ws/{userId}")  // 接口路径 ws://localhost:8087/webSocket/userId;
 public class WebSocketServer {
 
     //concurrent包的线程安全Set，用来存放每个客户端对应的MyWebSocket对象。
