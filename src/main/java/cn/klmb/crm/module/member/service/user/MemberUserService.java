@@ -47,4 +47,21 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      * @return 实体
      */
     String saveCustomer(MemberUserDO saveDO);
+
+
+    /**
+     * 编辑联系人
+     *
+     * @param saveDO 实体
+     * @return 实体
+     */
+    boolean updateDO(MemberUserDO saveDO);
+
+
+    /**
+     * 根据业务id列表删除(逻辑删除)
+     *
+     * @param bizIds 业务id列表
+     */
+    void removeByBizIds(List<String> bizIds);
 }

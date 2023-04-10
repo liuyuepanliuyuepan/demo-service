@@ -133,7 +133,7 @@ public class SysNotifyTemplateController {
     @Parameter(name = "id", description = "id", required = true)
     @Operation(summary = "删除任务")
     @PreAuthorize("@ss.hasPermission('system:notify-template:post')")
-    public CommonResult<Boolean> remove(@RequestParam("id") Integer id) {
+    public CommonResult<Boolean> remove(@RequestParam("id") Long id) {
         xxlJobApiUtils.deleteTask(id);
         return success(true);
     }

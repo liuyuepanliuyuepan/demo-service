@@ -46,7 +46,7 @@ public class XxlJobApiUtils {
      *
      * @param taskId 任务管理id
      */
-    public void startTask(Integer taskId) {
+    public void startTask(Long taskId) {
         //获取登录cookie
         HttpClientConfig clientConfig = new HttpClientConfig();
         String cookie = loginTaskCenter(clientConfig);
@@ -70,7 +70,7 @@ public class XxlJobApiUtils {
      *
      * @param id 任务id
      */
-    public void deleteTask(Integer id) {
+    public void deleteTask(Long id) {
         //获取登录cookie
         HttpClientConfig clientConfig = new HttpClientConfig();
         String cookie = loginTaskCenter(clientConfig);
@@ -161,7 +161,7 @@ public class XxlJobApiUtils {
         //创建任务管理参数
         Map<String, String> form = new HashMap<>();
         form.put("jobGroup", xxlJobInfo.getJobGroup() + "");
-        form.put("jobDesc", xxlJobInfo.getJobDesc());
+//        form.put("jobDesc", xxlJobInfo.getJobDesc());
         form.put("executorHandler", xxlJobInfo.getExecutorHandler());
         form.put("author", xxlJobInfo.getAuthor());
         form.put("triggerStatus", "-1");

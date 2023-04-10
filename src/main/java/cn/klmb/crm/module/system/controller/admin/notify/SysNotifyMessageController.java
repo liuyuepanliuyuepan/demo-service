@@ -13,6 +13,7 @@ import cn.klmb.crm.module.system.convert.notify.SysNotifyMessageConvert;
 import cn.klmb.crm.module.system.dto.notify.SysNotifyMessageQueryDTO;
 import cn.klmb.crm.module.system.entity.notify.SysNotifyMessageDO;
 import cn.klmb.crm.module.system.service.notify.SysNotifyMessageService;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -110,6 +111,18 @@ public class SysNotifyMessageController {
         SysNotifyMessageQueryDTO queryDTO = SysNotifyMessageConvert.INSTANCE.convert(reqVO);
         KlmbPage<SysNotifyMessageDO> page = sysNotifyMessageService.page(queryDTO, klmbPage);
         return success(SysNotifyMessageConvert.INSTANCE.convert(page));
+    }
+
+    @PutMapping("/update-read-status")
+    @ApiOperation("标记为已读")
+    @PreAuthorize("@ss.hasPermission('sys:notify-message:update')")
+    public CommonResult<Boolean> updateReadStatus(
+            @Valid @RequestBody SysNotifyMessageUpdateReqVO updateReqVO) {
+        sysNotifyMessageService.update(
+                new LambdaUpdateWrapper<SysNotifyMessageDO>().eq(SysNotifyMessageDO::getBizId,
+                                updateReqVO.getBizId())
+                        .set(SysNotifyMessageDO::getReadStatus, true));
+        return success(true);
     }
 
 }

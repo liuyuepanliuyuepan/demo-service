@@ -5,6 +5,7 @@ import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.e
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
@@ -12,6 +13,7 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.entity.XxlJobGroup;
 import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobResponseInfo;
+import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.job.util.CronUtil;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
@@ -173,29 +175,105 @@ public class MemberUserServiceImpl extends
         memberTeamService.saveDO(
                 MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.CUSTOMER.getType())
                         .typeId(bizId).build());
-
-        if (ObjectUtil.isNotNull(saveDO.getNextTime())
-                && LocalDateTimeUtil.toEpochMilli(saveDO.getNextTime()) != 0) {
-            XxlJobGroup xxlJobGroup = new XxlJobGroup();
-            xxlJobGroup.setAppname("xxl-job-executor-crm");
-            xxlJobGroup.setTitle("crm执行器");
-            List<XxlJobGroup> xxlJobGroups = xxlJobApiUtils.selectActuator(xxlJobGroup);
-            XxlJobInfo xxlJobInfo = new XxlJobInfo();
-            String nextTime = saveDO.getNextTime()
-                    .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN));
-            xxlJobInfo.setJobGroup(xxlJobGroups.get(0).getId());
-            xxlJobInfo.setJobDesc(
-                    StrUtil.format("客户{}下次联系时间{}定时任务！", saveDO.getName(), nextTime));
-            xxlJobInfo.setExecutorHandler("customerContactReminderHandler");
-            xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(nextTime));
-            List<String> list = Arrays.asList(saveDO.getOwnerUserId(),
-                    (CrmEnum.CUSTOMER.getType().toString()), saveDO.getBizId());
-            xxlJobInfo.setExecutorParam(CollUtil.join(list, COMMA));
-            XxlJobResponseInfo task = xxlJobApiUtils.createTask(xxlJobInfo);
-            xxlJobApiUtils.startTask(Integer.parseInt(task.getContent()));
-        }
+        changeTask(saveDO.getOwnerUserId(), bizId, saveDO.getNextTime(), saveDO.getName(), 1, "客户");
         return bizId;
     }
 
 
+    @Override
+    public boolean updateDO(MemberUserDO entity) {
+        boolean success = super.updateDO(entity);
+        MemberUserDO memberUserDO = super.getByBizId(entity.getBizId());
+        LocalDateTime nextTime = memberUserDO.getNextTime();
+        if (!nextTime.isEqual(entity.getNextTime())) {
+            changeTask(entity.getOwnerUserId(), entity.getBizId(), entity.getNextTime(),
+                    entity.getName(), 2, "客户");
+        }
+        return success;
+    }
+
+    @Override
+    public void removeByBizIds(List<String> bizIds) {
+        super.removeByBizIds(bizIds);
+        bizIds.forEach(e -> {
+            changeTask(null, e, null, null, 3, "客户");
+        });
+
+    }
+
+
+    /**
+     * @param ownerUserId 负责人id
+     * @param bizId       消息来源的主键id (比如：客户、联系人的主键id)
+     * @param nextTime    下次联系时间
+     * @param name        消息来源的名称 (比如：客户、联系人的名字)
+     * @param operateType 1新增，2编辑，3删除
+     * @param messageType 例如：客户、联系人
+     */
+    private void changeTask(String ownerUserId, String bizId, LocalDateTime nextTime, String name,
+            Integer operateType, String messageType) {
+        XxlJobGroup xxlJobGroup = new XxlJobGroup();
+        xxlJobGroup.setAppname("xxl-job-executor-crm");
+        xxlJobGroup.setTitle("crm执行器");
+        List<XxlJobGroup> xxlJobGroups = xxlJobApiUtils.selectActuator(xxlJobGroup);
+        XxlJobInfo xxlJobInfo = new XxlJobInfo();
+        xxlJobInfo.setJobGroup(xxlJobGroups.get(0).getId());
+        xxlJobInfo.setExecutorHandler("customerContactReminderHandler");
+        xxlJobInfo.setAuthor("liuyuepan");
+        XxlJobTaskManagerInfo xxlJobTaskManagerInfo = xxlJobApiUtils.selectTask(xxlJobInfo);
+        if (operateType != 3 && ObjectUtil.isNotNull(nextTime)
+                && LocalDateTimeUtil.toEpochMilli(nextTime) != 0) {
+            if (LocalDateTime.now().isAfter(nextTime)) {
+                throw exception(
+                        cn.klmb.crm.module.member.enums.ErrorCodeConstants.USER_NEXT_TIME_ERROR);
+            }
+            String nextTimeStr = nextTime
+                    .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN));
+            xxlJobInfo.setJobDesc(
+                    StrUtil.format("{}{}下次联系时间{}定时任务！", messageType, name, nextTimeStr));
+            xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(nextTimeStr));
+            List<String> list = Arrays.asList(ownerUserId,
+                    (CrmEnum.CUSTOMER.getType().toString()), bizId);
+            xxlJobInfo.setExecutorParam(CollUtil.join(list, COMMA));
+            if (operateType == 2 && ObjectUtil.isNotNull(xxlJobTaskManagerInfo)
+                    && CollUtil.isNotEmpty(
+                    xxlJobTaskManagerInfo.getData())) {
+                List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
+                for (XxlJobInfo datum : data) {
+                    String executorParam = datum.getExecutorParam();
+                    List<String> split = StrUtil.split(executorParam, CharUtil.COMMA);
+                    String s = split.get(2);
+                    if (StrUtil.equals(bizId, s)) {
+                        datum.setScheduleConf(xxlJobInfo.getScheduleConf());
+                        datum.setJobDesc(xxlJobInfo.getJobDesc());
+                        datum.setExecutorParam(xxlJobInfo.getExecutorParam());
+                        xxlJobApiUtils.editTask(datum);
+                        xxlJobApiUtils.startTask(datum.getId());
+                    }
+                }
+            }
+
+            if (operateType == 1) {
+                XxlJobResponseInfo task = xxlJobApiUtils.createTask(xxlJobInfo);
+                if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
+                    xxlJobApiUtils.startTask(Long.parseLong(task.getContent()));
+                }
+            }
+        }
+        if (operateType == 3) {
+            if (ObjectUtil.isNotNull(xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
+                    xxlJobTaskManagerInfo.getData())) {
+                List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
+                for (XxlJobInfo datum : data) {
+                    String executorParam = datum.getExecutorParam();
+                    List<String> split = StrUtil.split(executorParam, CharUtil.COMMA);
+                    String s = split.get(2);
+                    if (StrUtil.equals(bizId, s)) {
+                        xxlJobApiUtils.deleteTask(datum.getId());
+                    }
+                }
+            }
+        }
+
+    }
 }

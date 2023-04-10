@@ -5,6 +5,7 @@ import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.mq.message.WebSocketServer;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
@@ -42,16 +43,19 @@ public class CustomerContactReminderHandler {
 
     private final SysNotifyMessageService sysNotifyMessageService;
 
+    private final XxlJobApiUtils xxlJobApiUtils;
+
 
     public CustomerContactReminderHandler(WebSocketServer webSocketServer,
             SysNotifySendService sysNotifySendService,
             MemberUserService memberUserService, MemberContactsService memberContactsService,
-            SysNotifyMessageService sysNotifyMessageService) {
+            SysNotifyMessageService sysNotifyMessageService, XxlJobApiUtils xxlJobApiUtils) {
         this.webSocketServer = webSocketServer;
         this.sysNotifySendService = sysNotifySendService;
         this.memberUserService = memberUserService;
         this.memberContactsService = memberContactsService;
         this.sysNotifyMessageService = sysNotifyMessageService;
+        this.xxlJobApiUtils = xxlJobApiUtils;
     }
 
     @XxlJob("customerContactReminderHandler")
@@ -86,6 +90,8 @@ public class CustomerContactReminderHandler {
                         bizId);
                 webSocketServer.sendOneMessage(userId,
                         JSONUtil.toJsonStr(JSONUtil.parse(sysNotifyMessageDO)));
+                //任务执行结束后销毁
+                xxlJobApiUtils.deleteTask(XxlJobHelper.getJobId());
             }
         }
         return ReturnT.SUCCESS;
