@@ -4,6 +4,7 @@ import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.e
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
@@ -30,6 +31,7 @@ import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -55,6 +57,8 @@ public class MemberUserServiceImpl extends
     private final MemberTeamService memberTeamService;
 
     private final XxlJobApiUtils xxlJobApiUtils;
+
+    private static final String COMMA = ",";
 
     public MemberUserServiceImpl(SysUserService sysUserService, MemberUserMapper mapper,
             MemberUserStarService memberUserStarService, @Lazy MemberTeamService memberTeamService,
@@ -170,18 +174,23 @@ public class MemberUserServiceImpl extends
                 MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.CUSTOMER.getType())
                         .typeId(bizId).build());
 
-        if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
+        if (ObjectUtil.isNotNull(saveDO.getNextTime())
+                && LocalDateTimeUtil.toEpochMilli(saveDO.getNextTime()) != 0) {
             XxlJobGroup xxlJobGroup = new XxlJobGroup();
             xxlJobGroup.setAppname("xxl-job-executor-crm");
             xxlJobGroup.setTitle("crm执行器");
             List<XxlJobGroup> xxlJobGroups = xxlJobApiUtils.selectActuator(xxlJobGroup);
             XxlJobInfo xxlJobInfo = new XxlJobInfo();
+            String nextTime = saveDO.getNextTime()
+                    .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN));
             xxlJobInfo.setJobGroup(xxlJobGroups.get(0).getId());
             xxlJobInfo.setJobDesc(
-                    StrUtil.format("客户{}下次联系时间{}定时任务！", saveDO.getName(), saveDO.getNextTime()));
+                    StrUtil.format("客户{}下次联系时间{}定时任务！", saveDO.getName(), nextTime));
             xxlJobInfo.setExecutorHandler("customerContactReminderHandler");
-            xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(saveDO.getNextTime()
-                    .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN))));
+            xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(nextTime));
+            List<String> list = Arrays.asList(saveDO.getOwnerUserId(),
+                    CrmEnum.CUSTOMER.getRemarks(), saveDO.getBizId());
+            xxlJobInfo.setExecutorParam(CollUtil.join(list, COMMA));
             XxlJobResponseInfo task = xxlJobApiUtils.createTask(xxlJobInfo);
             xxlJobApiUtils.startTask(Integer.parseInt(task.getContent()));
         }

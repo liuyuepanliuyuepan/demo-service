@@ -113,6 +113,7 @@ public class XxlJobApiUtils {
         form.put("executorBlockStrategy", "SERIAL_EXECUTION");
         form.put("scheduleType", "CRON");
         form.put("misfireStrategy", "DO_NOTHING");
+        form.put("executorParam", xxlJobInfo.getExecutorParam());
         form.put("alarmEmail", "liu_yue_pan@163.com");
         form.put("author", "liuyuepan");
 
@@ -200,6 +201,7 @@ public class XxlJobApiUtils {
         form.put("misfireStrategy", "DO_NOTHING");
         form.put("alarmEmail", "liu_yue_pan@163.com");
         form.put("executorRouteStrategy", "FIRST");
+        form.put("executorParam", xxlJobInfo.getExecutorParam());
         form.put("author", "liuyuepan");
         //创建任务管理
         clientConfig.setUrl(xxlJobLoginAddress + "/jobinfo/add");
