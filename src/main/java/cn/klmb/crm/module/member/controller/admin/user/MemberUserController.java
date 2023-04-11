@@ -308,7 +308,8 @@ public class MemberUserController {
                 reqVO);
         List<MemberUserPoolRelationDO> relationDOS = relationService.list(
                 new LambdaQueryWrapper<MemberUserPoolRelationDO>().eq(
-                        MemberUserPoolRelationDO::getPoolId, reqVO.getPoolId()));
+                                MemberUserPoolRelationDO::getPoolId, reqVO.getPoolId())
+                        .eq(MemberUserPoolRelationDO::getDeleted, false));
         if (CollUtil.isNotEmpty(relationDOS)) {
             convert.setBizIds(
                     relationDOS.stream().map(MemberUserPoolRelationDO::getCustomerId).collect(
@@ -320,6 +321,15 @@ public class MemberUserController {
         }
 
         return success(MemberUserConvert.INSTANCE.convert(klmbPage));
+    }
+
+
+    @PostMapping("/distribute_or_receive")
+    @ApiOperation("公海分配/领取客户")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
+    public CommonResult<Boolean> distributeOrReceive(@RequestBody MemberUserPoolBO poolBO) {
+        memberUserService.getCustomersByIds(poolBO);
+        return CommonResult.success(true);
     }
 
 
