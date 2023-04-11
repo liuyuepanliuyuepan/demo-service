@@ -2,7 +2,7 @@ package cn.klmb.crm.module.system.controller.admin.notify.vo.message;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotNull;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -13,8 +13,10 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class SysNotifyMessageUpdateReqVO extends SysNotifyMessageBaseVO {
 
-    @ApiModelProperty(value = "业务id", required = true, example = "e1cf298d02d2421d8376bf1f4fd988d4")
-    @NotNull(message = "业务id不能为空")
+    @ApiModelProperty(value = "业务id")
     private String bizId;
+
+    @ApiModelProperty(value = "业务ids")
+    private List<String> bizIds;
 
 }

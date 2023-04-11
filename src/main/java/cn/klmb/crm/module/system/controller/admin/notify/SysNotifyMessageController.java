@@ -119,8 +119,8 @@ public class SysNotifyMessageController {
     public CommonResult<Boolean> updateReadStatus(
             @Valid @RequestBody SysNotifyMessageUpdateReqVO updateReqVO) {
         sysNotifyMessageService.update(
-                new LambdaUpdateWrapper<SysNotifyMessageDO>().eq(SysNotifyMessageDO::getBizId,
-                                updateReqVO.getBizId())
+                new LambdaUpdateWrapper<SysNotifyMessageDO>().in(SysNotifyMessageDO::getBizId,
+                                updateReqVO.getBizIds())
                         .set(SysNotifyMessageDO::getReadStatus, true));
         return success(true);
     }
