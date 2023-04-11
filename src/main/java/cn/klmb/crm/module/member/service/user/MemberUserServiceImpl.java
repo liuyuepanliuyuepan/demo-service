@@ -293,6 +293,8 @@ public class MemberUserServiceImpl extends
             if (operateType == 2 && ObjectUtil.isNotNull(xxlJobTaskManagerInfo)
                     && CollUtil.isNotEmpty(
                     xxlJobTaskManagerInfo.getData())) {
+                // 增加edit标志时为了防止在执行更新用户下次联系时间时，定时任务创建不上
+                boolean edit = false;
                 List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
                 for (XxlJobInfo datum : data) {
                     String executorParam = datum.getExecutorParam();
@@ -304,6 +306,13 @@ public class MemberUserServiceImpl extends
                         datum.setExecutorParam(xxlJobInfo.getExecutorParam());
                         xxlJobApiUtils.editTask(datum);
                         xxlJobApiUtils.startTask(datum.getId());
+                        edit = true;
+                    }
+                }
+                if (!edit) {
+                    XxlJobResponseInfo task = xxlJobApiUtils.createTask(xxlJobInfo);
+                    if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
+                        xxlJobApiUtils.startTask(Long.parseLong(task.getContent()));
                     }
                 }
             }
