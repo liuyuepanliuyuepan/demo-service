@@ -59,4 +59,14 @@ public interface MemberContactsService extends
      */
     void removeByBizIds(List<String> bizIds);
 
+
+    /**
+     * 编辑联系人
+     *
+     * @param saveDO 实体
+     * @return 实体
+     */
+    boolean updateDO(MemberContactsDO saveDO);
+
+
 }

@@ -20,7 +20,6 @@ import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.mq.message.WebSocketServer;
 import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.notify.SysNotifyMessageDO;
-import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.notify.SysNotifyMessageService;
@@ -426,7 +425,8 @@ public class XxlJobApiUtils {
                             xxlJobChangeTaskDTO.getName(), nextTimeStr));
             xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(nextTimeStr));
             List<String> list = Arrays.asList(xxlJobChangeTaskDTO.getOwnerUserId(),
-                    (CrmEnum.CUSTOMER.getType().toString()), xxlJobChangeTaskDTO.getBizId(),
+                    (xxlJobChangeTaskDTO.getContactsType().toString()),
+                    xxlJobChangeTaskDTO.getBizId(),
                     xxlJobChangeTaskDTO.getNextTime().format(
                             DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
             xxlJobInfo.setExecutorParam(CollUtil.join(list, ","));

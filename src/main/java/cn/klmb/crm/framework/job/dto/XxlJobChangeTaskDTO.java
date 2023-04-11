@@ -45,6 +45,11 @@ public class XxlJobChangeTaskDTO {
      */
     private String messageType;
 
+    /**
+     * 联系人类型  {@link cn.klmb.crm.module.system.enums.CrmEnum}
+     */
+    private Integer contactsType;
+
 
     private String appName;
 

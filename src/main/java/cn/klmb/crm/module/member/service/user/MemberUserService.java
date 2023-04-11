@@ -50,7 +50,7 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
 
 
     /**
-     * 编辑联系人
+     * 编辑客户
      *
      * @param saveDO 实体
      * @return 实体

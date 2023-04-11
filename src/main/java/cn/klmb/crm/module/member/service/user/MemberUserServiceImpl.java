@@ -197,7 +197,8 @@ public class MemberUserServiceImpl extends
                         .ownerUserId(saveDO.getOwnerUserId())
                         .bizId(bizId).nextTime(saveDO.getNextTime()).name(saveDO.getName())
                         .operateType(1)
-                        .messageType(CrmEnum.CUSTOMER.getRemarks()).build());
+                        .messageType(CrmEnum.CUSTOMER.getRemarks())
+                        .contactsType(CrmEnum.CUSTOMER.getType()).build());
         return bizId;
     }
 
@@ -226,7 +227,8 @@ public class MemberUserServiceImpl extends
                     XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                             .executorHandler("customerContactReminderHandler").author("liuyuepan")
                             .bizId(e).operateType(3)
-                            .messageType(CrmEnum.CUSTOMER.getRemarks()).build());
+                            .messageType(CrmEnum.CUSTOMER.getRemarks())
+                            .contactsType(CrmEnum.CUSTOMER.getType()).build());
         });
 
     }
@@ -243,7 +245,8 @@ public class MemberUserServiceImpl extends
                             .ownerUserId(entity.getOwnerUserId())
                             .bizId(entity.getBizId()).nextTime(entity.getNextTime())
                             .name(entity.getName()).operateType(2)
-                            .messageType(CrmEnum.CUSTOMER.getRemarks()).build());
+                            .messageType(CrmEnum.CUSTOMER.getRemarks())
+                            .contactsType(CrmEnum.CUSTOMER.getType()).build());
         }
         return success;
     }

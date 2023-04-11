@@ -7,6 +7,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
+import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
+import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
@@ -18,11 +20,13 @@ import cn.klmb.crm.module.member.entity.contactsstar.MemberContactsStarDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contactsstar.MemberContactsStarService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
+import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,12 +49,15 @@ public class MemberContactsServiceImpl extends
 
     private final MemberContactsStarService memberContactsStarService;
 
+    private final XxlJobApiUtils xxlJobApiUtils;
+
     public MemberContactsServiceImpl(MemberContactsMapper mapper, SysUserService sysUserService,
             MemberUserService memberUserService,
-            MemberContactsStarService memberContactsStarService) {
+            MemberContactsStarService memberContactsStarService, XxlJobApiUtils xxlJobApiUtils) {
         this.sysUserService = sysUserService;
         this.memberUserService = memberUserService;
         this.memberContactsStarService = memberContactsStarService;
+        this.xxlJobApiUtils = xxlJobApiUtils;
         this.mapper = mapper;
     }
 
@@ -77,6 +84,14 @@ public class MemberContactsServiceImpl extends
             reqVO.setCustomerId(entity.getCustomerId());
             this.setContacts(reqVO);
         }
+        xxlJobApiUtils.changeTask(
+                XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                        .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                        .ownerUserId(entity.getOwnerUserId())
+                        .bizId(bizId).nextTime(entity.getNextTime()).name(entity.getName())
+                        .operateType(1)
+                        .messageType(CrmEnum.CONTACTS.getRemarks())
+                        .contactsType(CrmEnum.CONTACTS.getType()).build());
         return bizId;
     }
 
@@ -177,6 +192,35 @@ public class MemberContactsServiceImpl extends
             memberUserService.updateBatchById(memberUserDOS);
         }
 
+        bizIds.forEach(e -> {
+            xxlJobApiUtils.changeTask(
+                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                            .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                            .bizId(e).operateType(3)
+                            .messageType(CrmEnum.CONTACTS.getRemarks())
+                            .contactsType(CrmEnum.CONTACTS.getType()).build());
+        });
+
     }
+
+
+    @Override
+    public boolean updateDO(MemberContactsDO entity) {
+        MemberContactsDO memberContactsDO = super.getByBizId(entity.getBizId());
+        LocalDateTime nextTime = memberContactsDO.getNextTime();
+        boolean success = super.updateDO(entity);
+        if (!nextTime.isEqual(entity.getNextTime())) {
+            xxlJobApiUtils.changeTask(
+                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                            .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                            .ownerUserId(entity.getOwnerUserId())
+                            .bizId(entity.getBizId()).nextTime(entity.getNextTime())
+                            .name(entity.getName()).operateType(2)
+                            .messageType(CrmEnum.CONTACTS.getRemarks())
+                            .contactsType(CrmEnum.CONTACTS.getType()).build());
+        }
+        return success;
+    }
+
 
 }
