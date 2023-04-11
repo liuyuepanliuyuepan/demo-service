@@ -22,10 +22,12 @@ public class MemberUserPoolRelationPageReqVO extends PageParam {
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)
     private LocalDateTime[] createTime;
 
-    @ApiModelProperty(value = "客户id", example = "21415")
-    private String customerId;
+    /**
+     * 关键字查询
+     */
+    private String keyword;
 
-    @ApiModelProperty(value = "公海id", example = "20153")
+    @ApiModelProperty(value = "公海id")
     private String poolId;
 
 }

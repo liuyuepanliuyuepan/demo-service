@@ -10,28 +10,33 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
-import cn.klmb.crm.framework.mq.message.WebSocketServer;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
 import cn.klmb.crm.module.member.dao.user.MemberUserMapper;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
+import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
+import cn.klmb.crm.module.member.entity.record.MemberOwnerRecordDO;
 import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
+import cn.klmb.crm.module.member.entity.userpoolrelation.MemberUserPoolRelationDO;
 import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
+import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
+import cn.klmb.crm.module.member.service.record.MemberOwnerRecordService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
+import cn.klmb.crm.module.member.service.userpoolrelation.MemberUserPoolRelationService;
 import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
-import cn.klmb.crm.module.system.service.config.SysConfigService;
-import cn.klmb.crm.module.system.service.notify.SysNotifyMessageService;
-import cn.klmb.crm.module.system.service.notify.SysNotifySendService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,37 +58,28 @@ public class MemberUserServiceImpl extends
 
     private final MemberUserStarService memberUserStarService;
 
-
     private final MemberTeamService memberTeamService;
 
     private final XxlJobApiUtils xxlJobApiUtils;
+    private final MemberOwnerRecordService memberOwnerRecordService;
 
-    private static final String COMMA = ",";
+    private final MemberUserPoolRelationService relationService;
 
-    private final SysConfigService sysConfigService;
-
-
-    private final SysNotifySendService sysNotifySendService;
-
-    private final SysNotifyMessageService sysNotifyMessageService;
-
-
-    private final WebSocketServer webSocketServer;
+    private final MemberContactsService memberContactsService;
 
 
     public MemberUserServiceImpl(SysUserService sysUserService, MemberUserMapper mapper,
             MemberUserStarService memberUserStarService, @Lazy MemberTeamService memberTeamService,
-            XxlJobApiUtils xxlJobApiUtils, SysConfigService sysConfigService,
-            SysNotifySendService sysNotifySendService,
-            SysNotifyMessageService sysNotifyMessageService, WebSocketServer webSocketServer) {
+            XxlJobApiUtils xxlJobApiUtils, MemberOwnerRecordService memberOwnerRecordService,
+            MemberUserPoolRelationService relationService,
+            @Lazy MemberContactsService memberContactsService) {
         this.sysUserService = sysUserService;
         this.memberUserStarService = memberUserStarService;
         this.memberTeamService = memberTeamService;
         this.xxlJobApiUtils = xxlJobApiUtils;
-        this.sysConfigService = sysConfigService;
-        this.sysNotifySendService = sysNotifySendService;
-        this.sysNotifyMessageService = sysNotifyMessageService;
-        this.webSocketServer = webSocketServer;
+        this.memberOwnerRecordService = memberOwnerRecordService;
+        this.relationService = relationService;
+        this.memberContactsService = memberContactsService;
         this.mapper = mapper;
     }
 
@@ -249,5 +245,48 @@ public class MemberUserServiceImpl extends
                             .contactsType(CrmEnum.CUSTOMER.getType()).build());
         }
         return success;
+    }
+
+
+    @Override
+    public void addPool(MemberUserPoolBO poolBO) {
+        if (poolBO.getCustomerIds().size() == 0) {
+            return;
+        }
+        // String userId = WebFrameworkUtils.getLoginUserId();
+        List<MemberOwnerRecordDO> ownerRecordList = new ArrayList<>();
+        List<MemberUserPoolRelationDO> poolRelationList = new ArrayList<>();
+        for (String bizId : poolBO.getCustomerIds()) {
+            MemberUserDO memberUserDO = super.getByBizId(bizId);
+            if (StrUtil.isBlank(memberUserDO.getOwnerUserId())) {
+                continue;
+            }
+
+            MemberOwnerRecordDO memberOwnerRecordDO = new MemberOwnerRecordDO();
+            memberOwnerRecordDO.setTypeId(bizId);
+            memberOwnerRecordDO.setType(CrmEnum.CUSTOMER_POOL.getType());
+            memberOwnerRecordDO.setPreOwnerUserId(memberUserDO.getOwnerUserId());
+            ownerRecordList.add(memberOwnerRecordDO);
+            lambdaUpdate()
+                    .set(MemberUserDO::getOwnerUserId, null)
+                    .set(MemberUserDO::getPreOwnerUserId, memberUserDO.getOwnerUserId())
+                    .set(MemberUserDO::getPoolTime, LocalDateTime.now())
+                    .set(MemberUserDO::getIsReceive, null)
+                    .eq(MemberUserDO::getBizId, memberUserDO.getBizId()).update();
+            MemberUserPoolRelationDO relation = new MemberUserPoolRelationDO();
+            relation.setCustomerId(bizId);
+            relation.setPoolId(poolBO.getPoolId());
+            poolRelationList.add(relation);
+        }
+        if (ownerRecordList.size() > 0) {
+            memberOwnerRecordService.saveBatchDO(ownerRecordList);
+        }
+        if (poolRelationList.size() > 0) {
+            relationService.saveBatchDO(poolRelationList);
+        }
+        LambdaUpdateWrapper<MemberContactsDO> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.set(MemberContactsDO::getOwnerUserId, null);
+        wrapper.in(MemberContactsDO::getCustomerId, poolBO.getCustomerIds());
+        memberContactsService.update(wrapper);
     }
 }

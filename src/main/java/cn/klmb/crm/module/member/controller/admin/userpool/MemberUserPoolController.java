@@ -9,6 +9,7 @@ import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.member.controller.admin.userpool.vo.MemberUserPoolPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.userpool.vo.MemberUserPoolRespVO;
 import cn.klmb.crm.module.member.controller.admin.userpool.vo.MemberUserPoolSaveReqVO;
+import cn.klmb.crm.module.member.controller.admin.userpool.vo.MemberUserPoolSimpleRespVO;
 import cn.klmb.crm.module.member.controller.admin.userpool.vo.MemberUserPoolUpdateReqVO;
 import cn.klmb.crm.module.member.convert.userpool.MemberUserPoolConvert;
 import cn.klmb.crm.module.member.dto.userpool.MemberUserPoolQueryDTO;
@@ -19,6 +20,7 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import java.util.Collections;
+import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -110,5 +112,16 @@ public class MemberUserPoolController {
         KlmbPage<MemberUserPoolDO> page = memberUserPoolService.page(queryDTO, klmbPage);
         return success(MemberUserPoolConvert.INSTANCE.convert(page));
     }
+
+    @GetMapping({"/list-all-simple"})
+    @ApiOperation(value = "列表精简信息")
+    @PreAuthorize("@ss.hasPermission('member:user-pool:query')")
+    public CommonResult<List<MemberUserPoolSimpleRespVO>> listAllSimple(
+            @Valid MemberUserPoolPageReqVO reqVO) {
+        MemberUserPoolQueryDTO queryDTO = MemberUserPoolConvert.INSTANCE.convert(reqVO);
+        List<MemberUserPoolDO> entities = memberUserPoolService.list(queryDTO);
+        return success(MemberUserPoolConvert.INSTANCE.convert01(entities));
+    }
+
 
 }

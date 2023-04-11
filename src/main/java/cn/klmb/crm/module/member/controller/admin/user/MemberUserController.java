@@ -15,6 +15,7 @@ import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserBatchUpdateReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserDeleteReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserRespVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSaveReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSimpleRespVO;
@@ -23,10 +24,12 @@ import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
+import cn.klmb.crm.module.member.entity.userpoolrelation.MemberUserPoolRelationDO;
 import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
+import cn.klmb.crm.module.member.service.userpoolrelation.MemberUserPoolRelationService;
 import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
@@ -40,6 +43,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -74,14 +78,18 @@ public class MemberUserController {
 
     private final MemberTeamService memberTeamService;
 
+    private final MemberUserPoolRelationService relationService;
+
     public MemberUserController(MemberUserService memberUserService,
             MemberContactsService memberContactsService, SysUserService sysUserService,
-            MemberUserStarService memberUserStarService, MemberTeamService memberTeamService) {
+            MemberUserStarService memberUserStarService, MemberTeamService memberTeamService,
+            MemberUserPoolRelationService relationService) {
         this.memberUserService = memberUserService;
         this.memberContactsService = memberContactsService;
         this.sysUserService = sysUserService;
         this.memberUserStarService = memberUserStarService;
         this.memberTeamService = memberTeamService;
+        this.relationService = relationService;
     }
 
     @PostMapping(value = "/save")
@@ -272,6 +280,46 @@ public class MemberUserController {
     public CommonResult<Boolean> exitTeam(@PathVariable("customerId") String customerId) {
         memberTeamService.exitTeam(CrmEnum.CUSTOMER, customerId);
         return CommonResult.success(true);
+    }
+
+
+    @PostMapping("/add_pool")
+    @ApiOperation("客户放入公海")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
+    public CommonResult<Boolean> updateCustomerByIds(@RequestBody MemberUserPoolBO poolBO) {
+        memberUserService.addPool(poolBO);
+        return CommonResult.success(true);
+    }
+
+
+    @GetMapping({"/page_pool"})
+    @ApiOperation(value = "公海客户分页查询")
+    @PreAuthorize("@ss.hasPermission('member:user:query')")
+    public CommonResult<KlmbPage<MemberUserRespVO>> pagePool(
+            @Valid MemberUserPageReqVO reqVO) {
+        if (StrUtil.isBlank(reqVO.getPoolId())) {
+            throw exception(cn.klmb.crm.module.member.enums.ErrorCodeConstants.POOL_ID_NOT_EXISTS);
+        }
+        KlmbPage<MemberUserDO> klmbPage = KlmbPage.<MemberUserDO>builder()
+                .pageNo(reqVO.getPageNo())
+                .pageSize(reqVO.getPageSize())
+                .build();
+        MemberUserQueryDTO convert = MemberUserConvert.INSTANCE.convert(
+                reqVO);
+        List<MemberUserPoolRelationDO> relationDOS = relationService.list(
+                new LambdaQueryWrapper<MemberUserPoolRelationDO>().eq(
+                        MemberUserPoolRelationDO::getPoolId, reqVO.getPoolId()));
+        if (CollUtil.isNotEmpty(relationDOS)) {
+            convert.setBizIds(
+                    relationDOS.stream().map(MemberUserPoolRelationDO::getCustomerId).collect(
+                            Collectors.toList()));
+            klmbPage = memberUserService.page(convert,
+                    klmbPage);
+        } else {
+            klmbPage.setContent(Collections.EMPTY_LIST);
+        }
+
+        return success(MemberUserConvert.INSTANCE.convert(klmbPage));
     }
 
 

@@ -150,5 +150,10 @@ public class MemberUserDO extends KlmbBaseDO {
     @TableField(exist = false)
     private Boolean star;
 
+    /**
+     * 进入公海前负责人id
+     */
+    private String preOwnerUserId;
+
 
 }

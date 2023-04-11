@@ -3,6 +3,7 @@ package cn.klmb.crm.module.member.service.user;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import java.util.List;
@@ -64,5 +65,12 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      * @param bizIds 业务id列表
      */
     void removeByBizIds(List<String> bizIds);
+
+    /**
+     * 客户放入公海
+     *
+     * @param poolBO bo
+     */
+    void addPool(MemberUserPoolBO poolBO);
 
 }

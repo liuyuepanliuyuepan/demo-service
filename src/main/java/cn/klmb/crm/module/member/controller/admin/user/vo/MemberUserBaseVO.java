@@ -97,4 +97,11 @@ public class MemberUserBaseVO {
      */
     @ApiModelProperty(value = "客户行业")
     private String industry;
+
+
+    /**
+     * 进入公海前负责人id
+     */
+    @ApiModelProperty(value = "进入公海前负责人id")
+    private String preOwnerUserId;
 }
