@@ -288,7 +288,8 @@ public class MemberUserServiceImpl extends
                     StrUtil.format("{}{}下次联系时间{}定时任务！", messageType, name, nextTimeStr));
             xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(nextTimeStr));
             List<String> list = Arrays.asList(ownerUserId,
-                    (CrmEnum.CUSTOMER.getType().toString()), bizId);
+                    (CrmEnum.CUSTOMER.getType().toString()), bizId, nextTime.format(
+                            DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
             xxlJobInfo.setExecutorParam(CollUtil.join(list, COMMA));
             if (operateType == 2 && ObjectUtil.isNotNull(xxlJobTaskManagerInfo)
                     && CollUtil.isNotEmpty(

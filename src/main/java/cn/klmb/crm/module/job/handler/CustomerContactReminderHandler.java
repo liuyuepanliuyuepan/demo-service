@@ -68,11 +68,13 @@ public class CustomerContactReminderHandler {
             String userId = split.get(0); // 团队成员id
             String contractType = split.get(1); // 将要联系用户的类型(2客户,3联系人)
             String contractBizId = split.get(2); // 将要联系用户的bizId
+            String nextTime = split.get(3); // 联系时间
             Map<String, Object> map = new HashMap<>();
             if (StrUtil.equals(contractType, CrmEnum.CUSTOMER.getType().toString())) {
                 MemberUserDO memberUserDO = memberUserService.getByBizId(contractBizId);
                 if (ObjectUtil.isNotNull(memberUserDO)) {
                     map.put("name", memberUserDO.getName());
+                    map.put("nextTime", nextTime);
                     map.put("contractType", CrmEnum.CUSTOMER.getRemarks());
                 }
             }
@@ -80,6 +82,7 @@ public class CustomerContactReminderHandler {
                 MemberContactsDO memberContactsDO = memberContactsService.getByBizId(contractBizId);
                 if (ObjectUtil.isNotNull(memberContactsDO)) {
                     map.put("name", memberContactsDO.getName());
+                    map.put("nextTime", nextTime);
                     map.put("contractType", CrmEnum.CONTACTS.getRemarks());
                 }
             }
