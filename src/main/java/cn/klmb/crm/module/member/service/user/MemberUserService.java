@@ -65,4 +65,17 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      */
     void removeByBizIds(List<String> bizIds);
 
+	/**
+	 * 获取附近的客户
+	 *
+	 * @param lng 经度
+	 * @param lat 维度
+	 * @param type 2 客户查询  9 公海客户查询
+	 * @param radius 半径
+	 * @param ownerUserId 负责人id
+	 * @return 客户列表
+	 */
+	List<MemberUserDO> nearbyMember(String lng, String lat, Integer type, Integer radius,
+		String ownerUserId);
+
 }

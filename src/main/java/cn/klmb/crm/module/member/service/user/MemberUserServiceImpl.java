@@ -21,6 +21,7 @@ import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
+import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
@@ -250,4 +251,27 @@ public class MemberUserServiceImpl extends
         }
         return success;
     }
+
+
+	@Override
+	public List<MemberUserDO> nearbyMember(String lng, String lat, Integer type, Integer radius,
+		String ownerUserId) {
+		String userId = WebFrameworkUtils.getLoginUserId();
+		if (StrUtil.isEmpty(ownerUserId)) {
+			ownerUserId = userId;
+		}
+		List<String> childUserIds = sysUserService.queryChildUserId(
+			userId);
+		List<MemberUserDO> list = mapper
+			.nearbyMember(lng, lat, type, radius, ownerUserId, childUserIds);
+		if (CollUtil.isNotEmpty(list)) {
+			list.forEach(e -> {
+				SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+				if (ObjectUtil.isNotNull(sysUserDO)) {
+					e.setOwnerUserName(sysUserDO.getNickname());
+				}
+			});
+		}
+		return list;
+	}
 }

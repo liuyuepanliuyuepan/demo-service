@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.klmb.crm.module.member.dao.user.MemberUserMapper">
+  <select id="nearbyMember" resultType="cn.klmb.crm.module.member.entity.user.MemberUserDO">
+    select
+    a.biz_id, a.name,a.location,a.detail_address,a.mobile,a.tel,
+    a.lng,a.lat, a.owner_user_id,
+    (IF(a.owner_user_id is null, '公海', '客户')) as model,
+    ROUND(
+    6378.138 * 2 * ASIN(
+    SQRT(
+    POW(
+    SIN(
+    (
+    #{lat} * PI() / 180 - lat * PI() / 180
+    ) / 2
+    ),
+    2
+    ) + COS(#{lat} * PI() / 180) * COS(lat * PI() / 180) * POW(
+    SIN(
+    (
+    #{lng} * PI() / 180 - lng * PI() / 180
+    ) / 2
+    ),
+    2
+    )
+    )
+    ) * 1000
+    ) as distance
+    from member_user as a
+    where a.status != 3 and ROUND(
+    6378.138 * 2 * ASIN(
+    SQRT(
+    POW(
+    SIN(
+    (
+    #{lat} * PI() / 180 - lat * PI() / 180
+    ) / 2
+    ),
+    2
+    ) + COS(#{lat} * PI() / 180) * COS(lat * PI() / 180) * POW(
+    SIN(
+    (
+    #{lng} * PI() / 180 - lng * PI() / 180
+    ) / 2
+    ),
+    2
+    )
+    )
+    ) * 1000
+    ) &lt; #{radius}
+    <choose>
+      <when test="type == 2">
+        <if test="ownerUserId != null">
+          and owner_user_id = #{ownerUserId}
+        </if>
+        or owner_user_id in
+        <foreach close=")" collection="userIds" index="index" item="userId" open="(" separator=",">
+          #{userId}
+        </foreach>
+      </when>
+      <when test="type == 9">
+        and biz_id in (select customer_id from member_user_pool_relation)
+      </when>
+    </choose>
+  </select>
+</mapper>

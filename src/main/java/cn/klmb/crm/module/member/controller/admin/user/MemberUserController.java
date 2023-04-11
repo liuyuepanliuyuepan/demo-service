@@ -50,6 +50,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -274,5 +275,14 @@ public class MemberUserController {
         return CommonResult.success(true);
     }
 
-
+	@GetMapping("/nearbyMember")
+	@ApiOperation("附近的客户")
+	@PreAuthorize("@ss.hasPermission('member:user:query')")
+	public CommonResult<List<MemberUserDO>> nearbyCustomer(@RequestParam("lng") String lng,
+		@RequestParam("lat") String lat,
+		@RequestParam("type") Integer type, @RequestParam("radius") Integer radius,
+		@RequestParam(value = "ownerUserId", required = false) String ownerUserId) {
+		return CommonResult
+			.success(memberUserService.nearbyMember(lng, lat, type, radius, ownerUserId));
+	}
 }
