@@ -275,7 +275,8 @@ public class MemberUserServiceImpl extends
                         cn.klmb.crm.module.member.enums.ErrorCodeConstants.USER_NEXT_TIME_ERROR);
             }
             if (LocalDateTimeUtil.between(LocalDateTime.now(), nextTime).toHours() <= 1) {
-                sendMessage(name, ownerUserId, messageType);
+                sendMessage(name, ownerUserId, messageType, nextTime.format(
+                        DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
                 return true;
             }
             SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
@@ -343,10 +344,11 @@ public class MemberUserServiceImpl extends
 
     }
 
-    private void sendMessage(String name, String ownerUserId, String messageType) {
+    private void sendMessage(String name, String ownerUserId, String messageType, String nextTime) {
         Map<String, Object> map = new HashMap<>();
         map.put("name", name);
         map.put("contractType", messageType);
+        map.put("nextTime", nextTime);
         String bizId = sysNotifySendService.sendSingleNotifyToAdmin(ownerUserId,
                 "contactsRemind", map);
         SysNotifyMessageDO sysNotifyMessageDO = sysNotifyMessageService.getByBizId(
