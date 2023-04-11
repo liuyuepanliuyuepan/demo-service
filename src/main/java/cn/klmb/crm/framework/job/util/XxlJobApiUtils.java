@@ -1,14 +1,34 @@
 package cn.klmb.crm.framework.job.util;
 
+import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
+
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.klmb.crm.framework.job.config.HttpClientConfig;
+import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.entity.XxlJobActuatorManagerInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobGroup;
 import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobResponseInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
+import cn.klmb.crm.framework.mq.message.WebSocketServer;
+import cn.klmb.crm.module.system.entity.config.SysConfigDO;
+import cn.klmb.crm.module.system.entity.notify.SysNotifyMessageDO;
+import cn.klmb.crm.module.system.enums.CrmEnum;
+import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
+import cn.klmb.crm.module.system.service.config.SysConfigService;
+import cn.klmb.crm.module.system.service.notify.SysNotifyMessageService;
+import cn.klmb.crm.module.system.service.notify.SysNotifySendService;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +59,26 @@ public class XxlJobApiUtils {
 
     @Value("${xxl.job.login.password}")
     private String xxlJobLoginPassword;
+
+
+    private final WebSocketServer webSocketServer;
+
+
+    private final SysConfigService sysConfigService;
+
+    private final SysNotifyMessageService sysNotifyMessageService;
+
+    private final SysNotifySendService sysNotifySendService;
+
+
+    public XxlJobApiUtils(WebSocketServer webSocketServer, SysConfigService sysConfigService,
+            SysNotifyMessageService sysNotifyMessageService,
+            SysNotifySendService sysNotifySendService) {
+        this.webSocketServer = webSocketServer;
+        this.sysConfigService = sysConfigService;
+        this.sysNotifyMessageService = sysNotifyMessageService;
+        this.sysNotifySendService = sysNotifySendService;
+    }
 
 
     /**
@@ -341,6 +381,120 @@ public class XxlJobApiUtils {
         Headers headers = HttpClientUtils.doLoginRequest(clientConfig, loginForm);
         assert headers != null;
         return headers.get("Set-Cookie");
+    }
+
+
+    /**
+     * 创建任务
+     *
+     * @param xxlJobChangeTaskDTO
+     */
+    public void changeTask(XxlJobChangeTaskDTO xxlJobChangeTaskDTO) {
+        XxlJobGroup xxlJobGroup = new XxlJobGroup();
+        xxlJobGroup.setAppname(xxlJobChangeTaskDTO.getAppName());
+        xxlJobGroup.setTitle(xxlJobChangeTaskDTO.getTitle());
+        List<XxlJobGroup> xxlJobGroups = selectActuator(xxlJobGroup);
+        XxlJobInfo xxlJobInfo = new XxlJobInfo();
+        xxlJobInfo.setJobGroup(xxlJobGroups.get(0).getId());
+        xxlJobInfo.setExecutorHandler(xxlJobChangeTaskDTO.getExecutorHandler());
+        xxlJobInfo.setAuthor(xxlJobChangeTaskDTO.getAuthor());
+        XxlJobTaskManagerInfo xxlJobTaskManagerInfo = selectTask(xxlJobInfo);
+        if (xxlJobChangeTaskDTO.getOperateType() != 3 && ObjectUtil.isNotNull(
+                xxlJobChangeTaskDTO.getNextTime())
+                && LocalDateTimeUtil.toEpochMilli(xxlJobChangeTaskDTO.getNextTime()) != 0) {
+            if (LocalDateTime.now().isAfter(xxlJobChangeTaskDTO.getNextTime())) {
+                throw exception(
+                        cn.klmb.crm.module.member.enums.ErrorCodeConstants.USER_NEXT_TIME_ERROR);
+            }
+            if (LocalDateTimeUtil.between(LocalDateTime.now(), xxlJobChangeTaskDTO.getNextTime())
+                    .toHours() <= 1) {
+                sendMessage(xxlJobChangeTaskDTO.getName(), xxlJobChangeTaskDTO.getOwnerUserId(),
+                        xxlJobChangeTaskDTO.getMessageType(),
+                        xxlJobChangeTaskDTO.getNextTime().format(
+                                DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
+                return;
+            }
+            SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
+                    SysConfigKeyEnum.CONTACTS_REMINDER.getType());
+            String value = sysConfigDO.getValue();
+            String nextTimeStr = LocalDateTimeUtil.offset(xxlJobChangeTaskDTO.getNextTime(),
+                            -(Long.parseLong(value)),
+                            ChronoUnit.HOURS)
+                    .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN));
+            xxlJobInfo.setJobDesc(
+                    StrUtil.format("{}{}下次联系时间{}定时任务！", xxlJobChangeTaskDTO.getMessageType(),
+                            xxlJobChangeTaskDTO.getName(), nextTimeStr));
+            xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(nextTimeStr));
+            List<String> list = Arrays.asList(xxlJobChangeTaskDTO.getOwnerUserId(),
+                    (CrmEnum.CUSTOMER.getType().toString()), xxlJobChangeTaskDTO.getBizId(),
+                    xxlJobChangeTaskDTO.getNextTime().format(
+                            DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
+            xxlJobInfo.setExecutorParam(CollUtil.join(list, ","));
+            if (xxlJobChangeTaskDTO.getOperateType() == 2 && ObjectUtil.isNotNull(
+                    xxlJobTaskManagerInfo)
+                    && CollUtil.isNotEmpty(
+                    xxlJobTaskManagerInfo.getData())) {
+                // 增加edit标志时为了防止在执行更新用户下次联系时间时，定时任务创建不上
+                boolean edit = false;
+                List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
+                for (XxlJobInfo datum : data) {
+                    String executorParam = datum.getExecutorParam();
+                    List<String> split = StrUtil.split(executorParam, CharUtil.COMMA);
+                    String s = split.get(2);
+                    if (StrUtil.equals(xxlJobChangeTaskDTO.getBizId(), s)) {
+                        datum.setScheduleConf(xxlJobInfo.getScheduleConf());
+                        datum.setJobDesc(xxlJobInfo.getJobDesc());
+                        datum.setExecutorParam(xxlJobInfo.getExecutorParam());
+                        editTask(datum);
+                        startTask(datum.getId());
+                        edit = true;
+                        break;
+                    }
+                }
+                if (!edit) {
+                    XxlJobResponseInfo task = createTask(xxlJobInfo);
+                    if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
+                        startTask(Long.parseLong(task.getContent()));
+                    }
+                }
+            }
+
+            if (xxlJobChangeTaskDTO.getOperateType() == 1) {
+                XxlJobResponseInfo task = createTask(xxlJobInfo);
+                if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
+                    startTask(Long.parseLong(task.getContent()));
+                }
+            }
+        }
+        if (xxlJobChangeTaskDTO.getOperateType() == 3) {
+            if (ObjectUtil.isNotNull(xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
+                    xxlJobTaskManagerInfo.getData())) {
+                List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
+                for (XxlJobInfo datum : data) {
+                    String executorParam = datum.getExecutorParam();
+                    List<String> split = StrUtil.split(executorParam, CharUtil.COMMA);
+                    String s = split.get(2);
+                    if (StrUtil.equals(xxlJobChangeTaskDTO.getBizId(), s)) {
+                        deleteTask(datum.getId());
+                    }
+                }
+            }
+        }
+
+    }
+
+    private void sendMessage(String name, String ownerUserId, String messageType, String nextTime) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", name);
+        map.put("contractType", messageType);
+        map.put("nextTime", nextTime);
+        String bizId = sysNotifySendService.sendSingleNotifyToAdmin(ownerUserId,
+                "contactsRemind", map);
+        SysNotifyMessageDO sysNotifyMessageDO = sysNotifyMessageService.getByBizId(
+                bizId);
+        webSocketServer.sendOneMessage(ownerUserId,
+                JSONUtil.toJsonStr(JSONUtil.parse(sysNotifyMessageDO)));
+
     }
 }
 

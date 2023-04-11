@@ -5,7 +5,6 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
-import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -66,18 +65,4 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      */
     void removeByBizIds(List<String> bizIds);
 
-
-    /**
-     * 创建任务
-     *
-     * @param ownerUserId 负责人id
-     * @param bizId       消息来源的主键id (比如：客户、联系人的主键id)
-     * @param nextTime    下次联系时间
-     * @param name        消息来源的名称 (比如：客户、联系人的名字)
-     * @param operateType 1新增，2编辑，3删除
-     * @param messageType 例如：客户、联系人
-     */
-    Boolean changeTask(String ownerUserId, String bizId, LocalDateTime nextTime,
-            String name,
-            Integer operateType, String messageType);
 }
