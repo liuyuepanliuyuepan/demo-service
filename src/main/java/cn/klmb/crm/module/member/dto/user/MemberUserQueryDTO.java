@@ -52,4 +52,11 @@ public class MemberUserQueryDTO extends KlmbBaseQueryDTO {
     private List<String> ownerUserIds;
 
 
+    /**
+     * 进入公海前负责人id
+     */
+    @DtoFieldQuery
+    private String preOwnerUserId;
+
+
 }

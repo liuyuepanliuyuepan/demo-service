@@ -27,5 +27,11 @@ public class MemberUserPageReqVO extends PageParam {
     @ApiModelProperty(value = "当前用户id(无需传值)")
     private String userId;
 
+    /**
+     * 公海id
+     */
+    @ApiModelProperty(value = "公海id(只有公海分页时此时必传)")
+    private String poolId;
+
 
 }

@@ -23,4 +23,8 @@ public interface ErrorCodeConstants {
     // ========== 客户信息 1004000000 ==========
     ErrorCode MEMBER_TEAM_DELETE_ERROR = new ErrorCode(1004000001, "负责人不能退出团队！");
 
+
+    // ========== 公海信息 1005000000 ==========
+    ErrorCode POOL_ID_NOT_EXISTS = new ErrorCode(1005000001, "公海id不能为空！");
+
 }
