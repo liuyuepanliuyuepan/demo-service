@@ -86,4 +86,11 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      */
     void addPool(MemberUserPoolBO poolBO);
 
+    /**
+     * 领取或分配客户
+     *
+     * @param poolBO bo
+     */
+    void getCustomersByIds(MemberUserPoolBO poolBO);
+
 }

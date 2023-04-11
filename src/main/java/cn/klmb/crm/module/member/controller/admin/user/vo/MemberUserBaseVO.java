@@ -104,4 +104,10 @@ public class MemberUserBaseVO {
      */
     @ApiModelProperty(value = "进入公海前负责人id")
     private String preOwnerUserId;
+
+    /**
+     * 接收到客户时间
+     */
+    @ApiModelProperty(value = "接收到客户时间")
+    private LocalDateTime receiveTime;
 }

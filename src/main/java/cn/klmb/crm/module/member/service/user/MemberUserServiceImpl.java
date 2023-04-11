@@ -25,6 +25,7 @@ import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.record.MemberOwnerRecordService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
+import cn.klmb.crm.module.member.service.userpool.MemberUserPoolService;
 import cn.klmb.crm.module.member.service.userpoolrelation.MemberUserPoolRelationService;
 import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
@@ -68,12 +69,15 @@ public class MemberUserServiceImpl extends
 
     private final MemberContactsService memberContactsService;
 
+    private final MemberUserPoolService memberUserPoolService;
+
 
     public MemberUserServiceImpl(SysUserService sysUserService, MemberUserMapper mapper,
             MemberUserStarService memberUserStarService, @Lazy MemberTeamService memberTeamService,
             XxlJobApiUtils xxlJobApiUtils, MemberOwnerRecordService memberOwnerRecordService,
             MemberUserPoolRelationService relationService,
-            @Lazy MemberContactsService memberContactsService) {
+            @Lazy MemberContactsService memberContactsService,
+            MemberUserPoolService memberUserPoolService) {
         this.sysUserService = sysUserService;
         this.memberUserStarService = memberUserStarService;
         this.memberTeamService = memberTeamService;
@@ -81,6 +85,7 @@ public class MemberUserServiceImpl extends
         this.memberOwnerRecordService = memberOwnerRecordService;
         this.relationService = relationService;
         this.memberContactsService = memberContactsService;
+        this.memberUserPoolService = memberUserPoolService;
         this.mapper = mapper;
     }
 
@@ -312,5 +317,48 @@ public class MemberUserServiceImpl extends
         wrapper.set(MemberContactsDO::getOwnerUserId, null);
         wrapper.in(MemberContactsDO::getCustomerId, poolBO.getCustomerIds());
         memberContactsService.update(wrapper);
+    }
+
+
+    /**
+     * 领取或分配客户
+     *
+     * @param poolBO bo
+     */
+    @Override
+    public void getCustomersByIds(MemberUserPoolBO poolBO) {
+        if (poolBO.getCustomerIds().size() == 0) {
+            return;
+        }
+        if (StrUtil.isBlank(poolBO.getUserId())) {
+            poolBO.setUserId(WebFrameworkUtils.getLoginUserId());
+        }
+        List<MemberOwnerRecordDO> records = new ArrayList<>();
+        for (String id : poolBO.getCustomerIds()) {
+            MemberOwnerRecordDO memberOwnerRecordDO = new MemberOwnerRecordDO();
+            memberOwnerRecordDO.setTypeId(id);
+            memberOwnerRecordDO.setType(CrmEnum.CUSTOMER_POOL.getType());
+            memberOwnerRecordDO.setPostOwnerUserId(poolBO.getUserId());
+            memberOwnerRecordDO.setCreateTime(LocalDateTime.now());
+            records.add(memberOwnerRecordDO);
+        }
+        if (records.size() > 0) {
+            memberOwnerRecordService.saveBatchDO(records);
+        }
+        LambdaQueryWrapper<MemberUserPoolRelationDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.in(MemberUserPoolRelationDO::getCustomerId, poolBO.getCustomerIds());
+        relationService.remove(wrapper);
+        memberContactsService.lambdaUpdate()
+                .set(MemberContactsDO::getOwnerUserId, poolBO.getUserId())
+                .in(MemberContactsDO::getCustomerId, poolBO.getCustomerIds()).update();
+
+        super.update(new LambdaUpdateWrapper<MemberUserDO>().set(MemberUserDO::getOwnerUserId,
+                        poolBO.getUserId())
+                .set(MemberUserDO::getFollowup, 0)
+                .set(MemberUserDO::getReceiveTime, LocalDateTime.now())
+                .set(MemberUserDO::getUpdateTime, LocalDateTime.now())
+                .set(MemberUserDO::getIsReceive, poolBO.getIsReceive())
+                .in(MemberUserDO::getBizId, poolBO.getCustomerIds()));
+
     }
 }

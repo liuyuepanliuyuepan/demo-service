@@ -156,4 +156,10 @@ public class MemberUserDO extends KlmbBaseDO {
     private String preOwnerUserId;
 
 
+    /**
+     * 接收到客户时间
+     */
+    private LocalDateTime receiveTime;
+
+
 }

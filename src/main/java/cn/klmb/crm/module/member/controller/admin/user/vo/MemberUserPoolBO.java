@@ -17,4 +17,7 @@ public class MemberUserPoolBO {
 
     @ApiModelProperty("用户ID")
     private String userId;
+
+    @ApiModelProperty("1分配,2领取")
+    private Integer isReceive;
 }
