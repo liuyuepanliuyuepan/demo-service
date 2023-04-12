@@ -7,12 +7,12 @@
     SELECT COUNT(*) AS customerCount FROM member_user as c WHERE status != 3 and
     DATE_FORMAT(c.create_time,#{time.sqlDateFormat})
     <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
       <when test="time.cycleNum==1">
         = #{time.beginTime}
       </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
     </choose>
     AND owner_user_id in
     <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
