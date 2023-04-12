@@ -21,7 +21,7 @@ public class BiParams {
     @ApiModelProperty("用户IDs")
     private List<String> userIds;
 
-    @ApiModelProperty("类型")
+    @ApiModelProperty("类型(今天today,昨天yesterday,明天tomorrow,周week,上周lastWeek,下周nextWeek,本月month,上月lastMonth,下月nextMonth,本季度quarter,上一季度lastQuarter,下一季度nextQuarter,本年度year,上一年度lastYear,下一年度nextYear)")
     private String type;
 
     @ApiModelProperty("开始时间")
@@ -33,10 +33,8 @@ public class BiParams {
     @ApiModelProperty("0 部门 1员工")
     private Integer isUser = 1;
 
-    /**
-     * 今天today,昨天yesterday,明天tomorrow,周week,上周lastWeek,下周nextWeek,本月month,上月lastMonth,下月nextMonth,本季度quarter,上一季度lastQuarter,下一季度nextQuarter,本年度year,上一年度lastYear,下一年度nextYear
-     */
-    @ApiModelProperty("类型ID(今天today,昨天yesterday,明天tomorrow,周week,上周lastWeek,下周nextWeek,本月month,上月lastMonth,下月nextMonth,本季度quarter,上一季度lastQuarter,下一季度nextQuarter,本年度year,上一年度lastYear,下一年度nextYear)")
+
+    @ApiModelProperty("类型ID")
     private Integer typeId;
 
     @ApiModelProperty("年份")
