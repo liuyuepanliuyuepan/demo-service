@@ -288,7 +288,8 @@ public class MemberUserController {
 	@PreAuthorize("@ss.hasPermission('member:user:query')")
 	public CommonResult<List<MemberUserDO>> nearbyCustomer(@RequestParam("lng") String lng,
 		@RequestParam("lat") String lat,
-		@RequestParam("type") Integer type, @RequestParam("radius") Integer radius,
+        @RequestParam(value = "type", required = false) Integer type,
+        @RequestParam("radius") Integer radius,
 		@RequestParam(value = "ownerUserId", required = false) String ownerUserId) {
 		return CommonResult
 			.success(memberUserService.nearbyMember(lng, lat, type, radius, ownerUserId));

@@ -30,7 +30,7 @@
     ) as distance
     from member_user as a
     where a.status != 3
-    and a.lat is not null
+    and a.lat !=''
     and ROUND(
     6378.138 * 2 * ASIN(
     SQRT(
@@ -55,12 +55,13 @@
     <choose>
       <when test="type == 2">
         <if test="ownerUserId != null">
-          and owner_user_id = #{ownerUserId}
+          and (owner_user_id = #{ownerUserId}
         </if>
         or owner_user_id in
         <foreach close=")" collection="userIds" index="index" item="userId" open="(" separator=",">
           #{userId}
         </foreach>
+        )
       </when>
       <when test="type == 9">
         and biz_id in (select customer_id from member_user_pool_relation)
