@@ -26,14 +26,9 @@
       </otherwise>
     </choose>
     AND owner_user_id in
-    <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
-      <when test="time.cycleNum==1">
-        = #{time.beginTime}
-      </when>
-    </choose>
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
     AND deleted = false) a,
     (
     SELECT
@@ -63,9 +58,14 @@
     member_team_activity AS mtc
     WHERE
     DATE_FORMAT(mtc.create_time,#{time.sqlDateFormat})
-    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
-      #{id}
-    </foreach>
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
     AND creator in
     <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
       #{id}
