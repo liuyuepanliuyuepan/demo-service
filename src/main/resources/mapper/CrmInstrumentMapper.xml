@@ -18,12 +18,12 @@
     WHERE
     DATE_FORMAT(c.create_time,#{time.sqlDateFormat})
     <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
       <when test="time.cycleNum==1">
         = #{time.beginTime}
       </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
     </choose>
     AND owner_user_id in
     <choose>
