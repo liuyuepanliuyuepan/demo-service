@@ -29,7 +29,9 @@
     ) * 1000
     ) as distance
     from member_user as a
-    where a.status != 3 and ROUND(
+    where a.status != 3
+    and a.lat is not null
+    and ROUND(
     6378.138 * 2 * ASIN(
     SQRT(
     POW(
