@@ -58,4 +58,16 @@ public class SysUserBaseVO {
     @ApiModelProperty(value = "上级ID")
     private String parentId;
 
+    /**
+     * 飞书用户id
+     */
+    @ApiModelProperty(value = "飞书用户id")
+    private String userId;
+
+    /**
+     * 飞书用户openId
+     */
+    @ApiModelProperty(value = "飞书用户openId")
+    private String openId;
+
 }
