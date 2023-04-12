@@ -17,10 +17,12 @@ import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserUpdatePwdReqVO;
 import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserUpdateReqVO;
 import cn.klmb.crm.module.system.convert.permission.SysRoleConvert;
 import cn.klmb.crm.module.system.convert.user.SysUserConvert;
+import cn.klmb.crm.module.system.dto.feishu.FeishuApiResultDTO;
 import cn.klmb.crm.module.system.dto.user.SysUserQueryDTO;
 import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
 import cn.klmb.crm.module.system.entity.permission.SysRoleDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.permission.SysPermissionService;
 import cn.klmb.crm.module.system.service.permission.SysRoleService;
@@ -66,13 +68,16 @@ public class SysUserController {
     private final SysDeptService sysDeptService;
     private final SysPermissionService sysPermissionService;
 
+    private final SysFeishuManager sysFeishuManager;
+
     public SysUserController(SysUserService sysUserService, SysRoleService sysRoleService,
             SysDeptService sysDeptService,
-            SysPermissionService sysPermissionService) {
+            SysPermissionService sysPermissionService, SysFeishuManager sysFeishuManager) {
         this.sysUserService = sysUserService;
         this.sysRoleService = sysRoleService;
         this.sysDeptService = sysDeptService;
         this.sysPermissionService = sysPermissionService;
+        this.sysFeishuManager = sysFeishuManager;
     }
 
     @PostMapping(value = "/save")
@@ -239,6 +244,25 @@ public class SysUserController {
 //        respPage = SysUserConvert.INSTANCE.convert(page);
 //        return success(respPage);
 //    }
+
+
+    @GetMapping(value = "/getAccessToken")
+    @ApiOperation(value = "获取飞书访问凭证")
+    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    public CommonResult<String> getAccessToken() {
+        String accessToken = sysFeishuManager.getAccessToken();
+        return CommonResult.success(accessToken);
+    }
+
+    @GetMapping(value = "/code2session/{code}")
+    @ApiOperation(value = "飞书小程序自建应用的登录获取用户身份")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "code", value = "登录时获取的 code", dataTypeClass = String.class, paramType = "path")})
+    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    public CommonResult<FeishuApiResultDTO> code2session(@PathVariable String code) {
+        return CommonResult.success(sysFeishuManager.code2session(code));
+    }
+
 
 }
 
