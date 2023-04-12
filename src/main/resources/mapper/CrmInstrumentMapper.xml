@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.klmb.crm.module.member.dao.instrument.CrmInstrumentMapper">
+  <select id="queryBulletin"
+    resultType="cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO">
+    SELECT COUNT(*) AS customerCount FROM member_user as c WHERE status != 3 and
+    DATE_FORMAT(c.create_time,#{time.sqlDateFormat})
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+  </select>
+</mapper>
