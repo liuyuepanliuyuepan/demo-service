@@ -146,7 +146,7 @@ xxl:
       logretentiondays: 3
 feishu:
   api:
-    url: https://open.feishu.cn/open-apis
+    endpoint: https://open.feishu.cn/open-apis
     appId: cli_a4b9dee0ccf2d00b
     appSecret: x0gpxKzeUahHL538htQSwfxXjloXB6Zh
 

@@ -5,22 +5,30 @@ import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.AUTH_LOGIN_BAD_
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.AUTH_LOGIN_USER_DISABLED;
 
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.common.enums.CommonStatusEnum;
 import cn.klmb.crm.framework.common.enums.UserTypeEnum;
 import cn.klmb.crm.framework.common.util.servlet.ServletUtils;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthLoginReqVO;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthLoginRespVO;
+import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthMinAppLoginReqVO;
+import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthWebLoginReqVO;
 import cn.klmb.crm.module.system.convert.auth.SysAuthConvert;
 import cn.klmb.crm.module.system.convert.user.SysUserConvert;
+import cn.klmb.crm.module.system.dto.feishu.FeishuMinAppResultDTO;
+import cn.klmb.crm.module.system.dto.feishu.FeishuWebResultDTO;
 import cn.klmb.crm.module.system.entity.logger.SysLoginLogDO;
 import cn.klmb.crm.module.system.entity.oauth2.SysOAuth2AccessTokenDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.enums.logger.LoginLogTypeEnum;
 import cn.klmb.crm.module.system.enums.logger.LoginResultEnum;
 import cn.klmb.crm.module.system.enums.oauth2.SysOAuth2ClientConstants;
+import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import cn.klmb.crm.module.system.service.logger.SysLoginLogService;
 import cn.klmb.crm.module.system.service.oauth2.SysOAuth2TokenService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
 
@@ -40,11 +48,15 @@ public class SysAuthServiceImpl implements SysAuthService {
     private final SysOAuth2TokenService sysOAuth2TokenService;
     private final SysLoginLogService sysLoginLogService;
 
+    private final SysFeishuManager sysFeishuManager;
+
     public SysAuthServiceImpl(SysUserService sysUserService,
-            SysOAuth2TokenService sysOAuth2TokenService, SysLoginLogService sysLoginLogService) {
+            SysOAuth2TokenService sysOAuth2TokenService, SysLoginLogService sysLoginLogService,
+            SysFeishuManager sysFeishuManager) {
         this.sysUserService = sysUserService;
         this.sysOAuth2TokenService = sysOAuth2TokenService;
         this.sysLoginLogService = sysLoginLogService;
+        this.sysFeishuManager = sysFeishuManager;
     }
 
     @Override
@@ -80,6 +92,64 @@ public class SysAuthServiceImpl implements SysAuthService {
         tokenAfterLoginSuccess.setUserInfo(SysUserConvert.INSTANCE.convert01(user));
         return tokenAfterLoginSuccess;
     }
+
+    @Override
+    public SysAuthLoginRespVO minAppLogin(SysAuthMinAppLoginReqVO reqVO) {
+        FeishuMinAppResultDTO feishuMinAppResultDTO = sysFeishuManager.code2session(
+                reqVO.getCode());
+        if (ObjectUtil.isNull(feishuMinAppResultDTO)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        String employeeId = feishuMinAppResultDTO.getEmployee_id();
+        String openId = feishuMinAppResultDTO.getOpen_id();
+        SysUserDO sysUserDO = sysUserService.getOne(
+                new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getUserId, employeeId)
+                        .eq(SysUserDO::getDeleted, false));
+        if (ObjectUtil.isNull(sysUserDO)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        if (StrUtil.isBlank(sysUserDO.getOpenId()) && StrUtil.isNotBlank(openId)) {
+            sysUserDO.setOpenId(openId);
+            sysUserService.updateDO(sysUserDO);
+        }
+        // 创建 Token 令牌，记录登录日志
+        SysAuthLoginRespVO tokenAfterLoginSuccess = createTokenAfterLoginSuccess(
+                sysUserDO.getBizId(),
+                sysUserDO.getUsername(),
+                LoginLogTypeEnum.LOGIN_FEISHU_MIN_APP);
+        tokenAfterLoginSuccess.setUserInfo(SysUserConvert.INSTANCE.convert01(sysUserDO));
+        return tokenAfterLoginSuccess;
+
+    }
+
+    @Override
+    public SysAuthLoginRespVO webLogin(SysAuthWebLoginReqVO reqVO) {
+        FeishuWebResultDTO feishuWebResultDTO = sysFeishuManager.authenV1AccessToken(
+                reqVO.getCode());
+        if (ObjectUtil.isNull(feishuWebResultDTO)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        String userId = feishuWebResultDTO.getUser_id();
+        String openId = feishuWebResultDTO.getOpen_id();
+        SysUserDO sysUserDO = sysUserService.getOne(
+                new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getUserId, userId)
+                        .eq(SysUserDO::getDeleted, false));
+        if (ObjectUtil.isNull(sysUserDO)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        if (StrUtil.isBlank(sysUserDO.getOpenId()) && StrUtil.isNotBlank(openId)) {
+            sysUserDO.setOpenId(openId);
+            sysUserService.updateDO(sysUserDO);
+        }
+        // 创建 Token 令牌，记录登录日志
+        SysAuthLoginRespVO tokenAfterLoginSuccess = createTokenAfterLoginSuccess(
+                sysUserDO.getBizId(),
+                sysUserDO.getUsername(),
+                LoginLogTypeEnum.LOGIN_FEISHU_WEB);
+        tokenAfterLoginSuccess.setUserInfo(SysUserConvert.INSTANCE.convert01(sysUserDO));
+        return tokenAfterLoginSuccess;
+    }
+
 
     @Override
     public void logout(String token) {
