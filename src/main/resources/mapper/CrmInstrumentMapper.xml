@@ -4,8 +4,44 @@
 <mapper namespace="cn.klmb.crm.module.member.dao.instrument.CrmInstrumentMapper">
   <select id="queryBulletin"
     resultType="cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO">
-    SELECT COUNT(*) AS customerCount FROM member_user as c WHERE status != 3 and
+
+    SELECT
+    a.customerCount,
+    b.contactsCount,
+    c.activityCount
+    FROM
+    (
+    SELECT
+    COUNT(*) AS customerCount
+    FROM
+    member_user AS c
+    WHERE
     DATE_FORMAT(c.create_time,#{time.sqlDateFormat})
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND owner_user_id in
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND deleted = false) a,
+    (
+    SELECT
+    COUNT(*) AS contactsCount
+    FROM
+    member_contacts AS mc
+    WHERE
+    DATE_FORMAT(mc.create_time,#{time.sqlDateFormat})
     <choose>
       <when test="time.cycleNum==1">
         = #{time.beginTime}
@@ -18,5 +54,24 @@
     <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
       #{id}
     </foreach>
+    AND deleted = false
+    ) b,
+    (
+    SELECT
+    COUNT(*) AS activityCount
+    FROM
+    member_team_activity AS mtc
+    WHERE
+    DATE_FORMAT(mtc.create_time,#{time.sqlDateFormat})
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND creator in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false
+    AND type IN ( 1, 4 )
+    )c
   </select>
 </mapper>
