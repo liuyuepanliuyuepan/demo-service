@@ -150,5 +150,11 @@ public class MemberUserDO extends KlmbBaseDO {
     @TableField(exist = false)
     private Boolean star;
 
+	/**
+	 * 距离
+	 */
+	@TableField(exist = false)
+	private String distance;
+
 
 }
