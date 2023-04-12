@@ -161,5 +161,11 @@ public class MemberUserDO extends KlmbBaseDO {
      */
     private LocalDateTime receiveTime;
 
+	/**
+	 * 距离
+	 */
+	@TableField(exist = false)
+	private String distance;
+
 
 }
