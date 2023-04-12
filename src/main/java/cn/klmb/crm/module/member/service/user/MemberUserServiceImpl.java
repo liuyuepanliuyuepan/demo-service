@@ -279,6 +279,7 @@ public class MemberUserServiceImpl extends
 
     @Override
     public void addPool(MemberUserPoolBO poolBO) {
+        poolBO.setPoolId("0");
         if (poolBO.getCustomerIds().size() == 0) {
             return;
         }
@@ -327,6 +328,7 @@ public class MemberUserServiceImpl extends
      */
     @Override
     public void getCustomersByIds(MemberUserPoolBO poolBO) {
+        poolBO.setPoolId("0");
         if (poolBO.getCustomerIds().size() == 0) {
             return;
         }

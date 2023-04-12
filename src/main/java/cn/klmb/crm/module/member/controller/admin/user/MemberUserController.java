@@ -308,9 +308,7 @@ public class MemberUserController {
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<KlmbPage<MemberUserRespVO>> pagePool(
             @Valid MemberUserPageReqVO reqVO) {
-        if (StrUtil.isBlank(reqVO.getPoolId())) {
-            throw exception(cn.klmb.crm.module.member.enums.ErrorCodeConstants.POOL_ID_NOT_EXISTS);
-        }
+        reqVO.setPoolId("0");
         KlmbPage<MemberUserDO> klmbPage = KlmbPage.<MemberUserDO>builder()
                 .pageNo(reqVO.getPageNo())
                 .pageSize(reqVO.getPageSize())
