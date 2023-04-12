@@ -76,5 +76,23 @@ public interface SysUserService extends KlmbBaseService<SysUserDO, SysUserQueryD
      */
     List<String> queryChildUserId(String userId);
 
+
+    /**
+     * 查询部门下属部门
+     *
+     * @param parentId 上级ID
+     * @return data
+     */
+    List<String> queryChildDept(String parentId);
+
+    /**
+     * 根据部门ids查询用户列表
+     *
+     * @param ids id列表
+     * @return data
+     */
+    List<String> queryUserByDeptIds(List<String> ids);
+
+
 }
 

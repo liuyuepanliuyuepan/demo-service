@@ -23,7 +23,9 @@ import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.permission.SysPermissionService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -259,6 +261,39 @@ public class SysUserServiceImpl extends
     @Override
     public List<String> queryChildUserId(String userId) {
         return RecursionUtil.getChildList(list(), "parentId", userId, "bizId", "bizId");
+    }
+
+    /**
+     * 查询部门下属部门
+     *
+     * @param parentId 上级ID
+     * @return data
+     */
+    @Override
+    public List<String> queryChildDept(String parentId) {
+        return RecursionUtil.getChildList(list(), "treeParentId", parentId, "bizId", "bizId");
+    }
+
+
+    /**
+     * 根据部门ids查询用户列表
+     *
+     * @param ids id列表
+     * @return data
+     */
+    @Override
+    public List<String> queryUserByDeptIds(List<String> ids) {
+        if (ids.size() == 0) {
+            return new ArrayList<>();
+        }
+        LambdaQueryWrapper<SysUserDO> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.select(SysUserDO::getBizId);
+        if (ids.size() > 1) {
+            queryWrapper.in(SysUserDO::getDeptId, ids);
+        } else {
+            queryWrapper.eq(SysUserDO::getDeptId, ids.get(0));
+        }
+        return listObjs(queryWrapper, Object::toString);
     }
 
 }
