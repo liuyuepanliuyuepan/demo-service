@@ -2,6 +2,8 @@ package cn.klmb.crm.module.system.service.auth;
 
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthLoginReqVO;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthLoginRespVO;
+import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthMinAppLoginReqVO;
+import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthWebLoginReqVO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import javax.validation.Valid;
 
@@ -30,6 +32,23 @@ public interface SysAuthService {
      * @return 登录结果
      */
     SysAuthLoginRespVO login(@Valid SysAuthLoginReqVO reqVO);
+
+
+    /**
+     * 飞书小程序登录
+     *
+     * @param reqVO 登录信息
+     * @return 登录结果
+     */
+    SysAuthLoginRespVO minAppLogin(@Valid SysAuthMinAppLoginReqVO reqVO);
+
+    /**
+     * 飞书网页登录
+     *
+     * @param reqVO 登录信息
+     * @return 登录结果
+     */
+    SysAuthLoginRespVO webLogin(@Valid SysAuthWebLoginReqVO reqVO);
 
     /**
      * 基于 token 退出登录

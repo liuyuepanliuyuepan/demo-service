@@ -28,4 +28,11 @@ public class SysAuthLoginReqVO {
     @Length(min = 4, max = 16, message = "密码长度为 4-16 位")
     private String password;
 
+
+    /**
+     * 飞书小程序登录时获取的 code
+     */
+    @ApiModelProperty(value = "飞书小程序登录时获取的 code")
+    private String code;
+
 }

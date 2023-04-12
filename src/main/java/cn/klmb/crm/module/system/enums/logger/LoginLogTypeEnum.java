@@ -14,6 +14,9 @@ public enum LoginLogTypeEnum {
     LOGIN_SOCIAL(101), // 使用社交登录
     LOGIN_MOBILE(103), // 使用手机登陆
     LOGIN_SMS(104), // 使用短信登陆
+    LOGIN_FEISHU_MIN_APP(105), // 使用飞书小程序登录
+
+    LOGIN_FEISHU_WEB(106), // 使用飞书网页登录
 
     LOGOUT_SELF(200),  // 自己主动登出
     LOGOUT_DELETE(202), // 强制退出

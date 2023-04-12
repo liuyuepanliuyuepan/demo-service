@@ -17,7 +17,7 @@ import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserUpdatePwdReqVO;
 import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserUpdateReqVO;
 import cn.klmb.crm.module.system.convert.permission.SysRoleConvert;
 import cn.klmb.crm.module.system.convert.user.SysUserConvert;
-import cn.klmb.crm.module.system.dto.feishu.FeishuApiResultDTO;
+import cn.klmb.crm.module.system.dto.feishu.FeishuMinAppResultDTO;
 import cn.klmb.crm.module.system.dto.user.SysUserQueryDTO;
 import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
 import cn.klmb.crm.module.system.entity.permission.SysRoleDO;
@@ -259,7 +259,7 @@ public class SysUserController {
     @ApiImplicitParams({
             @ApiImplicitParam(name = "code", value = "登录时获取的 code", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('system:user:query')")
-    public CommonResult<FeishuApiResultDTO> code2session(@PathVariable String code) {
+    public CommonResult<FeishuMinAppResultDTO> code2session(@PathVariable String code) {
         return CommonResult.success(sysFeishuManager.code2session(code));
     }
 

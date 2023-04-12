@@ -13,7 +13,9 @@ import cn.klmb.crm.framework.security.config.SecurityProperties;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthLoginReqVO;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthLoginRespVO;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthMenuRespVO;
+import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthMinAppLoginReqVO;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthPermissionInfoRespVO;
+import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthWebLoginReqVO;
 import cn.klmb.crm.module.system.convert.auth.SysAuthConvert;
 import cn.klmb.crm.module.system.entity.permission.SysMenuDO;
 import cn.klmb.crm.module.system.entity.permission.SysRoleDO;
@@ -131,5 +133,23 @@ public class SysAuthController {
         // 转换成 Tree 结构返回
         return success(SysAuthConvert.INSTANCE.buildMenuTree(menuList));
     }
+
+
+    @PostMapping("/min_app_login")
+    @ApiOperation(value = "飞书小程序登录")
+    @PermitAll
+    public CommonResult<SysAuthLoginRespVO> minAppLogin(
+            @RequestBody @Valid SysAuthMinAppLoginReqVO reqVO) {
+        return success(sysAuthService.minAppLogin(reqVO));
+    }
+
+    @PostMapping("/web_login")
+    @ApiOperation(value = "飞书网页登录")
+    @PermitAll
+    public CommonResult<SysAuthLoginRespVO> webLogin(
+            @RequestBody @Valid SysAuthWebLoginReqVO reqVO) {
+        return success(sysAuthService.webLogin(reqVO));
+    }
+
 
 }
