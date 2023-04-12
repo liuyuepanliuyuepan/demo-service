@@ -103,7 +103,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         String employeeId = feishuMinAppResultDTO.getEmployee_id();
         String openId = feishuMinAppResultDTO.getOpen_id();
         SysUserDO sysUserDO = sysUserService.getOne(
-                new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getUserId, employeeId)
+                new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getFsUserId, employeeId)
                         .eq(SysUserDO::getDeleted, false));
         if (ObjectUtil.isNull(sysUserDO)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
@@ -132,7 +132,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         String userId = feishuWebResultDTO.getUser_id();
         String openId = feishuWebResultDTO.getOpen_id();
         SysUserDO sysUserDO = sysUserService.getOne(
-                new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getUserId, userId)
+                new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getFsUserId, userId)
                         .eq(SysUserDO::getDeleted, false));
         if (ObjectUtil.isNull(sysUserDO)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);

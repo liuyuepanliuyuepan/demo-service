@@ -95,7 +95,7 @@ public class SysUserDO extends KlmbBaseDO {
     /**
      * 飞书用户id
      */
-    private String userId;
+    private String fsUserId;
 
     /**
      * 飞书用户openId

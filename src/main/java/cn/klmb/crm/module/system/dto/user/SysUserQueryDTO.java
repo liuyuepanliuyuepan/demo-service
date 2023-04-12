@@ -115,7 +115,7 @@ public class SysUserQueryDTO extends KlmbBaseQueryDTO {
      * 飞书用户id
      */
     @DtoFieldQuery
-    private String userId;
+    private String fsUserId;
 
     /**
      * 飞书用户openId

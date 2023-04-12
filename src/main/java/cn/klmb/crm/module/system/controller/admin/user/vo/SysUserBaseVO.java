@@ -62,7 +62,7 @@ public class SysUserBaseVO {
      * 飞书用户id
      */
     @ApiModelProperty(value = "飞书用户id")
-    private String userId;
+    private String fsUserId;
 
     /**
      * 飞书用户openId
