@@ -263,16 +263,6 @@ public class SysUserServiceImpl extends
         return RecursionUtil.getChildList(list(), "parentId", userId, "bizId", "bizId");
     }
 
-    /**
-     * 查询部门下属部门
-     *
-     * @param parentId 上级ID
-     * @return data
-     */
-    @Override
-    public List<String> queryChildDept(String parentId) {
-        return RecursionUtil.getChildList(list(), "treeParentId", parentId, "bizId", "bizId");
-    }
 
 
     /**

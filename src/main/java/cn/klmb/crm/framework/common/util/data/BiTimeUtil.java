@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.common.pojo.BiParams;
 import cn.klmb.crm.framework.common.util.servlet.ApplicationContextHolder;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,10 +40,12 @@ public class BiTimeUtil {
         Integer isUser = biParams.getIsUser();
         if (isUser == 0) {
             SysUserService sysUserService = ApplicationContextHolder.getBean(SysUserService.class);
+            SysDeptService sysDeptService = ApplicationContextHolder.getBean(SysDeptService.class);
+
             if (deptId == null) {
                 deptId = sysUserService.getByBizId(WebFrameworkUtils.getLoginUserId()).getDeptId();
             }
-            List<String> deptIdList = sysUserService.queryChildDept(deptId);
+            List<String> deptIdList = sysDeptService.queryChildDept(deptId);
             deptIdList.add(deptId);
             userIdList.addAll(sysUserService.queryUserByDeptIds(deptIdList));
         } else {
@@ -557,7 +560,9 @@ public class BiTimeUtil {
             timeEntity.getUserIds().add(userId);
         } else if (deptId != null) {
             SysUserService sysUserService = ApplicationContextHolder.getBean(SysUserService.class);
-            List<String> data = sysUserService.queryChildDept(deptId);
+            SysDeptService sysDeptService = ApplicationContextHolder.getBean(SysDeptService.class);
+
+            List<String> data = sysDeptService.queryChildDept(deptId);
             timeEntity.getUserIds().addAll(sysUserService.queryUserByDeptIds(data));
         }
         return timeEntity;

@@ -15,6 +15,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseTreeServiceImpl;
 import cn.klmb.crm.framework.common.enums.CommonStatusEnum;
 import cn.klmb.crm.framework.common.util.collection.CollectionUtils;
+import cn.klmb.crm.framework.common.util.data.RecursionUtil;
 import cn.klmb.crm.module.system.dao.dept.SysDeptMapper;
 import cn.klmb.crm.module.system.dto.dept.SysDeptQueryDTO;
 import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
@@ -149,5 +150,17 @@ public class SysDeptServiceImpl extends
                 throw exception(DEPT_NOT_ENABLE, dept.getName());
             }
         });
+    }
+
+
+    /**
+     * 查询部门下属部门
+     *
+     * @param parentId 上级ID
+     * @return data
+     */
+    @Override
+    public List<String> queryChildDept(String parentId) {
+        return RecursionUtil.getChildList(list(), "treeParentId", parentId, "bizId", "bizId");
     }
 }

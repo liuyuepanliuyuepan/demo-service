@@ -40,5 +40,13 @@ public interface SysDeptService extends KlmbBaseTreeService<SysDeptDO, SysDeptQu
         return CollectionUtils.convertMap(list, SysDeptDO::getBizId);
     }
 
+    /**
+     * 查询部门下属部门
+     *
+     * @param parentId 上级ID
+     * @return data
+     */
+    List<String> queryChildDept(String parentId);
+
 }
 

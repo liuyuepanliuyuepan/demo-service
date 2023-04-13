@@ -15,6 +15,7 @@ import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import cn.klmb.crm.module.system.service.notify.SysNotifyMessageService;
 import cn.klmb.crm.module.system.service.notify.SysNotifySendService;
+import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -45,17 +46,21 @@ public class CustomerContactReminderHandler {
 
     private final SysFeishuManager sysFeishuManager;
 
+    private final SysUserService sysUserService;
+
 
     public CustomerContactReminderHandler(WebSocketServer webSocketServer,
             SysNotifySendService sysNotifySendService,
             MemberUserService memberUserService, MemberContactsService memberContactsService,
-            SysNotifyMessageService sysNotifyMessageService, SysFeishuManager sysFeishuManager) {
+            SysNotifyMessageService sysNotifyMessageService, SysFeishuManager sysFeishuManager,
+            SysUserService sysUserService) {
         this.webSocketServer = webSocketServer;
         this.sysNotifySendService = sysNotifySendService;
         this.memberUserService = memberUserService;
         this.memberContactsService = memberContactsService;
         this.sysNotifyMessageService = sysNotifyMessageService;
         this.sysFeishuManager = sysFeishuManager;
+        this.sysUserService = sysUserService;
     }
 
     @XxlJob("customerContactReminderHandler")
@@ -93,8 +98,13 @@ public class CustomerContactReminderHandler {
                         bizId);
                 webSocketServer.sendOneMessage(userId,
                         JSONUtil.toJsonStr(JSONUtil.parse(sysNotifyMessageDO)));
-                sysFeishuManager.sendMsg(StrUtil.format("CRM-客户【{}】下次联系时间【{}】", map.get("name"),
-                        map.get("nextTime")));
+
+//                SysUserDO sysUserDO = sysUserService.getByBizId(userId);
+//                String fsUserId = sysUserDO.getFsUserId();
+                sysFeishuManager.sendMsg(
+                        StrUtil.format("CRM-【{}】【{}】下次联系时间【{}】", map.get("contractType"),
+                                map.get("name"),
+                                map.get("nextTime")));
 
                 // 任务执行结束后销毁
                 //  xxlJobApiUtils.deleteTask(XxlJobHelper.getJobId());

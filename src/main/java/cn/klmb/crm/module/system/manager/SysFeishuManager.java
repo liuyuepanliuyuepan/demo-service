@@ -16,10 +16,15 @@ import cn.klmb.crm.module.system.dto.feishu.FeishuMessageRemind.Content;
 import cn.klmb.crm.module.system.dto.feishu.FeishuMinAppResultDTO;
 import cn.klmb.crm.module.system.dto.feishu.FeishuWebResultDTO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
+import com.lark.oapi.Client;
+import com.lark.oapi.core.utils.Jsons;
+import com.lark.oapi.service.contact.v3.model.GetUserReq;
+import com.lark.oapi.service.contact.v3.model.GetUserResp;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
@@ -151,7 +156,6 @@ public class SysFeishuManager {
                 } catch (InterruptedException ignored) {
                 }
             }
-
             log.info("CRM客户联系时间提醒消息-飞书，内容【{}】，响应结果集【{}】", content,
                     CollUtil.join(respList, ","));
         });
@@ -177,6 +181,30 @@ public class SysFeishuManager {
         } catch (Exception ignored) {
         }
         return null;
+    }
+
+
+    public void getUserInfo() {
+        Client client = Client.newBuilder(appId, appSecret)
+                .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers,body 等信息。
+                .build();
+        try {
+            log.info("lalalalalalalalaalalalal");
+            GetUserResp resp = client.contact().user()
+                    .get(GetUserReq.newBuilder().userId("2a341556").userIdType("user_id").build());
+            // 处理服务端错误
+            if (!resp.success()) {
+                log.info(String.format("code:%s,msg:%s,reqId:%s"
+                        , resp.getCode(), resp.getMsg(), resp.getRequestId()));
+                return;
+            }
+            // 业务数据处理
+            System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
     }
 
 

@@ -10,6 +10,7 @@ import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO;
 import cn.klmb.crm.module.member.dao.instrument.CrmInstrumentMapper;
 import cn.klmb.crm.module.member.enums.DataTypeEnum;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,11 +22,14 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
 
     private final SysUserService sysUserService;
 
+    private final SysDeptService sysDeptService;
+
     private final CrmInstrumentMapper crmInstrumentMapper;
 
     public CrmInstrumentServiceImpl(SysUserService sysUserService,
-            CrmInstrumentMapper crmInstrumentMapper) {
+            SysDeptService sysDeptService, CrmInstrumentMapper crmInstrumentMapper) {
         this.sysUserService = sysUserService;
+        this.sysDeptService = sysDeptService;
         this.crmInstrumentMapper = crmInstrumentMapper;
     }
 
@@ -57,11 +61,11 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                 deptIdList.add(sysUserDO.getDeptId());
                 userIdList.addAll(sysUserService.queryUserByDeptIds(deptIdList));
             } else if (typeEnum == DataTypeEnum.DEPT_AND_CHILD) {
-                deptIdList.addAll(sysUserService.queryChildDept(sysUserDO.getDeptId()));
+                deptIdList.addAll(sysDeptService.queryChildDept(sysUserDO.getDeptId()));
                 deptIdList.add(sysUserDO.getDeptId());
                 userIdList.addAll(sysUserService.queryUserByDeptIds(deptIdList));
             } else {
-                deptIdList.addAll(sysUserService.queryChildDept("0"));
+                deptIdList.addAll(sysDeptService.queryChildDept("0"));
                 userIdList.addAll(sysUserService.queryUserByDeptIds(deptIdList));
             }
         } else {
@@ -76,7 +80,7 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                 if (userIds.size() == 0) {
                     if (StrUtil.equals(sysUserDO.getDeptId(), "0")) {
                         userIdList.addAll(sysUserService.queryUserByDeptIds(
-                                sysUserService.queryChildDept("0")));
+                                sysDeptService.queryChildDept("0")));
                     } else {
                         userIdList.addAll(sysUserService.queryChildUserId(
                                 WebFrameworkUtils.getLoginUserId()));
@@ -88,7 +92,7 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                     }
                 }
             } else if (0 == biParams.getIsUser() && biParams.getDeptId() != null) {
-                List<String> data = sysUserService.queryChildDept(biParams.getDeptId());
+                List<String> data = sysDeptService.queryChildDept(biParams.getDeptId());
                 data.add(biParams.getDeptId());
                 deptIdList.addAll(data);
                 userIdList.addAll(sysUserService.queryUserByDeptIds(deptIdList));
