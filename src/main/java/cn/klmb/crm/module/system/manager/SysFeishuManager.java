@@ -2,16 +2,28 @@ package cn.klmb.crm.module.system.manager;
 
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.util.RandomUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import cn.klmb.crm.framework.common.util.json.JsonUtils;
 import cn.klmb.crm.module.system.dto.feishu.FeishuAccessTokenDTO;
+import cn.klmb.crm.module.system.dto.feishu.FeishuMessageRemind;
+import cn.klmb.crm.module.system.dto.feishu.FeishuMessageRemind.Content;
 import cn.klmb.crm.module.system.dto.feishu.FeishuMinAppResultDTO;
 import cn.klmb.crm.module.system.dto.feishu.FeishuWebResultDTO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +45,9 @@ public class SysFeishuManager {
 
     @Value("${feishu.api.appSecret}")
     private String appSecret;
+
+    @Value("${feishu.api.secret}")
+    private String secret;
 
 
     public String getAccessToken() {
@@ -99,6 +114,69 @@ public class SysFeishuManager {
             throw exception(ErrorCodeConstants.WEB_AUTHEN_ACCESS_TOKEN);
         }
         return JsonUtils.parseObject(entries.get("data").toString(), FeishuWebResultDTO.class);
+    }
+
+
+    /**
+     * 发送CRM客户联系时间提醒的飞书通知（异步）
+     *
+     * @param content 消息内容 内容大小不能超过30KB，自动分段发送
+     */
+    public void sendMsg(String content) {
+        ThreadUtil.execAsync(() -> {
+            long timestamp = System.currentTimeMillis() / 1000;
+            String sign = this.genSign(timestamp);
+            if (StrUtil.isBlank(sign)) {
+                log.error("CRM客户联系时间提醒消息-飞书，签名生成错误！");
+                return;
+            }
+            String msgCode = RandomUtil.randomNumbers(6);
+            String[] contentArray = StrUtil.split(content, 30000);
+            List<String> respList = new ArrayList<>();
+            for (int i = 0; i < contentArray.length; i++) {
+                String c = contentArray[i];
+                if (contentArray.length > 1) {
+                    c = "[" + msgCode + "-" + i + "]\n" + c;
+                }
+                FeishuMessageRemind reqFeishu = FeishuMessageRemind.builder()
+                        .content(new Content(c))
+                        .sign(sign)
+                        .timestamp(timestamp)
+                        .build();
+                respList.add(HttpUtil.post(
+                        endpoint + "/bot/v2/hook/ae635f1a-ae69-4785-9e5e-2ebdae33809d",
+                        JSONUtil.toJsonStr(reqFeishu), 5000));
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException ignored) {
+                }
+            }
+
+            log.info("CRM客户联系时间提醒消息-飞书，内容【{}】，响应结果集【{}】", content,
+                    CollUtil.join(respList, ","));
+        });
+    }
+
+    /**
+     * 生成签名 设定后，发送的请求是需要签名验证来保障来源可信。 签名的算法：把 timestamp + "\n" + 密钥 当做签名字符串，使用 HmacSHA256 算法计算签名，再进行
+     * Base64 编码。
+     *
+     * @param timestamp 秒
+     * @return 签名
+     */
+    private String genSign(long timestamp) {
+        try {
+            //把timestamp+"\n"+密钥当做签名字符串
+            String stringToSign = timestamp + "\n" + secret;
+            //使用HmacSHA256算法计算签名
+            Mac mac = Mac.getInstance("HmacSHA256");
+            mac.init(
+                    new SecretKeySpec(stringToSign.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
+            byte[] signData = mac.doFinal(new byte[]{});
+            return new String(Base64.encodeBase64(signData));
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
 
