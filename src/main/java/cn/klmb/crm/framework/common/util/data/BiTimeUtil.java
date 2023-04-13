@@ -158,36 +158,50 @@ public class BiTimeUtil {
                 case "nextMonth":
                     beginDate = DateUtil.beginOfMonth(DateUtil.date().offset(DateField.MONTH, 1));
                     endDate = DateUtil.beginOfMonth(DateUtil.date().offset(DateField.MONTH, 1));
+                    sqlDateFormat = "%Y%m%d";
+                    dateFormat = "yyyyMMdd";
                     break;
                 case "nextWeek":
                     beginDate = DateUtil.beginOfWeek(
                             DateUtil.date().offset(DateField.DAY_OF_YEAR, 7));
                     endDate = DateUtil.endOfWeek(DateUtil.date().offset(DateField.DAY_OF_YEAR, 7));
+                    sqlDateFormat = "%Y%m%d";
+                    dateFormat = "yyyyMMdd";
                     break;
                 case "tomorrow":
                     beginDate = DateUtil.beginOfDay(
                             DateUtil.date().offset(DateField.DAY_OF_YEAR, 1));
                     endDate = DateUtil.endOfDay(DateUtil.date().offset(DateField.DAY_OF_YEAR, 1));
+                    sqlDateFormat = "%Y%m%d";
+                    dateFormat = "yyyyMMdd";
                     break;
                 case "previous7day":
                     beginDate = DateUtil.beginOfDay(
                             DateUtil.date().offset(DateField.DAY_OF_YEAR, -7));
                     endDate = DateUtil.endOfDay(DateUtil.date().offset(DateField.DAY_OF_YEAR, -1));
+                    sqlDateFormat = "%Y%m%d";
+                    dateFormat = "yyyyMMdd";
                     break;
                 case "previous30day":
                     beginDate = DateUtil.beginOfDay(
                             DateUtil.date().offset(DateField.DAY_OF_YEAR, -30));
                     endDate = DateUtil.endOfDay(DateUtil.date().offset(DateField.DAY_OF_YEAR, -1));
+                    sqlDateFormat = "%Y%m%d";
+                    dateFormat = "yyyyMMdd";
                     break;
                 case "future7day":
                     beginDate = DateUtil.beginOfDay(
                             DateUtil.date().offset(DateField.DAY_OF_YEAR, 1));
                     endDate = DateUtil.endOfDay(DateUtil.date().offset(DateField.DAY_OF_YEAR, 7));
+                    sqlDateFormat = "%Y%m%d";
+                    dateFormat = "yyyyMMdd";
                     break;
                 case "future30day":
                     beginDate = DateUtil.beginOfDay(
                             DateUtil.date().offset(DateField.DAY_OF_YEAR, 1));
                     endDate = DateUtil.endOfDay(DateUtil.date().offset(DateField.DAY_OF_YEAR, 30));
+                    sqlDateFormat = "%Y%m%d";
+                    dateFormat = "yyyyMMdd";
                     break;
                 default:
                     break;
