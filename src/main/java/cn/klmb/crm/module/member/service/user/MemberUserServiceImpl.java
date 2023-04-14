@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -154,9 +155,22 @@ public class MemberUserServiceImpl extends
                 List<String> customerIds = memberUserStarDOS.stream()
                         .map(MemberUserStarDO::getCustomerId)
                         .collect(Collectors.toList());
-                queryDTO.setBizIds(customerIds);
-                KlmbPage<MemberUserDO> page = super.page(queryDTO, klmbPage);
-                return page;
+                //查询 公海中是否存在这些客户,如果存在剔除掉该客户
+                List<MemberUserPoolRelationDO> relationDOS = relationService.list(
+                        new LambdaQueryWrapper<MemberUserPoolRelationDO>().in(
+                                        MemberUserPoolRelationDO::getCustomerId, customerIds)
+                                .eq(MemberUserPoolRelationDO::getDeleted, false));
+                if(CollUtil.isNotEmpty(relationDOS)){
+                    List<String> collect = relationDOS.stream()
+                            .map(MemberUserPoolRelationDO::getCustomerId).collect(
+                                    Collectors.toList());
+                    customerIds = CollUtil.subtractToList(customerIds, collect);
+                }
+                if(CollUtil.isNotEmpty(customerIds)){
+                    queryDTO.setBizIds(customerIds);
+                    KlmbPage<MemberUserDO> page = super.page(queryDTO, klmbPage);
+                    return page;
+                }
             } else {
                 klmbPage.setContent(Collections.EMPTY_LIST);
                 return klmbPage;
