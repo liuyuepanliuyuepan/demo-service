@@ -421,6 +421,17 @@ public class XxlJobApiUtils {
                         xxlJobChangeTaskDTO.getMessageType(),
                         xxlJobChangeTaskDTO.getNextTime().format(
                                 DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
+                //删除掉已经在xxl-job 中存在的任务
+                List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
+                if (CollUtil.isNotEmpty(data)) {
+                    for (XxlJobInfo datum : data) {
+                        List<String> split = StrUtil.split(datum.getExecutorParam(),
+                                CharUtil.COMMA);
+                        if (CollUtil.contains(split, xxlJobChangeTaskDTO.getOwnerUserId())) {
+                            deleteTask(datum.getId());
+                        }
+                    }
+                }
                 return;
             }
             SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
