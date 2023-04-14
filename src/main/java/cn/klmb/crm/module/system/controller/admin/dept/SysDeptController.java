@@ -121,6 +121,16 @@ public class SysDeptController {
         return success(SysDeptConvert.INSTANCE.convert01(list));
     }
 
+
+    @GetMapping(value = "/query-child-dept/{deptId}")
+    @ApiOperation(value = "查询部门下属部门")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "deptId", value = "部门id", dataTypeClass = String.class, paramType = "path")})
+    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    public CommonResult<List<String>> queryChildDept(@PathVariable String deptId) {
+        return success(sysDeptService.queryChildDept(deptId));
+    }
+
 //    @GetMapping({"/tree"})
 //    @ApiOperation(value = "部门树")
 //    @PreAuthorize("@ss.hasPermission('system:dept:query')")

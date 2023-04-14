@@ -83,7 +83,8 @@ public class SysFeishuManager {
         if (Integer.parseInt(entries.get("code").toString()) != 0) {
             throw exception(ErrorCodeConstants.MIN_APP_TOKEN_LOGIN_VALIDATE);
         }
-        return JsonUtils.parseObject(entries.get("data").toString(), FeishuMinAppResultDTO.class);
+        return JSONUtil.toBean(entries.get("data").toString(),
+                FeishuMinAppResultDTO.class);
     }
 
 
@@ -109,7 +110,8 @@ public class SysFeishuManager {
         if (Integer.parseInt(entries.get("code").toString()) != 0) {
             throw exception(ErrorCodeConstants.WEB_AUTHEN_ACCESS_TOKEN);
         }
-        return JsonUtils.parseObject(entries.get("data").toString(), FeishuWebResultDTO.class);
+        return JSONUtil.toBean(entries.get("data").toString(),
+                FeishuWebResultDTO.class);
     }
 
 
