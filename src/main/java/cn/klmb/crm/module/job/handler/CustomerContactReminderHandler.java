@@ -11,6 +11,7 @@ import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.system.entity.notify.SysNotifyMessageDO;
+import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import cn.klmb.crm.module.system.service.notify.SysNotifyMessageService;
@@ -99,13 +100,9 @@ public class CustomerContactReminderHandler {
                 webSocketServer.sendOneMessage(userId,
                         JSONUtil.toJsonStr(JSONUtil.parse(sysNotifyMessageDO)));
 
-//                SysUserDO sysUserDO = sysUserService.getByBizId(userId);
-//                String fsUserId = sysUserDO.getFsUserId();
-                sysFeishuManager.sendMsg(
-                        StrUtil.format("CRM-【{}】【{}】下次联系时间【{}】", map.get("contractType"),
-                                map.get("name"),
-                                map.get("nextTime")));
-
+                SysUserDO sysUserDO = sysUserService.getByBizId(userId);
+                String fsUserId = sysUserDO.getFsUserId();
+                sysFeishuManager.sendMsg(fsUserId, sysNotifyMessageDO.getTemplateContent());
                 // 任务执行结束后销毁
                 //  xxlJobApiUtils.deleteTask(XxlJobHelper.getJobId());
             }

@@ -2,8 +2,7 @@ package cn.klmb.crm.module.system.manager;
 
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.thread.ThreadUtil;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.http.HttpUtil;
@@ -17,18 +16,17 @@ import cn.klmb.crm.module.system.dto.feishu.FeishuMinAppResultDTO;
 import cn.klmb.crm.module.system.dto.feishu.FeishuWebResultDTO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import com.lark.oapi.Client;
-import com.lark.oapi.core.utils.Jsons;
 import com.lark.oapi.service.contact.v3.model.GetUserReq;
 import com.lark.oapi.service.contact.v3.model.GetUserResp;
+import com.lark.oapi.service.contact.v3.model.User;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -68,7 +66,7 @@ public class SysFeishuManager {
         if (Integer.parseInt(entries.get("code").toString()) != 0) {
             throw exception(ErrorCodeConstants.TENANT_ACCESS_TOKEN_ERROR);
         }
-        return entries.get("tenant_access_token").toString();
+        return "Bearer " + entries.get("tenant_access_token").toString();
     }
 
     /**
@@ -81,7 +79,7 @@ public class SysFeishuManager {
         String accessToken = getAccessToken();
         HashMap<String, String> headers = new HashMap<>(1);
         headers.put("Content-Type", "application/json; charset=UTF-8");
-        headers.put("Authorization", "Bearer " + accessToken);
+        headers.put("Authorization", accessToken);
         JSONObject jsonObject = new JSONObject();
         jsonObject.set("code", code);
         String result = HttpUtil.createPost(endpoint + "/mina/v2/tokenLoginValidate")
@@ -106,7 +104,7 @@ public class SysFeishuManager {
         String accessToken = getAccessToken();
         HashMap<String, String> headers = new HashMap<>(1);
         headers.put("Content-Type", "application/json; charset=UTF-8");
-        headers.put("Authorization", "Bearer " + accessToken);
+        headers.put("Authorization", accessToken);
         JSONObject jsonObject = new JSONObject();
         jsonObject.set("code", code);
         jsonObject.set("grant_type", "authorization_code");
@@ -119,46 +117,6 @@ public class SysFeishuManager {
             throw exception(ErrorCodeConstants.WEB_AUTHEN_ACCESS_TOKEN);
         }
         return JsonUtils.parseObject(entries.get("data").toString(), FeishuWebResultDTO.class);
-    }
-
-
-    /**
-     * 发送CRM客户联系时间提醒的飞书通知（异步）
-     *
-     * @param content 消息内容 内容大小不能超过30KB，自动分段发送
-     */
-    public void sendMsg(String content) {
-        ThreadUtil.execAsync(() -> {
-            long timestamp = System.currentTimeMillis() / 1000;
-            String sign = this.genSign(timestamp);
-            if (StrUtil.isBlank(sign)) {
-                log.error("CRM客户联系时间提醒消息-飞书，签名生成错误！");
-                return;
-            }
-            String msgCode = RandomUtil.randomNumbers(6);
-            String[] contentArray = StrUtil.split(content, 30000);
-            List<String> respList = new ArrayList<>();
-            for (int i = 0; i < contentArray.length; i++) {
-                String c = contentArray[i];
-                if (contentArray.length > 1) {
-                    c = "[" + msgCode + "-" + i + "]\n" + c;
-                }
-                FeishuMessageRemind reqFeishu = FeishuMessageRemind.builder()
-                        .content(new Content(c))
-                        .sign(sign)
-                        .timestamp(timestamp)
-                        .build();
-                respList.add(HttpUtil.post(
-                        endpoint + "/bot/v2/hook/ae635f1a-ae69-4785-9e5e-2ebdae33809d",
-                        JSONUtil.toJsonStr(reqFeishu), 5000));
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException ignored) {
-                }
-            }
-            log.info("CRM客户联系时间提醒消息-飞书，内容【{}】，响应结果集【{}】", content,
-                    CollUtil.join(respList, ","));
-        });
     }
 
     /**
@@ -184,27 +142,67 @@ public class SysFeishuManager {
     }
 
 
-    public void getUserInfo() {
-        Client client = Client.newBuilder(appId, appSecret)
-                .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
-                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers,body 等信息。
-                .build();
+    /**
+     * 根据飞书用户id查询飞书用户信息
+     *
+     * @param userId
+     * @return
+     */
+    public User getUserInfo(String userId) {
         try {
-            log.info("lalalalalalalalaalalalal");
+            Client client = Client.newBuilder(appId, appSecret)
+                    .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+                    .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers,body 等信息。
+                    .build();
             GetUserResp resp = client.contact().user()
-                    .get(GetUserReq.newBuilder().userId("2a341556").userIdType("user_id").build());
+                    .get(GetUserReq.newBuilder().userId(userId).userIdType("user_id").build());
             // 处理服务端错误
             if (!resp.success()) {
                 log.info(String.format("code:%s,msg:%s,reqId:%s"
                         , resp.getCode(), resp.getMsg(), resp.getRequestId()));
-                return;
+                throw exception(ErrorCodeConstants.FEISHU_USER_NOT_EXISTS);
             }
             // 业务数据处理
-            System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+            return resp.getData().getUser();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
+    }
+
+    /**
+     * 发送CRM客户联系时间提醒的飞书通知（异步）
+     */
+    public void sendMsg(String userId, String content) {
+        try {
+            User userInfo = getUserInfo(userId);
+            String msgCode = RandomUtil.randomNumbers(6);
+            String[] contentArray = StrUtil.split(content, 30000);
+            HashMap<String, String> headers = new HashMap<>(1);
+            headers.put("Content-Type", "application/json; charset=UTF-8");
+            headers.put("Authorization", getAccessToken());
+            for (int i = 0; i < contentArray.length; i++) {
+                String c = contentArray[i];
+                if (contentArray.length > 1) {
+                    c = "[" + msgCode + "-" + i + "]\n" + c;
+                }
+                FeishuMessageRemind reqFeishu = FeishuMessageRemind.builder()
+                        .content(
+                                StringEscapeUtils.unescapeJson(JSONUtil.toJsonStr(new Content(c))))
+                        .receive_id(userInfo.getOpenId())
+                        .uuid(UUID.randomUUID().toString())
+                        .build();
+                log.info("CRM-飞书机器人入参【{}】", JSONUtil.toJsonStr(reqFeishu));
+                String result = HttpUtil.createPost(
+                                endpoint + "/im/v1/messages" + "?receive_id_type=open_id")
+                        .addHeaders(headers)
+                        .body(JSONUtil.toJsonStr(reqFeishu)).execute().charset("utf-8").body();
+                log.info("CRM-飞书机器人返回结果【{}】", result);
+            }
+
+        } catch (Exception e) {
+            throw exception(ErrorCodeConstants.FEISHU_BOT_SEND_MSG_ERROR, e.getMessage());
+        }
     }
 
 

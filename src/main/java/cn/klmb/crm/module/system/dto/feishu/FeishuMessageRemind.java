@@ -24,19 +24,21 @@ public class FeishuMessageRemind {
     private String msg_type = "text";
 
     /**
-     * timestamp为距当前时间不超过 1 小时(3600)的时间戳，时间单位s，如：1599360473
-     */
-    private Long timestamp;
-
-    /**
-     * 签名的算法：把 timestamp + "\n" + 密钥 当做签名字符串，使用 HmacSHA256 算法计算签名，再进行 Base64 编码。
-     */
-    private String sign;
-
-    /**
      * 文本
      */
-    private Content content;
+    private String content;
+
+    /**
+     * 消息接收者的ID，ID类型应与查询参数receive_id_type 对应；推荐使用 OpenID
+     */
+    private String receive_id;
+
+
+    /**
+     * 由开发者生成的唯一字符串序列，用于发送消息请求去重；持有相同uuid的请求1小时内至多成功发送一条消息
+     */
+    private String uuid;
+
 
     @NoArgsConstructor
     @AllArgsConstructor

@@ -20,10 +20,13 @@ import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.mq.message.WebSocketServer;
 import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.notify.SysNotifyMessageDO;
+import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
+import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.notify.SysNotifyMessageService;
 import cn.klmb.crm.module.system.service.notify.SysNotifySendService;
+import cn.klmb.crm.module.system.service.user.SysUserService;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -69,14 +72,21 @@ public class XxlJobApiUtils {
 
     private final SysNotifySendService sysNotifySendService;
 
+    private final SysUserService sysUserService;
+
+    private final SysFeishuManager sysFeishuManager;
+
 
     public XxlJobApiUtils(WebSocketServer webSocketServer, SysConfigService sysConfigService,
             SysNotifyMessageService sysNotifyMessageService,
-            SysNotifySendService sysNotifySendService) {
+            SysNotifySendService sysNotifySendService, SysUserService sysUserService,
+            SysFeishuManager sysFeishuManager) {
         this.webSocketServer = webSocketServer;
         this.sysConfigService = sysConfigService;
         this.sysNotifyMessageService = sysNotifyMessageService;
         this.sysNotifySendService = sysNotifySendService;
+        this.sysUserService = sysUserService;
+        this.sysFeishuManager = sysFeishuManager;
     }
 
 
@@ -494,6 +504,9 @@ public class XxlJobApiUtils {
                 bizId);
         webSocketServer.sendOneMessage(ownerUserId,
                 JSONUtil.toJsonStr(JSONUtil.parse(sysNotifyMessageDO)));
+        SysUserDO sysUserDO = sysUserService.getByBizId(ownerUserId);
+        String fsUserId = sysUserDO.getFsUserId();
+        sysFeishuManager.sendMsg(fsUserId, sysNotifyMessageDO.getTemplateContent());
 
     }
 }

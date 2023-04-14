@@ -221,11 +221,15 @@ public interface ErrorCodeConstants {
     ErrorCode NOTIFY_TEMPLATE_CODE_DUPLICATE = new ErrorCode(1002026001, "已经存在编码为【{}】的站内信模板");
     ErrorCode NOTIFY_SEND_TEMPLATE_PARAM_MISS = new ErrorCode(1002025000, "模板参数({})缺失");
 
-    // ========== 飞书 授权 1002023000 =========
+    // ========== 飞书1002023000 =========
     ErrorCode TENANT_ACCESS_TOKEN_ERROR = new ErrorCode(1002026000,
             "飞书自建应用获取tenant_access_token失败");
     ErrorCode MIN_APP_TOKEN_LOGIN_VALIDATE = new ErrorCode(1002026001, "飞书小程序自建应用的登录获取用户身份失败");
     ErrorCode WEB_AUTHEN_ACCESS_TOKEN = new ErrorCode(1002026002, "飞书网页登录获取用户身份失败");
+
+    ErrorCode FEISHU_USER_NOT_EXISTS = new ErrorCode(1002026003, "飞书用户不存在!");
+
+    ErrorCode FEISHU_BOT_SEND_MSG_ERROR = new ErrorCode(1002026004, "飞书机器人发送消息失败,错误消息为【{}】!");
 
 
 }
