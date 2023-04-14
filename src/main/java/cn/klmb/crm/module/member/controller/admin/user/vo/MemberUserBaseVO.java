@@ -20,7 +20,7 @@ public class MemberUserBaseVO {
 
     @ApiModelProperty(value = "客户级别 1(重点客户)，2(普通用户)，3(非优先客户)", required = true)
     @NotNull(message = "客户级别 1(重点客户)，2(普通用户)，3(非优先客户)不能为空")
-    private Integer level;
+    private String level;
 
     @ApiModelProperty(value = "客户来源")
     private String source;

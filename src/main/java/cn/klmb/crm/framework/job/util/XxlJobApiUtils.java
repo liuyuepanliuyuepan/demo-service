@@ -520,5 +520,20 @@ public class XxlJobApiUtils {
         sysFeishuManager.sendMsg(fsUserId, sysNotifyMessageDO.getTemplateContent());
 
     }
+
+
+    public XxlJobTaskManagerInfo getTaskManagerInfo(XxlJobChangeTaskDTO xxlJobChangeTaskDTO) {
+        XxlJobGroup xxlJobGroup = new XxlJobGroup();
+        xxlJobGroup.setAppname(xxlJobChangeTaskDTO.getAppName());
+        xxlJobGroup.setTitle(xxlJobChangeTaskDTO.getTitle());
+        List<XxlJobGroup> xxlJobGroups = selectActuator(xxlJobGroup);
+        XxlJobInfo xxlJobInfo = new XxlJobInfo();
+        xxlJobInfo.setJobGroup(xxlJobGroups.get(0).getId());
+        xxlJobInfo.setExecutorHandler(xxlJobChangeTaskDTO.getExecutorHandler());
+        xxlJobInfo.setAuthor(xxlJobChangeTaskDTO.getAuthor());
+        XxlJobTaskManagerInfo xxlJobTaskManagerInfo = selectTask(xxlJobInfo);
+        return xxlJobTaskManagerInfo;
+
+    }
 }
 

@@ -29,7 +29,7 @@ public class MemberUserDO extends KlmbBaseDO {
     /**
      * 客户级别 1(重点客户)，2(普通用户)，3(非优先客户)
      */
-    private Integer level;
+    private String level;
     /**
      * 客户来源
      */

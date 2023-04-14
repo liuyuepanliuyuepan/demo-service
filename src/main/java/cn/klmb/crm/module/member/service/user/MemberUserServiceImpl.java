@@ -4,11 +4,14 @@ import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.e
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
+import cn.klmb.crm.framework.job.entity.XxlJobInfo;
+import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
@@ -42,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.checkerframework.checker.units.qual.C;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -334,8 +336,7 @@ public class MemberUserServiceImpl extends
             memberOwnerRecordDO.setType(CrmEnum.CUSTOMER_POOL.getType());
             memberOwnerRecordDO.setPreOwnerUserId(memberUserDO.getOwnerUserId());
             ownerRecordList.add(memberOwnerRecordDO);
-            lambdaUpdate()
-                    .set(MemberUserDO::getOwnerUserId, null)
+            lambdaUpdate().set(MemberUserDO::getOwnerUserId, null)
                     .set(MemberUserDO::getPreOwnerUserId, memberUserDO.getOwnerUserId())
                     .set(MemberUserDO::getPoolTime, LocalDateTime.now())
                     .set(MemberUserDO::getIsReceive, null)
@@ -344,6 +345,22 @@ public class MemberUserServiceImpl extends
             relation.setCustomerId(bizId);
             relation.setPoolId(poolBO.getPoolId());
             poolRelationList.add(relation);
+
+            //同时判断客户是否存在定时任务，如果存在删除该定时任务
+            XxlJobTaskManagerInfo xxlJobTaskManagerInfo = xxlJobApiUtils.getTaskManagerInfo(
+                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                            .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                            .build());
+            if (ObjectUtil.isNotNull(xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
+                    xxlJobTaskManagerInfo.getData())) {
+                List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
+                for (XxlJobInfo datum : data) {
+                    List<String> split = StrUtil.split(datum.getExecutorParam(), CharUtil.COMMA);
+                    if (CollUtil.contains(split, bizId)) {
+                        xxlJobApiUtils.deleteTask(datum.getId());
+                    }
+                }
+            }
         }
         if (ownerRecordList.size() > 0) {
             memberOwnerRecordService.saveBatchDO(ownerRecordList);
