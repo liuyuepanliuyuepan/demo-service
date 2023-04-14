@@ -119,9 +119,32 @@ public class MemberUserServiceImpl extends
         }
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
             childUserIds.add(userId);
-            queryDTO.setOwnerUserIds(childUserIds);
-            KlmbPage<MemberUserDO> page = super.page(queryDTO, klmbPage);
-            return page;
+            List<String> bizIds = new ArrayList<>();
+            //根据用户id集合查询用户id集合负责的客户信息
+            List<MemberUserDO> userDOList = super.list(
+                    new LambdaQueryWrapper<MemberUserDO>().in(MemberUserDO::getOwnerUserId,
+                            childUserIds).eq(MemberUserDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(userDOList)) {
+                bizIds = CollUtil.unionAll(userDOList.stream().map(MemberUserDO::getBizId)
+                        .collect(Collectors.toList()), bizIds);
+            }
+            //根据当前用户查询团队成员表中客户id,根据客户id查询客户负责人id
+            List<MemberTeamDO> memberTeamDOList = memberTeamService.list(
+                    new LambdaQueryWrapper<MemberTeamDO>().eq(MemberTeamDO::getUserId, userId)
+                            .eq(MemberTeamDO::getType, CrmEnum.CUSTOMER.getType())
+                            .eq(MemberTeamDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(memberTeamDOList)) {
+                bizIds = CollUtil.unionAll(memberTeamDOList.stream().map(MemberTeamDO::getTypeId)
+                        .collect(Collectors.toList()), bizIds);
+            }
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                return super.page(queryDTO, klmbPage);
+            } else {
+                klmbPage.setContent(Collections.EMPTY_LIST);
+                return klmbPage;
+            }
+
         }
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
             List<MemberUserStarDO> memberUserStarDOS = memberUserStarService.list(
