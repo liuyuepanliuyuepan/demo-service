@@ -5,12 +5,14 @@ import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityRespVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivitySaveReqVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityUpdateReqVO;
+import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamScrollPageReqVO;
 import cn.klmb.crm.module.member.convert.teamactivity.MemberTeamActivityConvert;
 import cn.klmb.crm.module.member.dto.teamactivity.MemberTeamActivityQueryDTO;
 import cn.klmb.crm.module.member.entity.teamactivity.MemberTeamActivityDO;
@@ -150,6 +152,27 @@ public class MemberTeamActivityController {
         return success(convert);
     }
 
+    @GetMapping({"/page-scroll"})
+    @ApiOperation(value = "滚动分页查询", notes = "只支持根据bizId顺序进行正、倒序查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
+            @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
+    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    public CommonResult<KlmbScrollPage<MemberTeamActivityRespVO>> pageScroll(
+            @Valid MemberTeamScrollPageReqVO reqVO) {
+        KlmbScrollPage<MemberTeamActivityDO> klmbPage = KlmbScrollPage.<MemberTeamActivityDO>builder()
+                .lastBizId(reqVO.getLastBizId())
+                .pageSize(reqVO.getPageSize())
+                .asc(reqVO.getAsc())
+                .build();
+        MemberTeamActivityQueryDTO queryDTO = MemberTeamActivityConvert.INSTANCE.convert(reqVO);
+        KlmbScrollPage<MemberTeamActivityDO> page = memberTeamActivityService.pageScroll(
+                queryDTO, klmbPage);
+        KlmbScrollPage<MemberTeamActivityRespVO> respPage = new KlmbScrollPage<>();
+        respPage = MemberTeamActivityConvert.INSTANCE.convert(page);
+        return success(respPage);
+    }
 
 
 }
