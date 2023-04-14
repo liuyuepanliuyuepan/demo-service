@@ -33,4 +33,24 @@ public class MemberTeamActivityRespVO extends MemberTeamActivityBaseVO {
     @ApiModelProperty(value = "文件详细信息")
     private List<SysFileDO> fileInfo;
 
+
+    /**
+     * 活动创建者id
+     */
+    @ApiModelProperty(value = "活动创建者id")
+    private String creator;
+
+    /**
+     * 活动创建者
+     */
+    @ApiModelProperty(value = "活动创建者")
+    private String creatorName;
+
+
+    /**
+     * 活动创建人头像地址
+     */
+    @ApiModelProperty(value = "活动创建人头像地址")
+    private String avatar;
+
 }

@@ -18,7 +18,9 @@ import cn.klmb.crm.module.member.dto.teamactivity.MemberTeamActivityQueryDTO;
 import cn.klmb.crm.module.member.entity.teamactivity.MemberTeamActivityDO;
 import cn.klmb.crm.module.member.service.teamactivity.MemberTeamActivityService;
 import cn.klmb.crm.module.system.entity.file.SysFileDO;
+import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.service.file.SysFileService;
+import cn.klmb.crm.module.system.service.user.SysUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -53,10 +55,13 @@ public class MemberTeamActivityController {
 
     private final SysFileService sysFileService;
 
+    private final SysUserService sysUserService;
+
     public MemberTeamActivityController(MemberTeamActivityService memberTeamActivityService,
-            SysFileService sysFileService) {
+            SysFileService sysFileService, SysUserService sysUserService) {
         this.memberTeamActivityService = memberTeamActivityService;
         this.sysFileService = sysFileService;
+        this.sysUserService = sysUserService;
     }
 
     @PostMapping(value = "/save")
@@ -144,6 +149,11 @@ public class MemberTeamActivityController {
                             List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(fileIds);
                             e.setFileInfo(sysFileDOS);
                         }
+                        SysUserDO sysUserDO = sysUserService.getByBizId(e.getCreator());
+                        if (ObjectUtil.isNotNull(sysUserDO)) {
+                            e.setCreatorName(sysUserDO.getNickname());
+                            e.setAvatar(sysUserDO.getAvatar());
+                        }
 
                     }
 
@@ -171,6 +181,29 @@ public class MemberTeamActivityController {
                 queryDTO, klmbPage);
         KlmbScrollPage<MemberTeamActivityRespVO> respPage = new KlmbScrollPage<>();
         respPage = MemberTeamActivityConvert.INSTANCE.convert(page);
+        if (ObjectUtil.isNotNull(respPage) && CollUtil.isNotEmpty(respPage.getContent())) {
+            List<MemberTeamActivityRespVO> content = respPage.getContent();
+            content.forEach(e -> {
+                        List<String> imgIds = e.getImgIds();
+                        List<String> fileIds = e.getFileIds();
+                        if (CollUtil.isNotEmpty(imgIds)) {
+                            List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(imgIds);
+                            e.setImgInfo(sysFileDOS);
+                        }
+                        if (CollUtil.isNotEmpty(fileIds)) {
+                            List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(fileIds);
+                            e.setFileInfo(sysFileDOS);
+                        }
+                        SysUserDO sysUserDO = sysUserService.getByBizId(e.getCreator());
+                        if (ObjectUtil.isNotNull(sysUserDO)) {
+                            e.setCreatorName(sysUserDO.getNickname());
+                            e.setAvatar(sysUserDO.getAvatar());
+                        }
+
+                    }
+
+            );
+        }
         return success(respPage);
     }
 
