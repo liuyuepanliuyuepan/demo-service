@@ -19,13 +19,9 @@ import com.lark.oapi.Client;
 import com.lark.oapi.service.contact.v3.model.GetUserReq;
 import com.lark.oapi.service.contact.v3.model.GetUserResp;
 import com.lark.oapi.service.contact.v3.model.User;
-import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -48,9 +44,6 @@ public class SysFeishuManager {
 
     @Value("${feishu.api.appSecret}")
     private String appSecret;
-
-    @Value("${feishu.api.secret}")
-    private String secret;
 
 
     public String getAccessToken() {
@@ -117,28 +110,6 @@ public class SysFeishuManager {
             throw exception(ErrorCodeConstants.WEB_AUTHEN_ACCESS_TOKEN);
         }
         return JsonUtils.parseObject(entries.get("data").toString(), FeishuWebResultDTO.class);
-    }
-
-    /**
-     * 生成签名 设定后，发送的请求是需要签名验证来保障来源可信。 签名的算法：把 timestamp + "\n" + 密钥 当做签名字符串，使用 HmacSHA256 算法计算签名，再进行
-     * Base64 编码。
-     *
-     * @param timestamp 秒
-     * @return 签名
-     */
-    private String genSign(long timestamp) {
-        try {
-            //把timestamp+"\n"+密钥当做签名字符串
-            String stringToSign = timestamp + "\n" + secret;
-            //使用HmacSHA256算法计算签名
-            Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(
-                    new SecretKeySpec(stringToSign.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));
-            byte[] signData = mac.doFinal(new byte[]{});
-            return new String(Base64.encodeBase64(signData));
-        } catch (Exception ignored) {
-        }
-        return null;
     }
 
 
