@@ -7,6 +7,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
@@ -18,6 +19,7 @@ import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserRespVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSaveReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserScrollPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserSimpleRespVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserUpdateReqVO;
 import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
@@ -41,8 +43,6 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -216,6 +216,48 @@ public class MemberUserController {
         return success(MemberUserConvert.INSTANCE.convert(page));
     }
 
+    @GetMapping({"/page-scroll"})
+    @ApiOperation(value = "滚动分页查询(客户)", notes = "只支持根据bizId顺序进行正、倒序查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
+            @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
+    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    public CommonResult<KlmbScrollPage<MemberUserRespVO>> pageScroll(
+            @Valid MemberUserScrollPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        reqVO.setUserId(userId);
+        KlmbScrollPage<MemberUserDO> page = memberUserService.pageScroll(reqVO);
+        KlmbScrollPage<MemberUserRespVO> respPage = new KlmbScrollPage<>();
+        respPage = MemberUserConvert.INSTANCE.convert(page);
+        List<MemberUserRespVO> content = respPage.getContent();
+        if (CollUtil.isNotEmpty(content)) {
+            content.forEach(e -> {
+                MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                        e.getContactsId());
+                if (ObjectUtil.isNotNull(memberContactsDO)) {
+                    e.setContactsName(memberContactsDO.getName());
+                    e.setContactsMobile(memberContactsDO.getMobile());
+                }
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+                List<MemberUserStarDO> starDOList = memberUserStarService.list(
+                        new LambdaQueryWrapper<MemberUserStarDO>().eq(
+                                        MemberUserStarDO::getCustomerId, e.getBizId())
+                                .eq(MemberUserStarDO::getUserId, userId)
+                                .eq(MemberUserStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(starDOList));
+            });
+        }
+        return success(respPage);
+    }
+
     @PostMapping("/star/{bizId}")
     @ApiOperation("客户标星")
     @PreAuthorize("@ss.hasPermission('member:user:post')")
@@ -331,8 +373,43 @@ public class MemberUserController {
         } else {
             klmbPage.setContent(Collections.EMPTY_LIST);
         }
-
         return success(MemberUserConvert.INSTANCE.convert(klmbPage));
+    }
+
+    @GetMapping({"/page-scroll-pool"})
+    @ApiOperation(value = "滚动分页查询(公海客户)", notes = "只支持根据bizId顺序进行正、倒序查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
+            @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
+    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    public CommonResult<KlmbScrollPage<MemberUserRespVO>> pageScrollPool(
+            @Valid MemberUserScrollPageReqVO reqVO) {
+        reqVO.setPoolId("0");
+        KlmbScrollPage<MemberUserDO> klmbPage = KlmbScrollPage.<MemberUserDO>builder()
+                .lastBizId(reqVO.getLastBizId())
+                .pageSize(reqVO.getPageSize())
+                .asc(reqVO.getAsc())
+                .build();
+        KlmbScrollPage<MemberUserRespVO> respPage = new KlmbScrollPage<>();
+        MemberUserQueryDTO convert = MemberUserConvert.INSTANCE.convert(reqVO);
+        List<MemberUserPoolRelationDO> relationDOS = relationService.list(
+                new LambdaQueryWrapper<MemberUserPoolRelationDO>().eq(
+                                MemberUserPoolRelationDO::getPoolId, reqVO.getPoolId())
+                        .eq(MemberUserPoolRelationDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(relationDOS)) {
+            convert.setBizIds(
+                    relationDOS.stream().map(MemberUserPoolRelationDO::getCustomerId).collect(
+                            Collectors.toList()));
+            KlmbScrollPage<MemberUserDO> page = memberUserService.pageScroll(
+                    convert, klmbPage);
+            respPage = new KlmbScrollPage<>();
+            respPage = MemberUserConvert.INSTANCE.convert(page);
+            return success(respPage);
+        } else {
+            respPage.setContent(Collections.EMPTY_LIST);
+        }
+        return success(respPage);
     }
 
 

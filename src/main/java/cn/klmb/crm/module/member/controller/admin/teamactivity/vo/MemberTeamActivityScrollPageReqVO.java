@@ -23,7 +23,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 @NoArgsConstructor
 @AllArgsConstructor
 @Data
-public class MemberTeamScrollPageReqVO extends PageScrollParam {
+public class MemberTeamActivityScrollPageReqVO extends PageScrollParam {
 
     @ApiModelProperty(value = "创建时间")
     @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND)

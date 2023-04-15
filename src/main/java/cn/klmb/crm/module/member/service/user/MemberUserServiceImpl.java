@@ -8,6 +8,7 @@ import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.entity.XxlJobInfo;
@@ -16,6 +17,7 @@ import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserScrollPageReqVO;
 import cn.klmb.crm.module.member.convert.user.MemberUserConvert;
 import cn.klmb.crm.module.member.dao.user.MemberUserMapper;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
@@ -174,16 +176,117 @@ public class MemberUserServiceImpl extends
                         new LambdaQueryWrapper<MemberUserPoolRelationDO>().in(
                                         MemberUserPoolRelationDO::getCustomerId, customerIds)
                                 .eq(MemberUserPoolRelationDO::getDeleted, false));
-                if(CollUtil.isNotEmpty(relationDOS)){
+                if (CollUtil.isNotEmpty(relationDOS)) {
                     List<String> collect = relationDOS.stream()
                             .map(MemberUserPoolRelationDO::getCustomerId).collect(
                                     Collectors.toList());
                     customerIds = CollUtil.subtractToList(customerIds, collect);
                 }
-                if(CollUtil.isNotEmpty(customerIds)){
+                if (CollUtil.isNotEmpty(customerIds)) {
                     queryDTO.setBizIds(customerIds);
                     KlmbPage<MemberUserDO> page = super.page(queryDTO, klmbPage);
                     return page;
+                }
+            } else {
+                klmbPage.setContent(Collections.EMPTY_LIST);
+                return klmbPage;
+            }
+        }
+        klmbPage.setContent(Collections.EMPTY_LIST);
+        return klmbPage;
+    }
+
+    @Override
+    public KlmbScrollPage<MemberUserDO> pageScroll(MemberUserScrollPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = reqVO.getUserId();
+        List<String> childUserIds = sysUserService.queryChildUserId(
+                userId);
+        KlmbScrollPage<MemberUserDO> klmbPage = KlmbScrollPage.<MemberUserDO>builder()
+                .lastBizId(reqVO.getLastBizId())
+                .pageSize(reqVO.getPageSize())
+                .asc(reqVO.getAsc())
+                .build();
+
+        MemberUserQueryDTO queryDTO = MemberUserConvert.INSTANCE.convert(reqVO);
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
+            if (CollUtil.isEmpty(childUserIds)) {
+                klmbPage.setContent(Collections.EMPTY_LIST);
+                return klmbPage;
+            } else {
+                queryDTO.setOwnerUserIds(childUserIds);
+                KlmbScrollPage<MemberUserDO> page = super.pageScroll(queryDTO, klmbPage);
+                return page;
+            }
+        }
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
+            queryDTO.setOwnerUserId(userId);
+            KlmbScrollPage<MemberUserDO> page = super.pageScroll(queryDTO, klmbPage);
+            return page;
+        }
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = new ArrayList<>();
+            //根据用户id集合查询用户id集合负责的客户信息
+            List<MemberUserDO> userDOList = super.list(
+                    new LambdaQueryWrapper<MemberUserDO>().in(MemberUserDO::getOwnerUserId,
+                            childUserIds).eq(MemberUserDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(userDOList)) {
+                bizIds = CollUtil.unionAll(userDOList.stream().map(MemberUserDO::getBizId)
+                        .collect(Collectors.toList()), bizIds);
+            }
+            //根据当前用户查询团队成员表中客户id,根据客户id查询客户负责人id
+            List<MemberTeamDO> memberTeamDOList = memberTeamService.list(
+                    new LambdaQueryWrapper<MemberTeamDO>().eq(MemberTeamDO::getUserId, userId)
+                            .eq(MemberTeamDO::getType, CrmEnum.CUSTOMER.getType())
+                            .eq(MemberTeamDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(memberTeamDOList)) {
+                bizIds = CollUtil.unionAll(memberTeamDOList.stream().map(MemberTeamDO::getTypeId)
+                        .collect(Collectors.toList()), bizIds);
+            }
+            if (CollUtil.isNotEmpty(bizIds)) {
+                //查询 公海中是否存在这些客户,如果存在剔除掉该客户
+                List<MemberUserPoolRelationDO> relationDOS = relationService.list(
+                        new LambdaQueryWrapper<MemberUserPoolRelationDO>().in(
+                                        MemberUserPoolRelationDO::getCustomerId, bizIds)
+                                .eq(MemberUserPoolRelationDO::getDeleted, false));
+                if (CollUtil.isNotEmpty(relationDOS)) {
+                    List<String> collect = relationDOS.stream()
+                            .map(MemberUserPoolRelationDO::getCustomerId)
+                            .collect(Collectors.toList());
+                    bizIds = CollUtil.subtractToList(bizIds, collect);
+                }
+                if (CollUtil.isNotEmpty(bizIds)) {
+                    queryDTO.setBizIds(bizIds);
+                    return super.pageScroll(queryDTO, klmbPage);
+                }
+            } else {
+                klmbPage.setContent(Collections.EMPTY_LIST);
+                return klmbPage;
+            }
+        }
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
+            List<MemberUserStarDO> memberUserStarDOS = memberUserStarService.list(
+                    new LambdaQueryWrapper<MemberUserStarDO>().eq(MemberUserStarDO::getUserId,
+                            userId).eq(MemberUserStarDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(memberUserStarDOS)) {
+                List<String> customerIds = memberUserStarDOS.stream()
+                        .map(MemberUserStarDO::getCustomerId)
+                        .collect(Collectors.toList());
+                //查询 公海中是否存在这些客户,如果存在剔除掉该客户
+                List<MemberUserPoolRelationDO> relationDOS = relationService.list(
+                        new LambdaQueryWrapper<MemberUserPoolRelationDO>().in(
+                                        MemberUserPoolRelationDO::getCustomerId, customerIds)
+                                .eq(MemberUserPoolRelationDO::getDeleted, false));
+                if (CollUtil.isNotEmpty(relationDOS)) {
+                    List<String> collect = relationDOS.stream()
+                            .map(MemberUserPoolRelationDO::getCustomerId).collect(
+                                    Collectors.toList());
+                    customerIds = CollUtil.subtractToList(customerIds, collect);
+                }
+                if (CollUtil.isNotEmpty(customerIds)) {
+                    queryDTO.setBizIds(customerIds);
+                    return super.pageScroll(queryDTO, klmbPage);
                 }
             } else {
                 klmbPage.setContent(Collections.EMPTY_LIST);

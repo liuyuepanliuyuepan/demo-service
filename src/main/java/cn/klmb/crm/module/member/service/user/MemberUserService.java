@@ -1,9 +1,11 @@
 package cn.klmb.crm.module.member.service.user;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserScrollPageReqVO;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import java.util.List;
@@ -24,6 +26,16 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      * @return 表单分页列表
      */
     KlmbPage<MemberUserDO> page(MemberUserPageReqVO reqVO);
+
+
+    /**
+     * 分页列表
+     *
+     * @param reqVO 查询条件
+     * @return 表单分页列表
+     */
+    KlmbScrollPage<MemberUserDO> pageScroll(MemberUserScrollPageReqVO reqVO);
+
 
     /**
      * 修改客户成交状态

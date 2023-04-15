@@ -11,8 +11,8 @@ import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityRespVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivitySaveReqVO;
+import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityScrollPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityUpdateReqVO;
-import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamScrollPageReqVO;
 import cn.klmb.crm.module.member.convert.teamactivity.MemberTeamActivityConvert;
 import cn.klmb.crm.module.member.dto.teamactivity.MemberTeamActivityQueryDTO;
 import cn.klmb.crm.module.member.entity.teamactivity.MemberTeamActivityDO;
@@ -168,9 +168,9 @@ public class MemberTeamActivityController {
             @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
             @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
             @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
-    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    @PreAuthorize("@ss.hasPermission('system:team-activity:query')")
     public CommonResult<KlmbScrollPage<MemberTeamActivityRespVO>> pageScroll(
-            @Valid MemberTeamScrollPageReqVO reqVO) {
+            @Valid MemberTeamActivityScrollPageReqVO reqVO) {
         KlmbScrollPage<MemberTeamActivityDO> klmbPage = KlmbScrollPage.<MemberTeamActivityDO>builder()
                 .lastBizId(reqVO.getLastBizId())
                 .pageSize(reqVO.getPageSize())

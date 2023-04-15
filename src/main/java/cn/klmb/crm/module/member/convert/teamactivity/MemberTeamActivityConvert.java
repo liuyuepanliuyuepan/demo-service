@@ -5,8 +5,8 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityRespVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivitySaveReqVO;
+import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityScrollPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityUpdateReqVO;
-import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamScrollPageReqVO;
 import cn.klmb.crm.module.member.dto.teamactivity.MemberTeamActivityQueryDTO;
 import cn.klmb.crm.module.member.entity.teamactivity.MemberTeamActivityDO;
 import java.util.List;
@@ -36,7 +36,7 @@ public interface MemberTeamActivityConvert {
     MemberTeamActivityQueryDTO convert(MemberTeamActivityPageReqVO reqVO);
 
 
-    MemberTeamActivityQueryDTO convert(MemberTeamScrollPageReqVO bean);
+    MemberTeamActivityQueryDTO convert(MemberTeamActivityScrollPageReqVO bean);
 
 
     KlmbScrollPage<MemberTeamActivityRespVO> convert(KlmbScrollPage<MemberTeamActivityDO> page);
