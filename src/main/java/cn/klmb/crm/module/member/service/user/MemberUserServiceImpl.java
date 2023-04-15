@@ -141,13 +141,25 @@ public class MemberUserServiceImpl extends
                         .collect(Collectors.toList()), bizIds);
             }
             if (CollUtil.isNotEmpty(bizIds)) {
-                queryDTO.setBizIds(bizIds);
-                return super.page(queryDTO, klmbPage);
+                //查询 公海中是否存在这些客户,如果存在剔除掉该客户
+                List<MemberUserPoolRelationDO> relationDOS = relationService.list(
+                        new LambdaQueryWrapper<MemberUserPoolRelationDO>().in(
+                                        MemberUserPoolRelationDO::getCustomerId, bizIds)
+                                .eq(MemberUserPoolRelationDO::getDeleted, false));
+                if (CollUtil.isNotEmpty(relationDOS)) {
+                    List<String> collect = relationDOS.stream()
+                            .map(MemberUserPoolRelationDO::getCustomerId)
+                            .collect(Collectors.toList());
+                    bizIds = CollUtil.subtractToList(bizIds, collect);
+                }
+                if (CollUtil.isNotEmpty(bizIds)) {
+                    queryDTO.setBizIds(bizIds);
+                    return super.page(queryDTO, klmbPage);
+                }
             } else {
                 klmbPage.setContent(Collections.EMPTY_LIST);
                 return klmbPage;
             }
-
         }
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
             List<MemberUserStarDO> memberUserStarDOS = memberUserStarService.list(
