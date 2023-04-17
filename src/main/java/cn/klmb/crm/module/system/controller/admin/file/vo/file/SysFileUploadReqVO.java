@@ -23,4 +23,7 @@ public class SysFileUploadReqVO {
     @ApiModelProperty(value = "文件附件", example = "klmb.png")
     private String path;
 
+    @ApiModelProperty(value = "资源名称")
+    private String resourceName;
+
 }

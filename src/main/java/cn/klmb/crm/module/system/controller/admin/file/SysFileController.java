@@ -3,6 +3,7 @@ package cn.klmb.crm.module.system.controller.admin.file;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
 import cn.hutool.core.io.IoUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.common.util.servlet.ServletUtils;
@@ -58,7 +59,9 @@ public class SysFileController {
     public CommonResult<SysFileRespVO> uploadFile(SysFileUploadReqVO uploadReqVO) throws Exception {
         MultipartFile file = uploadReqVO.getFile();
         String path = uploadReqVO.getPath();
-        SysFileDO sysFileDO = sysFileService.saveFile(file.getOriginalFilename(), path,
+        SysFileDO sysFileDO = sysFileService.saveFile(
+                StrUtil.isNotBlank(uploadReqVO.getResourceName()) ? uploadReqVO.getResourceName()
+                        : file.getOriginalFilename(), path,
                 IoUtil.readBytes(file.getInputStream()));
         return success(SysFileConvert.INSTANCE.convert(sysFileDO));
     }
