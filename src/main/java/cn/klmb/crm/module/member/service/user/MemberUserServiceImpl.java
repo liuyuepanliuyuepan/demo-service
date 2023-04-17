@@ -359,11 +359,11 @@ public class MemberUserServiceImpl extends
     }
 
     public static void main(String[] args) {
-        LocalDateTime start = LocalDateTimeUtil.parse("2020-02-02T01:00:00");
-        LocalDateTime end = LocalDateTimeUtil.parse("2020-03-01T00:30:00");
+        LocalDateTime start = LocalDateTimeUtil.parse("2020-04-17T11:21:00");
+        LocalDateTime end = LocalDateTimeUtil.parse("2020-04-17T13:00:00");
 
         Duration between = LocalDateTimeUtil.between(start, end);
-        long l = between.toHours();
+        long l = between.toMinutes();
         System.out.println(l);
         System.out.println(between.toMillis());
         System.out.println(between.toDays());

@@ -285,7 +285,7 @@ public class MemberUserController {
 
     @GetMapping("/getMembers/{customerId}")
     @ApiOperation("获取团队成员")
-    @PreAuthorize("@ss.hasPermission('member:user:get')")
+    @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<List<MembersTeamSelectVO>> getMembers(
             @PathVariable("customerId") @ApiParam("客户ID") String customerId) {
         CrmEnum crmEnum = CrmEnum.CUSTOMER;

@@ -416,7 +416,7 @@ public class XxlJobApiUtils {
                         cn.klmb.crm.module.member.enums.ErrorCodeConstants.USER_NEXT_TIME_ERROR);
             }
             if (LocalDateTimeUtil.between(LocalDateTime.now(), xxlJobChangeTaskDTO.getNextTime())
-                    .toHours() <= 1) {
+                    .toMinutes() <= 60L) {
                 sendMessage(xxlJobChangeTaskDTO.getName(), xxlJobChangeTaskDTO.getOwnerUserId(),
                         xxlJobChangeTaskDTO.getMessageType(),
                         xxlJobChangeTaskDTO.getNextTime().format(
