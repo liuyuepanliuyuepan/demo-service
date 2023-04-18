@@ -178,7 +178,15 @@ public class MemberUserController {
                         .eq(MemberUserStarDO::getUserId, userId)
                         .eq(MemberUserStarDO::getDeleted, false));
         saveDO.setStar(CollUtil.isNotEmpty(starDOList));
-        return success(MemberUserConvert.INSTANCE.convert(saveDO));
+        MemberUserRespVO convert = MemberUserConvert.INSTANCE.convert(saveDO);
+        if (ObjectUtil.isNotNull(convert)) {
+            List<MemberUserPoolRelationDO> list = relationService.list(
+                    new LambdaQueryWrapper<MemberUserPoolRelationDO>().eq(
+                                    MemberUserPoolRelationDO::getCustomerId, bizId)
+                            .eq(MemberUserPoolRelationDO::getDeleted, false));
+            convert.setExistPool(CollUtil.isNotEmpty(list));
+        }
+        return success(convert);
     }
 
     @GetMapping({"/page"})

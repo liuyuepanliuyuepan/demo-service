@@ -46,4 +46,10 @@ public class MemberUserRespVO extends MemberUserBaseVO {
     @ApiModelProperty(value = "是否标星")
     private Boolean star;
 
+    /**
+     * 是否在公海
+     */
+    @ApiModelProperty(value = "是否在公海")
+    private Boolean existPool;
+
 }
