@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.business.service.detail;
 
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
 import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 
@@ -13,4 +14,12 @@ import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 public interface BusinessDetailService extends
         KlmbBaseService<BusinessDetailDO, BusinessDetailQueryDTO> {
 
+
+    /**
+     * 新建商机
+     *
+     * @param saveReqVO
+     * @return
+     */
+    String saveBusiness(BusinessDetailSaveReqVO saveReqVO);
 }

@@ -52,12 +52,7 @@ public class BusinessDetailController {
     @ApiOperation(value = "新增")
     @PreAuthorize("@ss.hasPermission('business:detail:save')")
     public CommonResult<String> save(@Valid @RequestBody BusinessDetailSaveReqVO saveReqVO) {
-        BusinessDetailDO saveDO = BusinessDetailConvert.INSTANCE.convert(saveReqVO);
-        String bizId = "";
-        if (businessDetailService.saveDO(saveDO)) {
-            bizId = saveDO.getBizId();
-        }
-        return success(bizId);
+        return success(businessDetailService.saveBusiness(saveReqVO));
     }
 
     @DeleteMapping(value = "/delete/{bizId}")

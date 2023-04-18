@@ -1,8 +1,10 @@
 package cn.klmb.crm.module.business.controller.admin.detail.vo;
 
+import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailRespVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,5 +20,11 @@ public class BusinessDetailRespVO extends BusinessDetailBaseVO {
 
     @ApiModelProperty(value = "创建时间", required = true)
     private LocalDateTime createTime;
+
+    /**
+     * 产品 Response VO 集合
+     */
+    @ApiModelProperty(value = "产品ResponseVO集合")
+    private List<ProductDetailRespVO> productDetailRespVOList;
 
 }
