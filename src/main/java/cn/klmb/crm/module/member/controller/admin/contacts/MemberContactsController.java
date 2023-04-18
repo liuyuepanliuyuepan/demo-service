@@ -222,4 +222,46 @@ public class MemberContactsController {
     }
 
 
+    @GetMapping({"/list"})
+    @ApiOperation(value = "列表")
+    @PreAuthorize("@ss.hasPermission('member:user:query')")
+    public CommonResult<List<MemberContactsRespVO>> list(
+            @Valid MemberContactsPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
+        List<MemberContactsDO> entities = memberContactsService.list(queryDTO);
+        if (CollUtil.isNotEmpty(entities)) {
+            entities.forEach(e -> {
+                MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
+                if (ObjectUtil.isNotNull(memberUserDO)) {
+                    e.setCustomerName(memberUserDO.getName());
+                    e.setIsFirstContacts(
+                            StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                }
+                if (StrUtil.isNotBlank(e.getParentContactsId())) {
+                    MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                            e.getParentContactsId());
+                    e.setParentContactsName(memberContactsDO.getName());
+                }
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+                List<MemberContactsStarDO> starDOList = memberContactsStarService.list(
+                        new LambdaQueryWrapper<MemberContactsStarDO>().eq(
+                                        MemberContactsStarDO::getContactsId, e.getBizId())
+                                .eq(MemberContactsStarDO::getUserId, userId)
+                                .eq(MemberContactsStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(starDOList));
+
+            });
+        }
+        return success(MemberContactsConvert.INSTANCE.convert(entities));
+    }
+
+
 }
