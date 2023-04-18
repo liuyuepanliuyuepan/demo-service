@@ -57,10 +57,13 @@
         <if test="ownerUserId != null">
           and (owner_user_id = #{ownerUserId}
         </if>
-        or owner_user_id in
-        <foreach close=")" collection="userIds" index="index" item="userId" open="(" separator=",">
-          #{userId}
-        </foreach>
+        <if test="userIds !=null  and userIds.size > 0">
+          or owner_user_id in
+          <foreach close=")" collection="userIds" index="index" item="userId" open="("
+            separator=",">
+            #{userId}
+          </foreach>
+        </if>
         )
       </when>
       <when test="type == 9">
