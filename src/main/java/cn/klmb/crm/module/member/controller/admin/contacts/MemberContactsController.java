@@ -223,7 +223,7 @@ public class MemberContactsController {
 
 
     @GetMapping({"/list"})
-    @ApiOperation(value = "列表")
+    @ApiOperation(value = "列表", notes = "此接口仅适用根据customerId查询联系人信息")
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<List<MemberContactsRespVO>> list(
             @Valid MemberContactsPageReqVO reqVO) {
@@ -233,7 +233,10 @@ public class MemberContactsController {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
         MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
-        List<MemberContactsDO> entities = memberContactsService.list(queryDTO);
+        List<MemberContactsDO> entities = memberContactsService.list(
+                new LambdaQueryWrapper<MemberContactsDO>().eq(MemberContactsDO::getCustomerId,
+                                queryDTO.getCustomerId()).eq(MemberContactsDO::getDeleted, false)
+                        .orderByDesc(MemberContactsDO::getCreateTime));
         if (CollUtil.isNotEmpty(entities)) {
             entities.forEach(e -> {
                 MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
