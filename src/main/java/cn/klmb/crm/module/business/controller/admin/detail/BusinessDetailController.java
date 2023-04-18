@@ -1,10 +1,12 @@
 package cn.klmb.crm.module.business.controller.admin.detail;
 
+import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
-import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
+import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
@@ -13,6 +15,7 @@ import cn.klmb.crm.module.business.convert.detail.BusinessDetailConvert;
 import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
+import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -69,18 +72,17 @@ public class BusinessDetailController {
     @ApiOperation(value = "更新")
     @PreAuthorize("@ss.hasPermission('business:detail:update')")
     public CommonResult<Boolean> update(@Valid @RequestBody BusinessDetailUpdateReqVO updateReqVO) {
-        BusinessDetailDO updateDO = BusinessDetailConvert.INSTANCE.convert(updateReqVO);
-        businessDetailService.updateDO(updateDO);
+        businessDetailService.updateBusiness(updateReqVO);
         return success(true);
     }
 
-    @PutMapping("/update-status")
-    @ApiOperation("修改状态")
-    @PreAuthorize("@ss.hasPermission('business:detail:update')")
-    public CommonResult<Boolean> updateStatus(@Valid @RequestBody UpdateStatusReqVO reqVO) {
-        businessDetailService.updateStatus(reqVO.getBizId(), reqVO.getStatus());
-        return success(true);
-    }
+//    @PutMapping("/update-status")
+//    @ApiOperation("修改状态")
+//    @PreAuthorize("@ss.hasPermission('business:detail:update')")
+//    public CommonResult<Boolean> updateStatus(@Valid @RequestBody UpdateStatusReqVO reqVO) {
+//        businessDetailService.updateStatus(reqVO.getBizId(), reqVO.getStatus());
+//        return success(true);
+//    }
 
     @GetMapping(value = "/detail/{bizId}")
     @ApiOperation(value = "详情")
@@ -88,14 +90,19 @@ public class BusinessDetailController {
             @ApiImplicitParam(name = "bizId", value = "业务id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('business:detail:query')")
     public CommonResult<BusinessDetailRespVO> getByBizId(@PathVariable String bizId) {
-        BusinessDetailDO saveDO = businessDetailService.getByBizId(bizId);
-        return success(BusinessDetailConvert.INSTANCE.convert(saveDO));
+        BusinessDetailRespVO respVO = businessDetailService.getBusinessByBizId(bizId);
+        return success(respVO);
     }
 
     @GetMapping({"/page"})
     @ApiOperation(value = "分页查询")
     @PreAuthorize("@ss.hasPermission('business:detail:query')")
     public CommonResult<KlmbPage<BusinessDetailRespVO>> page(@Valid BusinessDetailPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
         KlmbPage<BusinessDetailDO> klmbPage = KlmbPage.<BusinessDetailDO>builder()
                 .pageNo(reqVO.getPageNo())
                 .pageSize(reqVO.getPageSize())

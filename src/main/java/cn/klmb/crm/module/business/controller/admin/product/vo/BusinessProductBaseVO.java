@@ -10,10 +10,10 @@ import lombok.Data;
 @Data
 public class BusinessProductBaseVO {
 
-    @ApiModelProperty(value = "商机ID", example = "6760")
+    @ApiModelProperty(value = "商机ID")
     private String businessId;
 
-    @ApiModelProperty(value = "产品ID", example = "24931")
+    @ApiModelProperty(value = "产品ID")
     private String productId;
 
     @ApiModelProperty(value = "产品单价")

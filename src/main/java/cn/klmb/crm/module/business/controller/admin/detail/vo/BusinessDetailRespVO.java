@@ -1,6 +1,6 @@
 package cn.klmb.crm.module.business.controller.admin.detail.vo;
 
-import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailRespVO;
+import cn.klmb.crm.module.business.controller.admin.product.vo.BusinessProductRespVO;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
@@ -22,9 +22,9 @@ public class BusinessDetailRespVO extends BusinessDetailBaseVO {
     private LocalDateTime createTime;
 
     /**
-     * 产品 Response VO 集合
+     * 商机产品关系集合
      */
-    @ApiModelProperty(value = "产品ResponseVO集合")
-    private List<ProductDetailRespVO> productDetailRespVOList;
+    @ApiModelProperty(value = "商机产品关系集合")
+    private List<BusinessProductRespVO> businessProductRespList;
 
 }

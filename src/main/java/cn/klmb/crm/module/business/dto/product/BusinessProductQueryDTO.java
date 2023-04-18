@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.business.dto.product;
 
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery;
+import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery.Operator;
 import cn.klmb.crm.framework.base.core.pojo.KlmbBaseQueryDTO;
 import java.math.BigDecimal;
 import lombok.Data;
@@ -23,7 +24,7 @@ public class BusinessProductQueryDTO extends KlmbBaseQueryDTO {
     /**
      * 商机ID
      */
-    @DtoFieldQuery
+    @DtoFieldQuery(queryType = Operator.IN)
     private String businessId;
     /**
      * 产品ID
