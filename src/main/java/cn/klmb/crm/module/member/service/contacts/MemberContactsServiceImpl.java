@@ -10,7 +10,9 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.entity.contacts.BusinessContactsDO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.service.contacts.BusinessContactsService;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
@@ -32,6 +34,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 
@@ -55,15 +58,19 @@ public class MemberContactsServiceImpl extends
 
     private final BusinessDetailService businessDetailService;
 
+    private final BusinessContactsService businessContactsService;
+
     public MemberContactsServiceImpl(MemberContactsMapper mapper, SysUserService sysUserService,
             MemberUserService memberUserService,
             MemberContactsStarService memberContactsStarService, XxlJobApiUtils xxlJobApiUtils,
-            BusinessDetailService businessDetailService) {
+            @Lazy BusinessDetailService businessDetailService,
+            BusinessContactsService businessContactsService) {
         this.sysUserService = sysUserService;
         this.memberUserService = memberUserService;
         this.memberContactsStarService = memberContactsStarService;
         this.xxlJobApiUtils = xxlJobApiUtils;
         this.businessDetailService = businessDetailService;
+        this.businessContactsService = businessContactsService;
         this.mapper = mapper;
     }
 
@@ -89,6 +96,11 @@ public class MemberContactsServiceImpl extends
             reqVO.setContactsId(bizId);
             reqVO.setCustomerId(entity.getCustomerId());
             this.setContacts(reqVO);
+        }
+        if (StrUtil.isNotBlank(businessId)) {
+            //保存商机和联系人的关系
+            businessContactsService.saveDO(
+                    BusinessContactsDO.builder().businessId(businessId).contactsId(bizId).build());
         }
         xxlJobApiUtils.changeTask(
                 XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")

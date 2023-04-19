@@ -14,6 +14,7 @@ import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPage
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpdateReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.CrmRelevanceBusinessBO;
 import cn.klmb.crm.module.business.controller.admin.product.vo.BusinessProductRespVO;
 import cn.klmb.crm.module.business.controller.admin.product.vo.BusinessProductSaveReqVO;
 import cn.klmb.crm.module.business.convert.detail.BusinessDetailConvert;
@@ -21,14 +22,24 @@ import cn.klmb.crm.module.business.convert.product.BusinessProductConvert;
 import cn.klmb.crm.module.business.dao.detail.BusinessDetailMapper;
 import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
 import cn.klmb.crm.module.business.dto.product.BusinessProductQueryDTO;
+import cn.klmb.crm.module.business.entity.contacts.BusinessContactsDO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.entity.product.BusinessProductDO;
 import cn.klmb.crm.module.business.entity.userstar.BusinessUserStarDO;
 import cn.klmb.crm.module.business.enums.BusinessStatusEnum;
+import cn.klmb.crm.module.business.service.contacts.BusinessContactsService;
 import cn.klmb.crm.module.business.service.product.BusinessProductService;
 import cn.klmb.crm.module.business.service.userstar.BusinessUserStarService;
+import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
+import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
+import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
+import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
+import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
+import cn.klmb.crm.module.member.entity.contactsstar.MemberContactsStarDO;
 import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
+import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
+import cn.klmb.crm.module.member.service.contactsstar.MemberContactsStarService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
@@ -41,7 +52,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 
@@ -67,16 +80,28 @@ public class BusinessDetailServiceImpl extends
 
     private final XxlJobApiUtils xxlJobApiUtils;
 
+    private final BusinessContactsService businessContactsService;
+
+    private final MemberContactsService memberContactsService;
+
+    private final MemberContactsStarService memberContactsStarService;
+
     public BusinessDetailServiceImpl(BusinessProductService businessProductService,
             BusinessDetailMapper mapper, SysUserService sysUserService,
             MemberTeamService memberTeamService, BusinessUserStarService businessUserStarService,
-            MemberUserService memberUserService, XxlJobApiUtils xxlJobApiUtils) {
+            MemberUserService memberUserService, XxlJobApiUtils xxlJobApiUtils,
+            BusinessContactsService businessContactsService,
+            MemberContactsService memberContactsService,
+            @Lazy MemberContactsStarService memberContactsStarService) {
         this.businessProductService = businessProductService;
         this.sysUserService = sysUserService;
         this.memberTeamService = memberTeamService;
         this.businessUserStarService = businessUserStarService;
         this.memberUserService = memberUserService;
         this.xxlJobApiUtils = xxlJobApiUtils;
+        this.businessContactsService = businessContactsService;
+        this.memberContactsService = memberContactsService;
+        this.memberContactsStarService = memberContactsStarService;
         this.mapper = mapper;
     }
 
@@ -350,6 +375,83 @@ public class BusinessDetailServiceImpl extends
         } else {
             businessUserStarService.removeById(star.getId());
         }
+    }
+
+    @Override
+    public void relateContacts(CrmRelevanceBusinessBO relevanceBusinessBO) {
+        relevanceBusinessBO.getContactsIds().forEach(id -> {
+            businessContactsService.saveDO(
+                    BusinessContactsDO.builder().businessId(relevanceBusinessBO.getBusinessId())
+                            .contactsId(id).build());
+        });
+    }
+
+    @Override
+    public void unrelateContacts(CrmRelevanceBusinessBO relevanceBusinessBO) {
+        BusinessDetailDO businessDetailDO = super.getByBizId(relevanceBusinessBO.getBusinessId());
+        relevanceBusinessBO.getContactsIds().forEach(r -> {
+            if (Objects.equals(r, businessDetailDO.getContactsId())) {
+                lambdaUpdate().set(BusinessDetailDO::getContactsId, null)
+                        .eq(BusinessDetailDO::getBizId, businessDetailDO.getBizId()).update();
+            }
+        });
+        LambdaQueryWrapper<BusinessContactsDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BusinessContactsDO::getBusinessId, relevanceBusinessBO.getBusinessId());
+        wrapper.in(BusinessContactsDO::getContactsId, relevanceBusinessBO.getContactsIds());
+        businessContactsService.remove(wrapper);
+    }
+
+    @Override
+    public KlmbPage<MemberContactsRespVO> pageContacts(MemberContactsPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
+        KlmbPage<MemberContactsDO> klmbPage = KlmbPage.<MemberContactsDO>builder()
+                .pageNo(reqVO.getPageNo()).pageSize(reqVO.getPageSize())
+                .sortingFields(reqVO.getSortingFields()).build();
+        //通过businessId来查询联系人
+        List<BusinessContactsDO> list = businessContactsService.list(
+                new LambdaQueryWrapper<BusinessContactsDO>().eq(BusinessContactsDO::getBusinessId,
+                        reqVO.getBusinessId()).eq(BusinessContactsDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(list)) {
+            List<String> collect = list.stream().map(BusinessContactsDO::getContactsId)
+                    .collect(Collectors.toList());
+            queryDTO.setBizIds(collect);
+
+            klmbPage = memberContactsService.page(queryDTO, klmbPage);
+            List<MemberContactsDO> content = klmbPage.getContent();
+            if (CollUtil.isNotEmpty(content)) {
+                content.forEach(e -> {
+                    MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
+                    if (ObjectUtil.isNotNull(memberUserDO)) {
+                        e.setCustomerName(memberUserDO.getName());
+                        e.setIsFirstContacts(
+                                StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                    }
+                    if (StrUtil.isNotBlank(e.getParentContactsId())) {
+                        MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                                e.getParentContactsId());
+                        e.setParentContactsName(memberContactsDO.getName());
+                    }
+                    SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                    if (ObjectUtil.isNotNull(sysUserDO)) {
+                        e.setOwnerUserName(sysUserDO.getNickname());
+                    }
+                    List<MemberContactsStarDO> starDOList = memberContactsStarService.list(
+                            new LambdaQueryWrapper<MemberContactsStarDO>().eq(
+                                            MemberContactsStarDO::getContactsId, e.getBizId())
+                                    .eq(MemberContactsStarDO::getUserId, userId)
+                                    .eq(MemberContactsStarDO::getDeleted, false));
+                    e.setStar(CollUtil.isNotEmpty(starDOList));
+
+                });
+            }
+        }
+
+        return MemberContactsConvert.INSTANCE.convert(klmbPage);
     }
 
 

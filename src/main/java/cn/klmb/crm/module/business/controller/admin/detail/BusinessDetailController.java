@@ -9,11 +9,15 @@ import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPage
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpdateReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.CrmRelevanceBusinessBO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.UpdateBusinessStatusReqVO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
+import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
+import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
+import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -51,10 +55,13 @@ public class BusinessDetailController {
 
     private final MemberTeamService memberTeamService;
 
+    private final MemberContactsService memberContactsService;
+
     public BusinessDetailController(BusinessDetailService businessDetailService,
-            MemberTeamService memberTeamService) {
+            MemberTeamService memberTeamService, MemberContactsService memberContactsService) {
         this.businessDetailService = businessDetailService;
         this.memberTeamService = memberTeamService;
+        this.memberContactsService = memberContactsService;
     }
 
     @PostMapping(value = "/save")
@@ -166,6 +173,33 @@ public class BusinessDetailController {
     public CommonResult<Boolean> star(@PathVariable("bizId") String bizId) {
         businessDetailService.star(bizId);
         return success(true);
+    }
+
+    @PostMapping("/relate-contacts")
+    @ApiOperation("商机关联联系人")
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> relateContacts(
+            @RequestBody CrmRelevanceBusinessBO relevanceBusinessBO) {
+        businessDetailService.relateContacts(relevanceBusinessBO);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/unrelate-contacts")
+    @ApiOperation("解除关联联系人")
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> unrelateContacts(
+            @RequestBody CrmRelevanceBusinessBO relevanceBusinessBO) {
+        businessDetailService.unrelateContacts(relevanceBusinessBO);
+        return CommonResult.success(true);
+    }
+
+
+    @GetMapping({"/page_contacts"})
+    @ApiOperation(value = "根据商机信息查询联系人分页")
+    @PreAuthorize("@ss.hasPermission('business:detail:query')")
+    public CommonResult<KlmbPage<MemberContactsRespVO>> pageContacts(
+            @Valid MemberContactsPageReqVO reqVO) {
+        return success(businessDetailService.pageContacts(reqVO));
     }
 
 

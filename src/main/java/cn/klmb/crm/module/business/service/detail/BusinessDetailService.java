@@ -6,8 +6,11 @@ import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPage
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpdateReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.CrmRelevanceBusinessBO;
 import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
+import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
 import java.util.List;
 
 
@@ -69,4 +72,29 @@ public interface BusinessDetailService extends
      * @param bizId
      */
     void star(String bizId);
+
+
+    /**
+     * 商机关联联系人
+     *
+     * @param relevanceBusinessBO 业务对象
+     */
+    void relateContacts(CrmRelevanceBusinessBO relevanceBusinessBO);
+
+
+    /**
+     * 商机解除+关联联系人
+     *
+     * @param relevanceBusinessBO 业务对象
+     */
+    void unrelateContacts(CrmRelevanceBusinessBO relevanceBusinessBO);
+
+
+    /**
+     * 分页列表
+     *
+     * @param reqVO 查询条件
+     * @return 表单分页列表
+     */
+    KlmbPage<MemberContactsRespVO> pageContacts(MemberContactsPageReqVO reqVO);
 }
