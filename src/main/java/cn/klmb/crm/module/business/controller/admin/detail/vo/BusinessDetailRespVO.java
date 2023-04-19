@@ -27,4 +27,24 @@ public class BusinessDetailRespVO extends BusinessDetailBaseVO {
     @ApiModelProperty(value = "商机产品关系集合")
     private List<BusinessProductRespVO> businessProductRespList;
 
+
+    /**
+     * 负责人
+     */
+    @ApiModelProperty(value = "负责人")
+    private String ownerUserName;
+
+
+    /**
+     * 是否标星
+     */
+    @ApiModelProperty(value = "是否标星")
+    private Boolean star;
+
+
+    /**
+     * 商机名称
+     */
+    @ApiModelProperty(value = "商机名称")
+    private String customerName;
 }

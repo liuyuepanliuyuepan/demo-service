@@ -26,7 +26,9 @@ import cn.klmb.crm.module.business.enums.BusinessStatusEnum;
 import cn.klmb.crm.module.business.service.product.BusinessProductService;
 import cn.klmb.crm.module.business.service.userstar.BusinessUserStarService;
 import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
+import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
+import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
@@ -58,13 +60,17 @@ public class BusinessDetailServiceImpl extends
 
     private final BusinessUserStarService businessUserStarService;
 
+    private final MemberUserService memberUserService;
+
     public BusinessDetailServiceImpl(BusinessProductService businessProductService,
             BusinessDetailMapper mapper, SysUserService sysUserService,
-            MemberTeamService memberTeamService, BusinessUserStarService businessUserStarService) {
+            MemberTeamService memberTeamService, BusinessUserStarService businessUserStarService,
+            MemberUserService memberUserService) {
         this.businessProductService = businessProductService;
         this.sysUserService = sysUserService;
         this.memberTeamService = memberTeamService;
         this.businessUserStarService = businessUserStarService;
+        this.memberUserService = memberUserService;
         this.mapper = mapper;
     }
 
@@ -84,7 +90,9 @@ public class BusinessDetailServiceImpl extends
         //获取商机产品关系集合
         List<BusinessProductSaveReqVO> businessProductSaveList = saveReqVO.getBusinessProductSaveList();
         if (CollUtil.isNotEmpty(businessProductSaveList)) {
+            String finalBizId = bizId;
             businessProductSaveList.forEach(e -> {
+                e.setBusinessId(finalBizId);
                 BusinessProductDO businessProductDO = BusinessProductConvert.INSTANCE.convert(e);
                 businessProductService.saveDO(businessProductDO);
             });
@@ -129,7 +137,33 @@ public class BusinessDetailServiceImpl extends
 
     @Override
     public BusinessDetailRespVO getBusinessByBizId(String bizId) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
         BusinessDetailDO businessDetailDO = super.getByBizId(bizId);
+        if (ObjectUtil.isNotNull(businessDetailDO)) {
+            if (StrUtil.isNotBlank(businessDetailDO.getCustomerId())) {
+                MemberUserDO memberUserDO = memberUserService.getByBizId(
+                        businessDetailDO.getCustomerId());
+                businessDetailDO.setCustomerName(
+                        ObjectUtil.isNotNull(memberUserDO) ? memberUserDO.getName() : null);
+            }
+            if (StrUtil.isNotBlank(businessDetailDO.getOwnerUserId())) {
+                SysUserDO sysUserDO = sysUserService.getByBizId(businessDetailDO.getOwnerUserId());
+                businessDetailDO.setOwnerUserName(
+                        ObjectUtil.isNotNull(sysUserDO) ? sysUserDO.getNickname() : null);
+            }
+
+            List<BusinessUserStarDO> businessUserStarDOS = businessUserStarService.list(
+                    new LambdaQueryWrapper<BusinessUserStarDO>().eq(
+                                    BusinessUserStarDO::getBusinessId, bizId)
+                            .eq(BusinessUserStarDO::getUserId, userId)
+                            .eq(BusinessUserStarDO::getDeleted, false));
+            businessDetailDO.setStar(CollUtil.isNotEmpty(businessUserStarDOS));
+
+        }
         BusinessDetailRespVO respVO = BusinessDetailConvert.INSTANCE.convert(businessDetailDO);
         List<BusinessProductRespVO> productRespList = Collections.emptyList();
         if (ObjectUtil.isNotNull(respVO)) {

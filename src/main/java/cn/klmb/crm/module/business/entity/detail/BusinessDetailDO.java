@@ -90,4 +90,9 @@ public class BusinessDetailDO extends KlmbBaseDO {
     @TableField(exist = false)
     private Boolean star;
 
+    /**
+     * 商机名称
+     */
+    private String customerName;
+
 }
