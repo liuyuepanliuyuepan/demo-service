@@ -120,7 +120,7 @@ public class SysNotifyMessageController {
             @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
             @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
             @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
-    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    @PreAuthorize("@ss.hasPermission('sys:notify-message:query')")
     public CommonResult<KlmbScrollPage<SysNotifyMessageRespVO>> pageScroll(
             @Valid SysNotifyMessageScrollPageReqVO reqVO) {
         KlmbScrollPage<SysNotifyMessageDO> klmbPage = KlmbScrollPage.<SysNotifyMessageDO>builder()

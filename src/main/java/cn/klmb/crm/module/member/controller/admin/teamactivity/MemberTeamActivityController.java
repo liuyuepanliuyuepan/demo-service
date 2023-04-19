@@ -168,7 +168,7 @@ public class MemberTeamActivityController {
             @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
             @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
             @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
-    @PreAuthorize("@ss.hasPermission('system:team-activity:query')")
+    @PreAuthorize("@ss.hasPermission('member:team-activity:query')")
     public CommonResult<KlmbScrollPage<MemberTeamActivityRespVO>> pageScroll(
             @Valid MemberTeamActivityScrollPageReqVO reqVO) {
         KlmbScrollPage<MemberTeamActivityDO> klmbPage = KlmbScrollPage.<MemberTeamActivityDO>builder()
