@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.business.entity.detail;
 
 import cn.klmb.crm.framework.base.core.entity.KlmbBaseDO;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -74,5 +75,19 @@ public class BusinessDetailDO extends KlmbBaseDO {
      * 最后跟进时间
      */
     private LocalDateTime lastTime;
+
+
+    /**
+     * 负责人
+     */
+    @TableField(exist = false)
+    private String ownerUserName;
+
+
+    /**
+     * 是否标星
+     */
+    @TableField(exist = false)
+    private Boolean star;
 
 }

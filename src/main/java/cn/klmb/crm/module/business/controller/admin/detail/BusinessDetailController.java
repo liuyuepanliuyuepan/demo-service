@@ -1,21 +1,17 @@
 package cn.klmb.crm.module.business.controller.admin.detail;
 
-import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
-import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
-import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpdateReqVO;
-import cn.klmb.crm.module.business.convert.detail.BusinessDetailConvert;
-import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.UpdateBusinessStatusReqVO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
-import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -98,18 +94,17 @@ public class BusinessDetailController {
     @ApiOperation(value = "分页查询")
     @PreAuthorize("@ss.hasPermission('business:detail:query')")
     public CommonResult<KlmbPage<BusinessDetailRespVO>> page(@Valid BusinessDetailPageReqVO reqVO) {
-        //获取当前用户id
-        String userId = WebFrameworkUtils.getLoginUserId();
-        if (StrUtil.isBlank(userId)) {
-            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
-        }
-        KlmbPage<BusinessDetailDO> klmbPage = KlmbPage.<BusinessDetailDO>builder()
-                .pageNo(reqVO.getPageNo())
-                .pageSize(reqVO.getPageSize())
-                .build();
-        BusinessDetailQueryDTO queryDTO = BusinessDetailConvert.INSTANCE.convert(reqVO);
-        KlmbPage<BusinessDetailDO> page = businessDetailService.page(queryDTO, klmbPage);
-        return success(BusinessDetailConvert.INSTANCE.convert(page));
+        return success(businessDetailService.page(reqVO));
     }
 
+    @PutMapping("/update-business-status")
+    @ApiOperation("修改商机阶段")
+    @PreAuthorize("@ss.hasPermission('business:detail:update')")
+    public CommonResult<Boolean> updateBusinessStatus(
+            @Valid @RequestBody UpdateBusinessStatusReqVO reqVO) {
+        businessDetailService.update(
+                new UpdateWrapper<BusinessDetailDO>().in("biz_id", reqVO.getBizIds())
+                        .set("status", reqVO.getBusinessStatus()));
+        return success(true);
+    }
 }
