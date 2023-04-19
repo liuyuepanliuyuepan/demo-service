@@ -7,6 +7,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
+import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
+import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
@@ -35,6 +37,7 @@ import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -62,15 +65,18 @@ public class BusinessDetailServiceImpl extends
 
     private final MemberUserService memberUserService;
 
+    private final XxlJobApiUtils xxlJobApiUtils;
+
     public BusinessDetailServiceImpl(BusinessProductService businessProductService,
             BusinessDetailMapper mapper, SysUserService sysUserService,
             MemberTeamService memberTeamService, BusinessUserStarService businessUserStarService,
-            MemberUserService memberUserService) {
+            MemberUserService memberUserService, XxlJobApiUtils xxlJobApiUtils) {
         this.businessProductService = businessProductService;
         this.sysUserService = sysUserService;
         this.memberTeamService = memberTeamService;
         this.businessUserStarService = businessUserStarService;
         this.memberUserService = memberUserService;
+        this.xxlJobApiUtils = xxlJobApiUtils;
         this.mapper = mapper;
     }
 
@@ -97,6 +103,15 @@ public class BusinessDetailServiceImpl extends
                 businessProductService.saveDO(businessProductDO);
             });
         }
+        xxlJobApiUtils.changeTask(
+                XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                        .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                        .ownerUserId(saveDO.getOwnerUserId())
+                        .bizId(bizId).nextTime(saveDO.getNextTime()).name(saveDO.getBusinessName())
+                        .operateType(1)
+                        .messageType(CrmEnum.BUSINESS.getRemarks())
+                        .contactsType(CrmEnum.BUSINESS.getType()).build());
+
         return bizId;
     }
 
@@ -112,10 +127,20 @@ public class BusinessDetailServiceImpl extends
         super.removeBatchByIds(entities);
         //同时删除商机产品关系集合
         businessProductService.removeBusinessProduct(bizIds);
+        bizIds.forEach(e -> {
+            xxlJobApiUtils.changeTask(
+                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                            .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                            .bizId(e).operateType(3)
+                            .messageType(CrmEnum.BUSINESS.getRemarks())
+                            .contactsType(CrmEnum.BUSINESS.getType()).build());
+        });
     }
 
     @Override
     public boolean updateBusiness(BusinessDetailUpdateReqVO updateReqVO) {
+        BusinessDetailDO businessDetailDO = super.getByBizId(updateReqVO.getBizId());
+        LocalDateTime nextTime = businessDetailDO.getNextTime();
         BusinessDetailDO updateDO = BusinessDetailConvert.INSTANCE.convert(updateReqVO);
         boolean success = super.updateDO(updateDO);
         if (success) {
@@ -131,7 +156,21 @@ public class BusinessDetailServiceImpl extends
                     businessProductService.saveDO(businessProductDO);
                 });
             }
+
+            if (!nextTime.isEqual(updateDO.getNextTime())) {
+                xxlJobApiUtils.changeTask(
+                        XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                .title("crm执行器")
+                                .executorHandler("customerContactReminderHandler")
+                                .author("liuyuepan")
+                                .ownerUserId(updateDO.getOwnerUserId())
+                                .bizId(updateDO.getBizId()).nextTime(updateDO.getNextTime())
+                                .name(updateDO.getBusinessName()).operateType(2)
+                                .messageType(CrmEnum.BUSINESS.getRemarks())
+                                .contactsType(CrmEnum.BUSINESS.getType()).build());
+            }
         }
+
         return success;
     }
 
@@ -280,13 +319,41 @@ public class BusinessDetailServiceImpl extends
                                 .eq(BusinessUserStarDO::getUserId, userId)
                                 .eq(BusinessUserStarDO::getDeleted, false));
                 e.setStar(CollUtil.isNotEmpty(businessUserStarDOS));
+
+                if (StrUtil.isNotBlank(e.getCustomerId())) {
+                    MemberUserDO memberUserDO = memberUserService.getByBizId(
+                            e.getCustomerId());
+                    e.setCustomerName(
+                            ObjectUtil.isNotNull(memberUserDO) ? memberUserDO.getName() : null);
+                }
             });
         }
         return BusinessDetailConvert.INSTANCE.convert(klmbPage);
     }
 
-    //获取当前用户下的全部商机bizId
+    @Override
+    public void star(String bizId) {
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        LambdaQueryWrapper<BusinessUserStarDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(BusinessUserStarDO::getBusinessId, bizId);
+        wrapper.eq(BusinessUserStarDO::getUserId, userId);
+        wrapper.eq(BusinessUserStarDO::getDeleted, false);
+        BusinessUserStarDO star = businessUserStarService.getOne(wrapper);
+        if (star == null) {
+            star = new BusinessUserStarDO();
+            star.setBusinessId(bizId);
+            star.setUserId(userId);
+            businessUserStarService.save(star);
+        } else {
+            businessUserStarService.removeById(star.getId());
+        }
+    }
 
+
+    //获取当前用户下的全部商机bizId
     private List<String> getALLBusiness(List<String> childUserIds, String userId) {
         List<String> bizIds = new ArrayList<>();
         //根据用户集合查询该用户们负责的商机

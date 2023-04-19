@@ -81,7 +81,7 @@ public class MemberContactsController {
     @PreAuthorize("@ss.hasPermission('member:contacts:save')")
     public CommonResult<String> save(@Valid @RequestBody MemberContactsSaveReqVO saveReqVO) {
         MemberContactsDO saveDO = MemberContactsConvert.INSTANCE.convert(saveReqVO);
-        return success(memberContactsService.saveContacts(saveDO));
+        return success(memberContactsService.saveContacts(saveReqVO.getBusinessId(), saveDO));
     }
 
     @DeleteMapping(value = "/delete/{bizId}")

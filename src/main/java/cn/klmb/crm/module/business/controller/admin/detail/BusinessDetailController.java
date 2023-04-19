@@ -4,6 +4,7 @@ import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDeleteReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
@@ -11,12 +12,17 @@ import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpda
 import cn.klmb.crm.module.business.controller.admin.detail.vo.UpdateBusinessStatusReqVO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
+import cn.klmb.crm.module.member.service.team.MemberTeamService;
+import cn.klmb.crm.module.system.enums.CrmEnum;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import java.util.Collections;
+import io.swagger.annotations.ApiParam;
+import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -43,8 +49,12 @@ public class BusinessDetailController {
 
     private final BusinessDetailService businessDetailService;
 
-    public BusinessDetailController(BusinessDetailService businessDetailService) {
+    private final MemberTeamService memberTeamService;
+
+    public BusinessDetailController(BusinessDetailService businessDetailService,
+            MemberTeamService memberTeamService) {
         this.businessDetailService = businessDetailService;
+        this.memberTeamService = memberTeamService;
     }
 
     @PostMapping(value = "/save")
@@ -54,13 +64,11 @@ public class BusinessDetailController {
         return success(businessDetailService.saveBusiness(saveReqVO));
     }
 
-    @DeleteMapping(value = "/delete/{bizId}")
-    @ApiOperation(value = "删除")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "bizId", value = "主键", dataTypeClass = String.class, paramType = "path")})
+    @DeleteMapping(value = "/batch-delete")
+    @ApiOperation(value = "批量删除")
     @PreAuthorize("@ss.hasPermission('business:detail:delete')")
-    public CommonResult<Boolean> deleteByBizId(@PathVariable String bizId) {
-        businessDetailService.removeByBizIds(Collections.singletonList(bizId));
+    public CommonResult<Boolean> deleteByBizId(@RequestBody BusinessDeleteReqVO reqVO) {
+        businessDetailService.removeByBizIds(reqVO.getBizIds());
         return success(true);
     }
 
@@ -107,4 +115,58 @@ public class BusinessDetailController {
                         .set("status", reqVO.getBusinessStatus()));
         return success(true);
     }
+
+    @GetMapping("/getMembers/{businessId}")
+    @ApiOperation("获取团队成员")
+    @PreAuthorize("@ss.hasPermission('business:detail:query')")
+    public CommonResult<List<MembersTeamSelectVO>> getMembers(
+            @PathVariable("businessId") @ApiParam("商机ID") String businessId) {
+        CrmEnum crmEnum = CrmEnum.BUSINESS;
+        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, businessId);
+        return CommonResult.success(members);
+    }
+
+    @PostMapping("/addMembers")
+    @ApiOperation("新增团队成员")
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> addMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+        memberTeamService.addMember(CrmEnum.BUSINESS, memberTeamSaveBO);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/updateMembers")
+    @ApiOperation("编辑团队成员")
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> updateMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+        memberTeamService.addMember(CrmEnum.BUSINESS, memberTeamSaveBO);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/deleteMembers")
+    @ApiOperation("删除团队成员")
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> deleteMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+        memberTeamService.deleteMember(CrmEnum.BUSINESS, memberTeamSaveBO);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/exitTeam/{businessId}")
+    @ApiOperation("退出团队")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "businessId", value = "商机id", dataTypeClass = String.class, paramType = "path")})
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> exitTeam(@PathVariable("businessId") String businessId) {
+        memberTeamService.exitTeam(CrmEnum.BUSINESS, businessId);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/star/{bizId}")
+    @ApiOperation("商机标星")
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> star(@PathVariable("bizId") String bizId) {
+        businessDetailService.star(bizId);
+        return success(true);
+    }
+
+
 }

@@ -6,6 +6,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import cn.klmb.crm.framework.mq.message.WebSocketServer;
+import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
@@ -49,12 +51,13 @@ public class CustomerContactReminderHandler {
 
     private final SysUserService sysUserService;
 
+    private final BusinessDetailService businessDetailService;
 
     public CustomerContactReminderHandler(WebSocketServer webSocketServer,
             SysNotifySendService sysNotifySendService,
             MemberUserService memberUserService, MemberContactsService memberContactsService,
             SysNotifyMessageService sysNotifyMessageService, SysFeishuManager sysFeishuManager,
-            SysUserService sysUserService) {
+            SysUserService sysUserService, BusinessDetailService businessDetailService) {
         this.webSocketServer = webSocketServer;
         this.sysNotifySendService = sysNotifySendService;
         this.memberUserService = memberUserService;
@@ -62,17 +65,18 @@ public class CustomerContactReminderHandler {
         this.sysNotifyMessageService = sysNotifyMessageService;
         this.sysFeishuManager = sysFeishuManager;
         this.sysUserService = sysUserService;
+        this.businessDetailService = businessDetailService;
     }
 
     @XxlJob("customerContactReminderHandler")
     public ReturnT<String> contactTimeExpiredReminderHandler() {
         log.info("进入[customerContactReminderHandler联系时间到期提醒接口]");
-        XxlJobHelper.log("进入客户联系时间到期提醒接口");
+        XxlJobHelper.log("进入联系时间到期提醒接口");
         String jobParam = XxlJobHelper.getJobParam();
         List<String> split = StrUtil.split(jobParam, CharUtil.COMMA);
         if (CollUtil.isNotEmpty(split)) {
             String userId = split.get(0); // 团队成员id
-            String contractType = split.get(1); // 将要联系用户的类型(2客户,3联系人)
+            String contractType = split.get(1); // 将要联系用户的类型(2客户,3联系人,5商机)
             String contractBizId = split.get(2); // 将要联系用户的bizId
             String nextTime = split.get(3); // 联系时间
             Map<String, Object> map = new HashMap<>();
@@ -90,6 +94,15 @@ public class CustomerContactReminderHandler {
                     map.put("name", memberContactsDO.getName());
                     map.put("nextTime", nextTime);
                     map.put("contractType", CrmEnum.CONTACTS.getRemarks());
+                }
+            }
+
+            if (StrUtil.equals(contractType, CrmEnum.BUSINESS.getType().toString())) {
+                BusinessDetailDO businessDetailDO = businessDetailService.getByBizId(contractBizId);
+                if (ObjectUtil.isNotNull(businessDetailDO)) {
+                    map.put("name", businessDetailDO.getBusinessName());
+                    map.put("nextTime", nextTime);
+                    map.put("contractType", CrmEnum.BUSINESS.getRemarks());
                 }
             }
             if (StrUtil.isNotBlank(map.get("name").toString())) {

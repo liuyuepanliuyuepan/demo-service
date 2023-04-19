@@ -61,4 +61,12 @@ public interface BusinessDetailService extends
      * @return 表单分页列表
      */
     KlmbPage<BusinessDetailRespVO> page(BusinessDetailPageReqVO reqVO);
+
+
+    /**
+     * 商机标星
+     *
+     * @param bizId
+     */
+    void star(String bizId);
 }

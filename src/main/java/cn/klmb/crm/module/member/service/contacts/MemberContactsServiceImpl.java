@@ -10,6 +10,8 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
@@ -51,19 +53,23 @@ public class MemberContactsServiceImpl extends
 
     private final XxlJobApiUtils xxlJobApiUtils;
 
+    private final BusinessDetailService businessDetailService;
+
     public MemberContactsServiceImpl(MemberContactsMapper mapper, SysUserService sysUserService,
             MemberUserService memberUserService,
-            MemberContactsStarService memberContactsStarService, XxlJobApiUtils xxlJobApiUtils) {
+            MemberContactsStarService memberContactsStarService, XxlJobApiUtils xxlJobApiUtils,
+            BusinessDetailService businessDetailService) {
         this.sysUserService = sysUserService;
         this.memberUserService = memberUserService;
         this.memberContactsStarService = memberContactsStarService;
         this.xxlJobApiUtils = xxlJobApiUtils;
+        this.businessDetailService = businessDetailService;
         this.mapper = mapper;
     }
 
 
     @Override
-    public String saveContacts(MemberContactsDO entity) {
+    public String saveContacts(String businessId, MemberContactsDO entity) {
         String bizId = "";
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
@@ -151,10 +157,21 @@ public class MemberContactsServiceImpl extends
 
     @Override
     public void setContacts(MemberFirstContactsReqVO reqVO) {
-        memberUserService.update(
-                new LambdaUpdateWrapper<MemberUserDO>().set(MemberUserDO::getContactsId,
-                                reqVO.getContactsId())
-                        .eq(MemberUserDO::getBizId, reqVO.getCustomerId()));
+        if (StrUtil.isNotBlank(reqVO.getCustomerId())) {
+            memberUserService.update(
+                    new LambdaUpdateWrapper<MemberUserDO>().set(MemberUserDO::getContactsId,
+                                    reqVO.getContactsId())
+                            .eq(MemberUserDO::getBizId, reqVO.getCustomerId()));
+        }
+
+        if (StrUtil.isNotBlank(reqVO.getBusinessId())) {
+            businessDetailService.update(
+                    new LambdaUpdateWrapper<BusinessDetailDO>().set(BusinessDetailDO::getContactsId,
+                                    reqVO.getContactsId())
+                            .eq(BusinessDetailDO::getBizId, reqVO.getBusinessId()));
+        }
+
+
     }
 
     @Override
