@@ -417,24 +417,27 @@ public class MemberUserServiceImpl extends
 	@Override
 	public List<MemberUserDO> nearbyMember(String lng, String lat, Integer type, Integer radius,
 		String ownerUserId) {
-		String userId = WebFrameworkUtils.getLoginUserId();
-		if (StrUtil.isEmpty(ownerUserId)) {
-			ownerUserId = userId;
-		}
-		List<String> childUserIds = sysUserService.queryChildUserId(
-			userId);
-		List<MemberUserDO> list = mapper
-			.nearbyMember(lng, lat, type, radius, ownerUserId, childUserIds);
-		if (CollUtil.isNotEmpty(list)) {
-			list.forEach(e -> {
-				SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
-				if (ObjectUtil.isNotNull(sysUserDO)) {
-					e.setOwnerUserName(sysUserDO.getNickname());
-				}
-			});
-		}
-		return list;
-	}
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isEmpty(ownerUserId)) {
+            ownerUserId = userId;
+        }
+        List<String> childUserIds = sysUserService.queryChildUserId(
+                userId);
+        if (ObjectUtil.isNull(type)) {
+            type = 1;
+        }
+        List<MemberUserDO> list = mapper
+                .nearbyMember(lng, lat, type, radius, ownerUserId, childUserIds);
+        if (CollUtil.isNotEmpty(list)) {
+            list.forEach(e -> {
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+            });
+        }
+        return list;
+    }
 
 
     @Override

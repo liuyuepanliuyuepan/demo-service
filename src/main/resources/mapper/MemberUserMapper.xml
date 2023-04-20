@@ -53,6 +53,20 @@
     ) * 1000
     ) &lt; #{radius}
     <choose>
+      <when test="type == 1">
+        <if test="ownerUserId != null">
+          and (owner_user_id = #{ownerUserId}
+        </if>
+        <if test="userIds !=null  and userIds.size > 0">
+          or owner_user_id in
+          <foreach close=")" collection="userIds" index="index" item="userId" open="("
+            separator=",">
+            #{userId}
+          </foreach>
+        </if>
+        )
+        or biz_id in (select customer_id from member_user_pool_relation where deleted = false)
+      </when>
       <when test="type == 2">
         <if test="ownerUserId != null">
           and (owner_user_id = #{ownerUserId}
