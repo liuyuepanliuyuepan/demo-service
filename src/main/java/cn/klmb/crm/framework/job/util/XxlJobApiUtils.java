@@ -111,7 +111,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.error(info.getMsg(), new RuntimeException());
+            logger.info(info.getMsg(), new RuntimeException());
         }
     }
 
@@ -136,7 +136,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.error(info.getMsg(), new RuntimeException());
+            logger.info(info.getMsg(), new RuntimeException());
         }
     }
 
@@ -173,7 +173,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.error(info.getMsg(), new RuntimeException());
+            logger.info(info.getMsg(), new RuntimeException());
         }
     }
 
@@ -222,7 +222,7 @@ public class XxlJobApiUtils {
                 XxlJobTaskManagerInfo.class);
 
         if (ObjectUtil.isNull(info) || CollectionUtil.isEmpty(info.getData())) {
-            logger.error("xxl-job任务管理不存在", new RuntimeException());
+            logger.info("xxl-job任务管理不存在", new RuntimeException());
         }
 
         return info;
@@ -260,7 +260,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.error(info.getMsg(), new RuntimeException());
+            logger.info(info.getMsg(), new RuntimeException());
         }
 
         return info;
@@ -285,7 +285,7 @@ public class XxlJobApiUtils {
         XxlJobResponseInfo info = JSONUtil.toBean(JSONUtil.parseObj(result),
                 XxlJobResponseInfo.class);
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.error(info.getMsg(), new RuntimeException());
+            logger.info(info.getMsg(), new RuntimeException());
         }
     }
 
@@ -312,7 +312,7 @@ public class XxlJobApiUtils {
         XxlJobResponseInfo info = JSONUtil.toBean(JSONUtil.parseObj(result),
                 XxlJobResponseInfo.class);
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.error(info.getMsg(), new RuntimeException());
+            logger.info(info.getMsg(), new RuntimeException());
         }
     }
 
@@ -369,7 +369,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.error(info.getMsg(), new RuntimeException());
+            logger.info(info.getMsg(), new RuntimeException());
         }
         return info;
     }
