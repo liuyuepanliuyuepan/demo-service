@@ -178,7 +178,15 @@ public class MemberUserController {
                         .eq(MemberUserStarDO::getUserId, userId)
                         .eq(MemberUserStarDO::getDeleted, false));
         saveDO.setStar(CollUtil.isNotEmpty(starDOList));
-        return success(MemberUserConvert.INSTANCE.convert(saveDO));
+        MemberUserRespVO convert = MemberUserConvert.INSTANCE.convert(saveDO);
+        if (ObjectUtil.isNotNull(convert)) {
+            List<MemberUserPoolRelationDO> list = relationService.list(
+                    new LambdaQueryWrapper<MemberUserPoolRelationDO>().eq(
+                                    MemberUserPoolRelationDO::getCustomerId, bizId)
+                            .eq(MemberUserPoolRelationDO::getDeleted, false));
+            convert.setExistPool(CollUtil.isNotEmpty(list));
+        }
+        return success(convert);
     }
 
     @GetMapping({"/page"})
@@ -222,7 +230,7 @@ public class MemberUserController {
             @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
             @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
             @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
-    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<KlmbScrollPage<MemberUserRespVO>> pageScroll(
             @Valid MemberUserScrollPageReqVO reqVO) {
         //获取当前用户id
@@ -382,7 +390,7 @@ public class MemberUserController {
             @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
             @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
             @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
-    @PreAuthorize("@ss.hasPermission('system:user:query')")
+    @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<KlmbScrollPage<MemberUserRespVO>> pageScrollPool(
             @Valid MemberUserScrollPageReqVO reqVO) {
         reqVO.setPoolId("0");

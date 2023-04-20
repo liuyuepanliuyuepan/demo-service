@@ -81,7 +81,7 @@ public class MemberContactsController {
     @PreAuthorize("@ss.hasPermission('member:contacts:save')")
     public CommonResult<String> save(@Valid @RequestBody MemberContactsSaveReqVO saveReqVO) {
         MemberContactsDO saveDO = MemberContactsConvert.INSTANCE.convert(saveReqVO);
-        return success(memberContactsService.saveContacts(saveDO));
+        return success(memberContactsService.saveContacts(saveReqVO.getBusinessId(), saveDO));
     }
 
     @DeleteMapping(value = "/delete/{bizId}")
@@ -219,6 +219,51 @@ public class MemberContactsController {
         queryDTO.setOwnerUserId(userId);
         List<MemberContactsDO> entities = memberContactsService.list(queryDTO);
         return success(MemberContactsConvert.INSTANCE.convert01(entities));
+    }
+
+
+    @GetMapping({"/list"})
+    @ApiOperation(value = "列表", notes = "此接口仅适用根据customerId查询联系人信息")
+    @PreAuthorize("@ss.hasPermission('member:user:query')")
+    public CommonResult<List<MemberContactsRespVO>> list(
+            @Valid MemberContactsPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
+        List<MemberContactsDO> entities = memberContactsService.list(
+                new LambdaQueryWrapper<MemberContactsDO>().eq(MemberContactsDO::getCustomerId,
+                                queryDTO.getCustomerId()).eq(MemberContactsDO::getDeleted, false)
+                        .orderByDesc(MemberContactsDO::getCreateTime));
+        if (CollUtil.isNotEmpty(entities)) {
+            entities.forEach(e -> {
+                MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
+                if (ObjectUtil.isNotNull(memberUserDO)) {
+                    e.setCustomerName(memberUserDO.getName());
+                    e.setIsFirstContacts(
+                            StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                }
+                if (StrUtil.isNotBlank(e.getParentContactsId())) {
+                    MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                            e.getParentContactsId());
+                    e.setParentContactsName(memberContactsDO.getName());
+                }
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+                List<MemberContactsStarDO> starDOList = memberContactsStarService.list(
+                        new LambdaQueryWrapper<MemberContactsStarDO>().eq(
+                                        MemberContactsStarDO::getContactsId, e.getBizId())
+                                .eq(MemberContactsStarDO::getUserId, userId)
+                                .eq(MemberContactsStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(starDOList));
+
+            });
+        }
+        return success(MemberContactsConvert.INSTANCE.convert(entities));
     }
 
 

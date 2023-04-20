@@ -10,6 +10,10 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.entity.contacts.BusinessContactsDO;
+import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.service.contacts.BusinessContactsService;
+import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
@@ -30,7 +34,9 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -51,19 +57,28 @@ public class MemberContactsServiceImpl extends
 
     private final XxlJobApiUtils xxlJobApiUtils;
 
+    private final BusinessDetailService businessDetailService;
+
+    private final BusinessContactsService businessContactsService;
+
     public MemberContactsServiceImpl(MemberContactsMapper mapper, SysUserService sysUserService,
             MemberUserService memberUserService,
-            MemberContactsStarService memberContactsStarService, XxlJobApiUtils xxlJobApiUtils) {
+            MemberContactsStarService memberContactsStarService, XxlJobApiUtils xxlJobApiUtils,
+            @Lazy BusinessDetailService businessDetailService,
+            BusinessContactsService businessContactsService) {
         this.sysUserService = sysUserService;
         this.memberUserService = memberUserService;
         this.memberContactsStarService = memberContactsStarService;
         this.xxlJobApiUtils = xxlJobApiUtils;
+        this.businessDetailService = businessDetailService;
+        this.businessContactsService = businessContactsService;
         this.mapper = mapper;
     }
 
 
     @Override
-    public String saveContacts(MemberContactsDO entity) {
+    @Transactional(rollbackFor = Exception.class)
+    public String saveContacts(String businessId, MemberContactsDO entity) {
         String bizId = "";
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
@@ -83,6 +98,11 @@ public class MemberContactsServiceImpl extends
             reqVO.setContactsId(bizId);
             reqVO.setCustomerId(entity.getCustomerId());
             this.setContacts(reqVO);
+        }
+        if (StrUtil.isNotBlank(businessId)) {
+            //保存商机和联系人的关系
+            businessContactsService.saveDO(
+                    BusinessContactsDO.builder().businessId(businessId).contactsId(bizId).build());
         }
         xxlJobApiUtils.changeTask(
                 XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
@@ -150,14 +170,27 @@ public class MemberContactsServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void setContacts(MemberFirstContactsReqVO reqVO) {
-        memberUserService.update(
-                new LambdaUpdateWrapper<MemberUserDO>().set(MemberUserDO::getContactsId,
-                                reqVO.getContactsId())
-                        .eq(MemberUserDO::getBizId, reqVO.getCustomerId()));
+        if (StrUtil.isNotBlank(reqVO.getCustomerId())) {
+            memberUserService.update(
+                    new LambdaUpdateWrapper<MemberUserDO>().set(MemberUserDO::getContactsId,
+                                    reqVO.getContactsId())
+                            .eq(MemberUserDO::getBizId, reqVO.getCustomerId()));
+        }
+
+        if (StrUtil.isNotBlank(reqVO.getBusinessId())) {
+            businessDetailService.update(
+                    new LambdaUpdateWrapper<BusinessDetailDO>().set(BusinessDetailDO::getContactsId,
+                                    reqVO.getContactsId())
+                            .eq(BusinessDetailDO::getBizId, reqVO.getBusinessId()));
+        }
+
+
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void star(String bizId) {
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -179,6 +212,7 @@ public class MemberContactsServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeByBizIds(List<String> bizIds) {
         super.removeByBizIds(bizIds);
         //判断客户中是否存在删除的联系人
@@ -205,6 +239,7 @@ public class MemberContactsServiceImpl extends
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateDO(MemberContactsDO entity) {
         MemberContactsDO memberContactsDO = super.getByBizId(entity.getBizId());
         LocalDateTime nextTime = memberContactsDO.getNextTime();

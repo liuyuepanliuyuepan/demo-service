@@ -49,7 +49,7 @@ public interface MemberContactsService extends
      * @param saveDO 实体
      * @return 实体
      */
-    String saveContacts(MemberContactsDO saveDO);
+    String saveContacts(String businessId, MemberContactsDO saveDO);
 
 
     /**

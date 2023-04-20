@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -298,6 +299,7 @@ public class MemberUserServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void setDealStatus(Integer dealStatus, List<String> bizIds) {
         List<MemberUserDO> memberUserDOS = super.listByBizIds(bizIds);
         memberUserDOS.forEach(e -> {
@@ -310,6 +312,7 @@ public class MemberUserServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void star(String bizId) {
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -331,6 +334,7 @@ public class MemberUserServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String saveCustomer(MemberUserDO saveDO) {
         String bizId = "";
         //获取当前用户id
@@ -376,6 +380,7 @@ public class MemberUserServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeByBizIds(List<String> bizIds) {
         super.removeByBizIds(bizIds);
         bizIds.forEach(e -> {
@@ -390,6 +395,7 @@ public class MemberUserServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateDO(MemberUserDO entity) {
         MemberUserDO memberUserDO = super.getByBizId(entity.getBizId());
         LocalDateTime nextTime = memberUserDO.getNextTime();
@@ -432,6 +438,7 @@ public class MemberUserServiceImpl extends
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addPool(MemberUserPoolBO poolBO) {
         poolBO.setPoolId("0");
         if (poolBO.getCustomerIds().size() == 0) {
@@ -496,6 +503,7 @@ public class MemberUserServiceImpl extends
      * @param poolBO bo
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void getCustomersByIds(MemberUserPoolBO poolBO) {
         poolBO.setPoolId("0");
         if (poolBO.getCustomerIds().size() == 0) {

@@ -16,8 +16,8 @@ public class MemberFirstContactsReqVO {
     @ApiModelProperty("客户ID")
     private String customerId;
 
-    @ApiModelProperty("商机ID(暂时不用传)")
-    private Integer businessId;
+    @ApiModelProperty("商机ID(商机中增加联系人必传)")
+    private String businessId;
 
 
 }

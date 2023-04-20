@@ -16,7 +16,16 @@ public enum CrmSceneEnum implements IntArrayValuable {
     SELF(2, "自己负责的"),
     CHILD(3, "下属负责的"),
     STAR(4, "关注的"),
-    TRANSFORM(5, "已转化的线索"),
+
+    WIN(5, "赢单商机"),
+
+    LOSE(6, "输单商机"),
+
+    INVALID(7, "无效商机"),
+
+    ING(8, "进行中的商机"),
+
+    TRANSFORM(99, "已转化的线索"),
     ;
 
 

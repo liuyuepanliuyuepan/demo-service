@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -165,6 +166,7 @@ public class SysUserController {
 
     @GetMapping({"/list-all-simple"})
     @ApiOperation(value = "列表精简信息")
+    @PermitAll
     public CommonResult<List<SysUserSimpleRespVO>> listAllSimple(SysUserPageReqVO query) {
         SysUserQueryDTO queryDTO = SysUserConvert.INSTANCE.convert(query);
         List<SysUserDO> entities = sysUserService.list(queryDTO);

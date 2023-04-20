@@ -2,9 +2,11 @@ package cn.klmb.crm.module.system.convert.notify;
 
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.message.SysNotifyMessagePageReqVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.message.SysNotifyMessageRespVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.message.SysNotifyMessageSaveReqVO;
+import cn.klmb.crm.module.system.controller.admin.notify.vo.message.SysNotifyMessageScrollPageReqVO;
 import cn.klmb.crm.module.system.controller.admin.notify.vo.message.SysNotifyMessageUpdateReqVO;
 import cn.klmb.crm.module.system.dto.notify.SysNotifyMessageQueryDTO;
 import cn.klmb.crm.module.system.entity.notify.SysNotifyMessageDO;
@@ -33,5 +35,9 @@ public interface SysNotifyMessageConvert {
     SysNotifyMessageRespVO convert(SysNotifyMessageDO saveDO);
 
     SysNotifyMessageQueryDTO convert(SysNotifyMessagePageReqVO reqVO);
+
+    SysNotifyMessageQueryDTO convert(SysNotifyMessageScrollPageReqVO reqVO);
+
+    KlmbScrollPage<SysNotifyMessageRespVO> convert(KlmbScrollPage<SysNotifyMessageDO> page);
 
 }

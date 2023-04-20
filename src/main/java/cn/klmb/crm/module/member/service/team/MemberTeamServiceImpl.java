@@ -229,6 +229,7 @@ public class MemberTeamServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteMember(CrmEnum crmEnum, MemberTeamSaveBO memberTeamSaveBO) {
         for (String bizId : memberTeamSaveBO.getBizIds()) {
             if (memberTeamSaveBO.getChangeType() != null && crmEnum == CrmEnum.CUSTOMER) {
@@ -263,6 +264,7 @@ public class MemberTeamServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void exitTeam(CrmEnum crmEnum, String typeId) {
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
