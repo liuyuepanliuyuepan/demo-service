@@ -46,44 +46,51 @@ public class SysUserQueryDTO extends KlmbBaseQueryDTO {
     @DtoFieldQuery(queryType = Operator.LIKE)
     private String realname;
 
-	/**
+    /**
      * 备注
      */
     @DtoFieldQuery
     private String remark;
 
-	/**
-	 * 部门ID
+    /**
+     * 部门ID
      */
     @DtoFieldQuery
     private String deptId;
 
-	/**
-	 * 用户邮箱
+
+    /**
+     * 部门id列表
+     */
+    @DtoFieldQuery(queryType = Operator.IN, fieldName = "deptId")
+    private List<String> deptIds;
+
+    /**
+     * 用户邮箱
      */
     @DtoFieldQuery
     private String email;
 
-	/**
-	 * 手机号码
+    /**
+     * 手机号码
      */
     @DtoFieldQuery(queryType = Operator.LIKE)
     private String mobile;
 
-	/**
-	 * 用户性别
+    /**
+     * 用户性别
      */
     @DtoFieldQuery
     private Integer sex;
 
-	/**
-	 * 头像地址
+    /**
+     * 头像地址
      */
     @DtoFieldQuery
     private String avatar;
 
-	/**
-	 * 帐号状态（1正常 2停用）
+    /**
+     * 帐号状态（1正常 2停用）
      */
     @DtoFieldQuery
     private Integer status;

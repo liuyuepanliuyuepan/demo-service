@@ -1,14 +1,17 @@
 package cn.klmb.crm.module.system.controller.admin.user;
 
+import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 import static cn.klmb.crm.framework.common.util.collection.CollectionUtils.convertList;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.common.util.collection.CollectionUtils;
+import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserPageReqVO;
 import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserRespVO;
 import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserSaveReqVO;
@@ -22,10 +25,12 @@ import cn.klmb.crm.module.system.dto.user.SysUserQueryDTO;
 import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
 import cn.klmb.crm.module.system.entity.permission.SysRoleDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.permission.SysPermissionService;
 import cn.klmb.crm.module.system.service.permission.SysRoleService;
+import cn.klmb.crm.module.system.service.permission.SysUserRoleService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -71,14 +76,18 @@ public class SysUserController {
 
     private final SysFeishuManager sysFeishuManager;
 
+    private final SysUserRoleService sysUserRoleService;
+
     public SysUserController(SysUserService sysUserService, SysRoleService sysRoleService,
             SysDeptService sysDeptService,
-            SysPermissionService sysPermissionService, SysFeishuManager sysFeishuManager) {
+            SysPermissionService sysPermissionService, SysFeishuManager sysFeishuManager,
+            SysUserRoleService sysUserRoleService) {
         this.sysUserService = sysUserService;
         this.sysRoleService = sysRoleService;
         this.sysDeptService = sysDeptService;
         this.sysPermissionService = sysPermissionService;
         this.sysFeishuManager = sysFeishuManager;
+        this.sysUserRoleService = sysUserRoleService;
     }
 
     @PostMapping(value = "/save")
@@ -172,6 +181,35 @@ public class SysUserController {
         List<SysUserDO> entities = sysUserService.list(queryDTO);
         return success(SysUserConvert.INSTANCE.convert01(entities));
     }
+
+    @GetMapping({"/list-all-simple-v2"})
+    @ApiOperation(value = "列表精简信息")
+    @PermitAll
+    public CommonResult<List<SysUserSimpleRespVO>> listAllSimpleV2(SysUserPageReqVO query) {
+        SysUserQueryDTO queryDTO = SysUserConvert.INSTANCE.convert(query);
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        SysUserDO sysUserDO = sysUserService.getByBizId(userId);
+        if (ObjectUtil.isNotNull(sysUserDO)) {
+            String deptId = sysUserDO.getDeptId();
+            List<String> queryChildDept = sysDeptService.queryChildDept(deptId);
+            queryDTO.setDeptIds(queryChildDept);
+            List<SysUserDO> entities = sysUserService.list(queryDTO);
+
+            //查询系统内置角色
+//            List<SysUserRoleDO> list = sysUserRoleService.list(
+//                    new LambdaQueryWrapper<SysUserRoleDO>().in(SysUserRoleDO::getUserId, entities)
+//                            .eq(SysUserRoleDO::getDeleted, false).eq(SysUserRoleDO::getRoleId));
+
+        }
+
+//        return success(SysUserConvert.INSTANCE.convert01(entities));
+        return null;
+    }
+
 
     @GetMapping({"/page"})
     @ApiOperation(value = "分页查询")

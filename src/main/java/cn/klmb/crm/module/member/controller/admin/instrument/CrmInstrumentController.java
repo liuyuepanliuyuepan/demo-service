@@ -36,7 +36,7 @@ public class CrmInstrumentController {
 
     @GetMapping(value = "/query-bulletin")
     @ApiOperation(value = "销售简报")
-    @PreAuthorize("@ss.hasPermission('member:/crm-instrument:query')")
+    @PreAuthorize("@ss.hasPermission('member:crm-instrument:query')")
     public CommonResult<CrmInstrumentVO> queryBulletin(BiParams biParams) {
         return success(crmInstrumentService.queryBulletin(biParams));
     }
