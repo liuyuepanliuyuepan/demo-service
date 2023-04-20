@@ -9,10 +9,10 @@ import lombok.Data;
 @Data
 public class ProductCategoryBaseVO {
 
-    @ApiModelProperty(value = "产品分类名称", example = "赵六")
+    @ApiModelProperty(value = "产品分类名称")
     private String name;
 
-    @ApiModelProperty(value = "产品分类的父id", example = "14260")
+    @ApiModelProperty(value = "产品分类的父id(如果要建一级分类 pid传0)")
     private String pid;
 
 }

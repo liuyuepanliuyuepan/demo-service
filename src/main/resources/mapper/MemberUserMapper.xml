@@ -29,7 +29,7 @@
     ) * 1000
     ) as distance
     from member_user as a
-    where a.status != 3
+    where a.status != 3 and deteled = false
     and a.lat !=''
     and ROUND(
     6378.138 * 2 * ASIN(
@@ -67,7 +67,7 @@
         )
       </when>
       <when test="type == 9">
-        and biz_id in (select customer_id from member_user_pool_relation)
+        and biz_id in (select customer_id from member_user_pool_relation where deleted = false)
       </when>
     </choose>
   </select>

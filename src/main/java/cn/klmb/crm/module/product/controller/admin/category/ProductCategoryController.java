@@ -5,6 +5,7 @@ import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
+import cn.klmb.crm.module.product.controller.admin.category.vo.CrmProductCategoryBO;
 import cn.klmb.crm.module.product.controller.admin.category.vo.ProductCategoryPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.category.vo.ProductCategoryRespVO;
 import cn.klmb.crm.module.product.controller.admin.category.vo.ProductCategorySaveReqVO;
@@ -17,7 +18,9 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import java.util.Collections;
+import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -111,5 +114,15 @@ public class ProductCategoryController {
         KlmbPage<ProductCategoryDO> page = productCategoryService.page(queryDTO, klmbPage);
         return success(ProductCategoryConvert.INSTANCE.convert(page));
     }
+
+
+    @GetMapping("/queryList")
+    @ApiOperation("查询产品分类列表")
+    @PreAuthorize("@ss.hasPermission('product:category:query')")
+    public CommonResult<List<CrmProductCategoryBO>> queryList(@ApiParam("type") String type) {
+        List<CrmProductCategoryBO> list = productCategoryService.queryList(type);
+        return CommonResult.success(list);
+    }
+
 
 }
