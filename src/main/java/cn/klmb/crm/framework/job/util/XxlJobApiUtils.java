@@ -18,10 +18,8 @@ import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobResponseInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.mq.message.WebSocketServer;
-import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.notify.SysNotifyMessageDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
-import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
 import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.notify.SysNotifyMessageService;
@@ -34,11 +32,13 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
 import okhttp3.Headers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 /**
@@ -48,6 +48,7 @@ import org.springframework.stereotype.Component;
  * @date 2023/04/07
  */
 @Component
+@Slf4j
 public class XxlJobApiUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(XxlJobApiUtils.class);
@@ -398,6 +399,7 @@ public class XxlJobApiUtils {
      *
      * @param xxlJobChangeTaskDTO
      */
+    @Async
     public void changeTask(XxlJobChangeTaskDTO xxlJobChangeTaskDTO) {
         XxlJobGroup xxlJobGroup = new XxlJobGroup();
         xxlJobGroup.setAppname(xxlJobChangeTaskDTO.getAppName());
@@ -434,11 +436,11 @@ public class XxlJobApiUtils {
                 }
                 return;
             }
-            SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
-                    SysConfigKeyEnum.CONTACTS_REMINDER.getType());
-            String value = sysConfigDO.getValue();
+//            SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
+//                    SysConfigKeyEnum.CONTACTS_REMINDER.getType());
+//            String value = sysConfigDO.getValue();
             String nextTimeStr = LocalDateTimeUtil.offset(xxlJobChangeTaskDTO.getNextTime(),
-                            -(Long.parseLong(value)),
+                            -(Long.parseLong(xxlJobChangeTaskDTO.getOffsetValue())),
                             ChronoUnit.HOURS)
                     .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN));
             xxlJobInfo.setJobDesc(
