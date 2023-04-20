@@ -428,6 +428,7 @@ public class MemberUserServiceImpl extends
         }
         List<MemberUserDO> list = mapper
                 .nearbyMember(lng, lat, type, radius, ownerUserId, childUserIds);
+
         if (CollUtil.isNotEmpty(list)) {
             list.forEach(e -> {
                 SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
