@@ -10,6 +10,7 @@ import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -32,6 +33,7 @@ public class MemberTeamActivityServiceImpl extends
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String saveActivityDO(MemberTeamActivityDO saveDO) {
         String bizId = "";
         if (super.saveDO(saveDO)) {
@@ -43,6 +45,7 @@ public class MemberTeamActivityServiceImpl extends
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateDO(MemberTeamActivityDO entity) {
         boolean b = super.updateDO(entity);
         updateLastContent(entity);

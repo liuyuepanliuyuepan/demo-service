@@ -13,10 +13,12 @@ import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthLoginReqVO;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthLoginRespVO;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthMinAppLoginReqVO;
 import cn.klmb.crm.module.system.controller.admin.auth.vo.SysAuthWebLoginReqVO;
+import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserRespVO;
 import cn.klmb.crm.module.system.convert.auth.SysAuthConvert;
 import cn.klmb.crm.module.system.convert.user.SysUserConvert;
 import cn.klmb.crm.module.system.dto.feishu.FeishuMinAppResultDTO;
 import cn.klmb.crm.module.system.dto.feishu.FeishuWebResultDTO;
+import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
 import cn.klmb.crm.module.system.entity.logger.SysLoginLogDO;
 import cn.klmb.crm.module.system.entity.oauth2.SysOAuth2AccessTokenDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
@@ -25,6 +27,7 @@ import cn.klmb.crm.module.system.enums.logger.LoginLogTypeEnum;
 import cn.klmb.crm.module.system.enums.logger.LoginResultEnum;
 import cn.klmb.crm.module.system.enums.oauth2.SysOAuth2ClientConstants;
 import cn.klmb.crm.module.system.manager.SysFeishuManager;
+import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.logger.SysLoginLogService;
 import cn.klmb.crm.module.system.service.oauth2.SysOAuth2TokenService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
@@ -50,13 +53,16 @@ public class SysAuthServiceImpl implements SysAuthService {
 
     private final SysFeishuManager sysFeishuManager;
 
+    private final SysDeptService sysDeptService;
+
     public SysAuthServiceImpl(SysUserService sysUserService,
             SysOAuth2TokenService sysOAuth2TokenService, SysLoginLogService sysLoginLogService,
-            SysFeishuManager sysFeishuManager) {
+            SysFeishuManager sysFeishuManager, SysDeptService sysDeptService) {
         this.sysUserService = sysUserService;
         this.sysOAuth2TokenService = sysOAuth2TokenService;
         this.sysLoginLogService = sysLoginLogService;
         this.sysFeishuManager = sysFeishuManager;
+        this.sysDeptService = sysDeptService;
     }
 
     @Override
@@ -90,6 +96,11 @@ public class SysAuthServiceImpl implements SysAuthService {
                 reqVO.getUsername(),
                 LoginLogTypeEnum.LOGIN_USERNAME);
         tokenAfterLoginSuccess.setUserInfo(SysUserConvert.INSTANCE.convert01(user));
+        SysUserRespVO userInfo = tokenAfterLoginSuccess.getUserInfo();
+        if (ObjectUtil.isNotNull(userInfo) && StrUtil.isNotBlank(userInfo.getDeptId())) {
+            SysDeptDO sysDeptDO = sysDeptService.getByBizId(userInfo.getDeptId());
+            userInfo.setDeptName(ObjectUtil.isNotNull(sysDeptDO) ? sysDeptDO.getName() : null);
+        }
         return tokenAfterLoginSuccess;
     }
 
@@ -118,6 +129,11 @@ public class SysAuthServiceImpl implements SysAuthService {
                 sysUserDO.getUsername(),
                 LoginLogTypeEnum.LOGIN_FEISHU_MIN_APP);
         tokenAfterLoginSuccess.setUserInfo(SysUserConvert.INSTANCE.convert01(sysUserDO));
+        SysUserRespVO userInfo = tokenAfterLoginSuccess.getUserInfo();
+        if (ObjectUtil.isNotNull(userInfo) && StrUtil.isNotBlank(userInfo.getDeptId())) {
+            SysDeptDO sysDeptDO = sysDeptService.getByBizId(userInfo.getDeptId());
+            userInfo.setDeptName(ObjectUtil.isNotNull(sysDeptDO) ? sysDeptDO.getName() : null);
+        }
         return tokenAfterLoginSuccess;
 
     }
@@ -147,6 +163,11 @@ public class SysAuthServiceImpl implements SysAuthService {
                 sysUserDO.getUsername(),
                 LoginLogTypeEnum.LOGIN_FEISHU_WEB);
         tokenAfterLoginSuccess.setUserInfo(SysUserConvert.INSTANCE.convert01(sysUserDO));
+        SysUserRespVO userInfo = tokenAfterLoginSuccess.getUserInfo();
+        if (ObjectUtil.isNotNull(userInfo) && StrUtil.isNotBlank(userInfo.getDeptId())) {
+            SysDeptDO sysDeptDO = sysDeptService.getByBizId(userInfo.getDeptId());
+            userInfo.setDeptName(ObjectUtil.isNotNull(sysDeptDO) ? sysDeptDO.getName() : null);
+        }
         return tokenAfterLoginSuccess;
     }
 

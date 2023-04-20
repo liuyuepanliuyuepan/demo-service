@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -76,6 +77,7 @@ public class MemberContactsServiceImpl extends
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String saveContacts(String businessId, MemberContactsDO entity) {
         String bizId = "";
         //获取当前用户id
@@ -168,6 +170,7 @@ public class MemberContactsServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void setContacts(MemberFirstContactsReqVO reqVO) {
         if (StrUtil.isNotBlank(reqVO.getCustomerId())) {
             memberUserService.update(
@@ -187,6 +190,7 @@ public class MemberContactsServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void star(String bizId) {
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -208,6 +212,7 @@ public class MemberContactsServiceImpl extends
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeByBizIds(List<String> bizIds) {
         super.removeByBizIds(bizIds);
         //判断客户中是否存在删除的联系人
@@ -234,6 +239,7 @@ public class MemberContactsServiceImpl extends
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public boolean updateDO(MemberContactsDO entity) {
         MemberContactsDO memberContactsDO = super.getByBizId(entity.getBizId());
         LocalDateTime nextTime = memberContactsDO.getNextTime();

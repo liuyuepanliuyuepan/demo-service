@@ -29,7 +29,7 @@
     ) * 1000
     ) as distance
     from member_user as a
-    where a.status != 3 and deteled = false
+    where a.status != 3 and a.deleted = false
     and a.lat !=''
     and ROUND(
     6378.138 * 2 * ASIN(
