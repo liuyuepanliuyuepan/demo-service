@@ -462,6 +462,7 @@ public class MemberUserServiceImpl extends
                     .set(MemberUserDO::getPreOwnerUserId, memberUserDO.getOwnerUserId())
                     .set(MemberUserDO::getPoolTime, LocalDateTime.now())
                     .set(MemberUserDO::getIsReceive, null)
+                    .set(MemberUserDO::getContactsId, null)
                     .eq(MemberUserDO::getBizId, memberUserDO.getBizId()).update();
             MemberUserPoolRelationDO relation = new MemberUserPoolRelationDO();
             relation.setCustomerId(bizId);
@@ -490,10 +491,27 @@ public class MemberUserServiceImpl extends
         if (poolRelationList.size() > 0) {
             relationService.saveBatchDO(poolRelationList);
         }
-        LambdaUpdateWrapper<MemberContactsDO> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.set(MemberContactsDO::getOwnerUserId, null);
-        wrapper.in(MemberContactsDO::getCustomerId, poolBO.getCustomerIds());
-        memberContactsService.update(wrapper);
+        //根据客户查询联系人信息并删除联系人
+        List<MemberContactsDO> contactsList = memberContactsService.list(
+                new LambdaQueryWrapper<MemberContactsDO>().in(MemberContactsDO::getCustomerId,
+                        poolBO.getCustomerIds()).eq(MemberContactsDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(contactsList)) {
+            memberContactsService.removeByBizIds(
+                    contactsList.stream().map(MemberContactsDO::getBizId).collect(
+                            Collectors.toList()));
+        }
+        //根据客户查询团队成员信息并删除团队成员
+        List<MemberTeamDO> memberTeamDOS = memberTeamService.list(
+                new LambdaQueryWrapper<MemberTeamDO>().eq(MemberTeamDO::getType,
+                                CrmEnum.CUSTOMER.getType())
+                        .in(MemberTeamDO::getTypeId, poolBO.getCustomerIds()));
+        if (CollUtil.isNotEmpty(memberTeamDOS)) {
+            memberTeamService.removeByBizIds(
+                    memberTeamDOS.stream().map(MemberTeamDO::getBizId).collect(
+                            Collectors.toList()));
+
+        }
+
     }
 
 
