@@ -1,7 +1,7 @@
 package cn.klmb.crm.module.member.controller.admin.bis.vo;
 
 import io.swagger.annotations.ApiModelProperty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -23,7 +23,7 @@ public class MemberBisBaseVO {
     private String operName;
 
     @ApiModelProperty(value = "统一社会信用代码")
-    @NotNull(message = "统一社会信用代码不能为空!")
+    @NotBlank(message = "统一社会信用代码不能为空!")
     private String creditNo;
 
     @ApiModelProperty(value = "电话")
