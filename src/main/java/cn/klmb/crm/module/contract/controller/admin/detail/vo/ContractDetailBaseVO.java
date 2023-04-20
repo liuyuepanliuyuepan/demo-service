@@ -90,4 +90,7 @@ public class ContractDetailBaseVO {
     @ApiModelProperty(value = "未回款总金额-复制使用", example = "2b268b2c7d2f4d4c9b4f03abdb1f082c")
     private String oldBizId;
 
+    @ApiModelProperty(value = " 待审核、1通过、2拒绝、3审核中 4:撤回 5 未提交 6 创建 7 已删除 8 作废")
+    private Integer checkStatus;
+
 }

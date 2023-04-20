@@ -20,7 +20,7 @@ public class UpdateStatusReqVO {
     private String bizId;
 
     @ApiModelProperty(value = "状态", required = true, example = "0")
-    @NotNull(message = "状态不能为空")
+    @NotNull(message = "状态不能为空  0待审核、1通过、2拒绝、3审核中 4:撤回 5 未提交 6 创建 7 已删除 8 作废\")")
     private Integer status;
 
 }

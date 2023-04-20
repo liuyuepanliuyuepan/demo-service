@@ -11,5 +11,5 @@ import cn.klmb.crm.framework.common.exception.ErrorCode;
  */
 public interface ContractErrorCodeConstants {
 
-    ErrorCode MEMBER_USER_NOT_EXISTS = new ErrorCode(1005000001, "客户不存在");
+    ErrorCode CONTRACT_TRANSFER_ERROR = new ErrorCode(1012000001, "已作废的合同不能转移");
 }

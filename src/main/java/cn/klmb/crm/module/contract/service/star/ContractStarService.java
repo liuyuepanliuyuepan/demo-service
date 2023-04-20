@@ -12,4 +12,9 @@ import cn.klmb.crm.module.contract.entity.star.ContractStarDO;
  */
 public interface ContractStarService extends KlmbBaseService<ContractStarDO, ContractStarQueryDTO> {
 
+    /**
+     * 取消关注
+     * @param contractId 合同id
+     */
+    void cancelStar(String contractId);
 }

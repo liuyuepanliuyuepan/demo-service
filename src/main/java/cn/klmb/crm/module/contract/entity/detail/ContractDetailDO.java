@@ -1,5 +1,6 @@
 package cn.klmb.crm.module.contract.entity.detail;
 
+import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery;
 import cn.klmb.crm.framework.base.core.entity.KlmbBaseDO;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -105,6 +106,11 @@ public class ContractDetailDO extends KlmbBaseDO {
      */
     private String oldBizId;
 
+    /**
+     * 审核状态
+     */
+    private Integer checkStatus;
+
     @TableField(exist = false)
     @ApiModelProperty(value = "客户名称")
     private String memberUserName;
@@ -144,5 +150,6 @@ public class ContractDetailDO extends KlmbBaseDO {
     @TableField(exist = false)
     @ApiModelProperty(value = "是否标星")
     private Boolean star;
+
 
 }

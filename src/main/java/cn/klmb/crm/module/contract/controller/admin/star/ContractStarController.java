@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
  *
  * @author 超级管理员
  */
-@Api(tags = "xxx. 合同标星关系")
+@Api(tags = "1203. 合同标星关系")
 @RestController
 @RequestMapping("/contract/star")
 @Validated
@@ -56,13 +56,13 @@ public class ContractStarController {
         return success(bizId);
     }
 
-    @DeleteMapping(value = "/delete/{bizId}")
-    @ApiOperation(value = "删除")
+    @DeleteMapping(value = "/delete/{contractId}")
+    @ApiOperation(value = "取消关注")
     @ApiImplicitParams({
-    @ApiImplicitParam(name = "bizId", value = "主键", dataTypeClass = String.class, paramType = "path")})
+    @ApiImplicitParam(name = "contractId", value = "合同id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('contract:star:delete')")
-    public CommonResult<Boolean> deleteByBizId(@PathVariable String bizId) {
-        contractStarService.removeByBizIds(Collections.singletonList(bizId));
+    public CommonResult<Boolean> deleteByBizId(@PathVariable String contractId) {
+        contractStarService.cancelStar(contractId);
         return success(true);
     }
 

@@ -10,12 +10,14 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractChangeOwnerUserVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
 import cn.klmb.crm.module.contract.convert.detail.ContractDetailConvert;
 import cn.klmb.crm.module.contract.dao.detail.ContractDetailMapper;
 import cn.klmb.crm.module.contract.dto.detail.ContractDetailQueryDTO;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
 import cn.klmb.crm.module.contract.entity.star.ContractStarDO;
+import cn.klmb.crm.module.contract.enums.ContractErrorCodeConstants;
 import cn.klmb.crm.module.contract.service.star.ContractStarService;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.entity.userpoolrelation.MemberUserPoolRelationDO;
@@ -25,10 +27,13 @@ import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -43,8 +48,8 @@ public class ContractDetailServiceImpl extends
     private final XxlJobApiUtils xxlJobApiUtils;
     private final SysUserService sysUserService;
     private final ContractStarService contractStarService;
-    public ContractDetailServiceImpl(XxlJobApiUtils xxlJobApiUtils, SysUserService sysUserService,
-            ContractDetailMapper mapper, ContractStarService contractStarService) {
+    public ContractDetailServiceImpl(XxlJobApiUtils xxlJobApiUtils, @Lazy SysUserService sysUserService,
+            ContractDetailMapper mapper, @Lazy ContractStarService contractStarService) {
         this.xxlJobApiUtils = xxlJobApiUtils;
         this.sysUserService = sysUserService;
         this.contractStarService = contractStarService;
@@ -64,6 +69,8 @@ public class ContractDetailServiceImpl extends
         saveDO.setStatus(1);
         // todo 合同编号的规律
         saveDO.setNum("");
+
+        // todo 操作记录记录
         if (super.saveDO(saveDO)) {
             bizId = saveDO.getBizId();
         }
@@ -71,7 +78,7 @@ public class ContractDetailServiceImpl extends
         // 发送合同到期提醒
         xxlJobApiUtils.changeTask(
                 XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                        .executorHandler("customerContactReminderHandler").author(saveDO.getContactsId())
+                        .executorHandler("contractEndReminderHandler").author(saveDO.getContactsId())
                         .ownerUserId(saveDO.getOwnerUserId())
                         .bizId(bizId).nextTime(saveDO.getEndTime()).name(saveDO.getName())
                         .operateType(1)
@@ -141,5 +148,79 @@ public class ContractDetailServiceImpl extends
         return klmbPage;
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changeOwnerUser(ContractChangeOwnerUserVO crmChangeOwnerUserVO) {
+        // 修改负责人
+        if (crmChangeOwnerUserVO.getBizIds().size() == 0) {
+            return;
+        }
+        crmChangeOwnerUserVO.getBizIds().forEach(e->{
+            ContractDetailDO contract = super.getByBizId(e);
 
+            if (contract.getCheckStatus() == 8) {
+                throw exception(ContractErrorCodeConstants.CONTRACT_TRANSFER_ERROR);
+            }
+            // 删除之前的定时任务
+            xxlJobApiUtils.changeTask(
+                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                            .executorHandler("contractEndReminderHandler").author("zhouzhipeng")
+                            .bizId(e).operateType(3)
+                            .messageType(CrmEnum.CONTRACT.getRemarks())
+                            .contactsType(CrmEnum.CONTRACT.getType()).build());
+
+            contract.setOwnerUserId(crmChangeOwnerUserVO.getOwnerUserId());
+            // todo 操作记录
+            super.updateDO(contract);
+            // 新增定时任务
+            xxlJobApiUtils.changeTask(
+                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                            .executorHandler("contractEndReminderHandler").author("zhouzhipeng")
+                            .ownerUserId(contract.getOwnerUserId())
+                            .bizId(contract.getBizId()).nextTime(contract.getEndTime()).name(contract.getName())
+                            .operateType(1)
+                            .messageType(CrmEnum.CUSTOMER.getRemarks())
+                            .contactsType(CrmEnum.CONTRACT.getType()).build());
+            // 团队成员的增加和删除
+            if (2 == crmChangeOwnerUserVO.getTransferType() ) {
+                // 当前合同 增加该成员未团队
+            } else {
+                // 移出成员团队
+            }
+        });
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeByBizIds(List<String> bizIds) {
+        super.removeByBizIds(bizIds);
+        bizIds.forEach(e -> {
+            xxlJobApiUtils.changeTask(
+                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                            .executorHandler("contractEndReminderHandler").author("zhouzhipeng")
+                            .bizId(e).operateType(3)
+                            .messageType(CrmEnum.CONTRACT.getRemarks())
+                            .contactsType(CrmEnum.CONTRACT.getType()).build());
+        });
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean updateDO(ContractDetailDO entity) {
+        ContractDetailDO contractDetailDO = super.getByBizId(entity.getBizId());
+        LocalDateTime endTime = contractDetailDO.getEndTime();
+        boolean success = super.updateDO(entity);
+        if (!endTime.isEqual(entity.getEndTime())) {
+            xxlJobApiUtils.changeTask(
+                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                            .executorHandler("contractEndReminderHandler").author("zhouzhipeng")
+                            .ownerUserId(entity.getOwnerUserId())
+                            .bizId(entity.getBizId()).nextTime(entity.getEndTime())
+                            .name(entity.getName()).operateType(2)
+                            .messageType(CrmEnum.CONTRACT.getRemarks())
+                            .contactsType(CrmEnum.CONTRACT.getType()).build());
+        }
+        return success;
+    }
 }

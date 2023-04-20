@@ -3,6 +3,7 @@ package cn.klmb.crm.module.contract.dto.detail;
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery;
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery.Operator;
 import cn.klmb.crm.framework.base.core.pojo.KlmbBaseQueryDTO;
+import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
 import java.math.BigDecimal;
 import java.util.List;
@@ -103,6 +104,9 @@ public class ContractDetailQueryDTO extends KlmbBaseQueryDTO {
      */
     @DtoFieldQuery
     private String paymentType;
+
+    @DtoFieldQuery
+    private Integer checkStatus;
     /**
      * 最后跟进时间
      */

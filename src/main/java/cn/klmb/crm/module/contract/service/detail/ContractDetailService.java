@@ -2,6 +2,7 @@ package cn.klmb.crm.module.contract.service.detail;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractChangeOwnerUserVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
 import cn.klmb.crm.module.contract.dto.detail.ContractDetailQueryDTO;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
@@ -27,4 +28,10 @@ public interface ContractDetailService extends KlmbBaseService<ContractDetailDO,
      * @return 分页数据
      */
     KlmbPage<ContractDetailDO> pageDefinition(ContractDetailPageReqVO reqVO);
+
+    /**
+     * 合同修改合同负责人
+     * @param crmChangeOwnerUserVO 修改合同
+     */
+    void changeOwnerUser(ContractChangeOwnerUserVO crmChangeOwnerUserVO);
 }
