@@ -33,10 +33,13 @@ import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.userpool.MemberUserPoolService;
 import cn.klmb.crm.module.member.service.userpoolrelation.MemberUserPoolRelationService;
 import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
+import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
+import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
+import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -47,6 +50,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +62,7 @@ import org.springframework.transaction.annotation.Transactional;
  * @author 超级管理员
  */
 @Service
+@Slf4j
 public class MemberUserServiceImpl extends
         KlmbBaseServiceImpl<MemberUserDO, MemberUserQueryDTO, MemberUserMapper> implements
         MemberUserService {
@@ -77,13 +82,15 @@ public class MemberUserServiceImpl extends
 
     private final MemberUserPoolService memberUserPoolService;
 
+    private final SysConfigService sysConfigService;
+
 
     public MemberUserServiceImpl(SysUserService sysUserService, MemberUserMapper mapper,
             MemberUserStarService memberUserStarService, @Lazy MemberTeamService memberTeamService,
             XxlJobApiUtils xxlJobApiUtils, MemberOwnerRecordService memberOwnerRecordService,
             MemberUserPoolRelationService relationService,
             @Lazy MemberContactsService memberContactsService,
-            MemberUserPoolService memberUserPoolService) {
+            MemberUserPoolService memberUserPoolService, SysConfigService sysConfigService) {
         this.sysUserService = sysUserService;
         this.memberUserStarService = memberUserStarService;
         this.memberTeamService = memberTeamService;
@@ -92,6 +99,7 @@ public class MemberUserServiceImpl extends
         this.relationService = relationService;
         this.memberContactsService = memberContactsService;
         this.memberUserPoolService = memberUserPoolService;
+        this.sysConfigService = sysConfigService;
         this.mapper = mapper;
     }
 
@@ -351,14 +359,17 @@ public class MemberUserServiceImpl extends
                 MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.CUSTOMER.getType())
                         .typeId(bizId).build());
 
-        xxlJobApiUtils.changeTask(
-                XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                        .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                        .ownerUserId(saveDO.getOwnerUserId())
-                        .bizId(bizId).nextTime(saveDO.getNextTime()).name(saveDO.getName())
-                        .operateType(1)
-                        .messageType(CrmEnum.CUSTOMER.getRemarks())
-                        .contactsType(CrmEnum.CUSTOMER.getType()).build());
+        SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
+                SysConfigKeyEnum.CONTACTS_REMINDER.getType());
+
+        changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                .ownerUserId(saveDO.getOwnerUserId())
+                .bizId(bizId).nextTime(saveDO.getNextTime()).name(saveDO.getName())
+                .operateType(1)
+                .messageType(CrmEnum.CUSTOMER.getRemarks())
+                .contactsType(CrmEnum.CUSTOMER.getType())
+                .offsetValue(sysConfigDO.getValue()).build());
         return bizId;
     }
 
@@ -384,12 +395,11 @@ public class MemberUserServiceImpl extends
     public void removeByBizIds(List<String> bizIds) {
         super.removeByBizIds(bizIds);
         bizIds.forEach(e -> {
-            xxlJobApiUtils.changeTask(
-                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                            .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                            .bizId(e).operateType(3)
-                            .messageType(CrmEnum.CUSTOMER.getRemarks())
-                            .contactsType(CrmEnum.CUSTOMER.getType()).build());
+            changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                    .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                    .bizId(e).operateType(3)
+                    .messageType(CrmEnum.CUSTOMER.getRemarks())
+                    .contactsType(CrmEnum.CUSTOMER.getType()).build());
         });
 
     }
@@ -401,14 +411,18 @@ public class MemberUserServiceImpl extends
         LocalDateTime nextTime = memberUserDO.getNextTime();
         boolean success = super.updateDO(entity);
         if (!nextTime.isEqual(entity.getNextTime())) {
-            xxlJobApiUtils.changeTask(
-                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                            .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                            .ownerUserId(entity.getOwnerUserId())
-                            .bizId(entity.getBizId()).nextTime(entity.getNextTime())
-                            .name(entity.getName()).operateType(2)
-                            .messageType(CrmEnum.CUSTOMER.getRemarks())
-                            .contactsType(CrmEnum.CUSTOMER.getType()).build());
+            SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
+                    SysConfigKeyEnum.CONTACTS_REMINDER.getType());
+            log.info("bbbbbbbbbb");
+            changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                    .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                    .ownerUserId(entity.getOwnerUserId())
+                    .bizId(entity.getBizId()).nextTime(entity.getNextTime())
+                    .name(entity.getName()).operateType(2)
+                    .messageType(CrmEnum.CUSTOMER.getRemarks())
+                    .contactsType(CrmEnum.CUSTOMER.getType())
+                    .offsetValue(sysConfigDO.getValue())
+                    .build());
         }
         return success;
     }
@@ -474,20 +488,7 @@ public class MemberUserServiceImpl extends
             poolRelationList.add(relation);
 
             //同时判断客户是否存在定时任务，如果存在删除该定时任务
-            XxlJobTaskManagerInfo xxlJobTaskManagerInfo = xxlJobApiUtils.getTaskManagerInfo(
-                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                            .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                            .build());
-            if (ObjectUtil.isNotNull(xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
-                    xxlJobTaskManagerInfo.getData())) {
-                List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
-                for (XxlJobInfo datum : data) {
-                    List<String> split = StrUtil.split(datum.getExecutorParam(), CharUtil.COMMA);
-                    if (CollUtil.contains(split, bizId)) {
-                        xxlJobApiUtils.deleteTask(datum.getId());
-                    }
-                }
-            }
+            removeXxlJobTask(bizId);
         }
         if (ownerRecordList.size() > 0) {
             memberOwnerRecordService.saveBatchDO(ownerRecordList);
@@ -514,6 +515,25 @@ public class MemberUserServiceImpl extends
                     memberTeamDOS.stream().map(MemberTeamDO::getBizId).collect(
                             Collectors.toList()));
 
+        }
+
+    }
+
+
+    public void removeXxlJobTask(String bizId) {
+        XxlJobTaskManagerInfo xxlJobTaskManagerInfo = xxlJobApiUtils.getTaskManagerInfo(
+                XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                        .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                        .build());
+        if (ObjectUtil.isNotNull(xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
+                xxlJobTaskManagerInfo.getData())) {
+            List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
+            for (XxlJobInfo datum : data) {
+                List<String> split = StrUtil.split(datum.getExecutorParam(), CharUtil.COMMA);
+                if (CollUtil.contains(split, bizId)) {
+                    xxlJobApiUtils.deleteTask(datum.getId());
+                }
+            }
         }
 
     }
@@ -561,5 +581,12 @@ public class MemberUserServiceImpl extends
                 .set(MemberUserDO::getIsReceive, poolBO.getIsReceive())
                 .in(MemberUserDO::getBizId, poolBO.getCustomerIds()));
 
+    }
+
+    @Override
+    public void changeTask(XxlJobChangeTaskDTO xxlJobChangeTaskDTO) {
+        xxlJobApiUtils.changeTask(
+                xxlJobChangeTaskDTO
+        );
     }
 }

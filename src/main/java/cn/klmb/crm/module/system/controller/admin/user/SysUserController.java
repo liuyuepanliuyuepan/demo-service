@@ -24,6 +24,7 @@ import cn.klmb.crm.module.system.dto.feishu.FeishuMinAppResultDTO;
 import cn.klmb.crm.module.system.dto.user.SysUserQueryDTO;
 import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
 import cn.klmb.crm.module.system.entity.permission.SysRoleDO;
+import cn.klmb.crm.module.system.entity.permission.SysUserRoleDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.manager.SysFeishuManager;
@@ -32,6 +33,7 @@ import cn.klmb.crm.module.system.service.permission.SysPermissionService;
 import cn.klmb.crm.module.system.service.permission.SysRoleService;
 import cn.klmb.crm.module.system.service.permission.SysUserRoleService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -200,9 +202,26 @@ public class SysUserController {
             List<SysUserDO> entities = sysUserService.list(queryDTO);
 
             //查询系统内置角色
-//            List<SysUserRoleDO> list = sysUserRoleService.list(
-//                    new LambdaQueryWrapper<SysUserRoleDO>().in(SysUserRoleDO::getUserId, entities)
-//                            .eq(SysUserRoleDO::getDeleted, false).eq(SysUserRoleDO::getRoleId));
+            List<SysRoleDO> sysRoleDOS = sysRoleService.list(
+                    new LambdaQueryWrapper<SysRoleDO>().eq(SysRoleDO::getType, 1)
+                            .eq(SysRoleDO::getDeleted, false));
+            List<String> collect = null;
+            if (CollUtil.isNotEmpty(sysRoleDOS)) {
+                collect = sysRoleDOS.stream().map(SysRoleDO::getBizId)
+                        .collect(Collectors.toList());
+
+            }
+            List<SysUserRoleDO> list = sysUserRoleService.list(
+                    new LambdaQueryWrapper<SysUserRoleDO>().in(SysUserRoleDO::getUserId, entities)
+                            .eq(SysUserRoleDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(list)) {
+                if (CollUtil.isNotEmpty(collect)) {
+                    List<String> finalCollect = collect;
+                    list = list.stream()
+                            .filter(e -> !CollUtil.contains(finalCollect, e.getRoleId())).collect(
+                                    Collectors.toList());
+                }
+            }
 
         }
 

@@ -42,10 +42,13 @@ import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.contactsstar.MemberContactsStarService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
+import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
+import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
+import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.time.LocalDateTime;
@@ -86,13 +89,16 @@ public class BusinessDetailServiceImpl extends
 
     private final MemberContactsStarService memberContactsStarService;
 
+    private final SysConfigService sysConfigService;
+
     public BusinessDetailServiceImpl(BusinessProductService businessProductService,
             BusinessDetailMapper mapper, SysUserService sysUserService,
             MemberTeamService memberTeamService, BusinessUserStarService businessUserStarService,
             MemberUserService memberUserService, XxlJobApiUtils xxlJobApiUtils,
             BusinessContactsService businessContactsService,
             MemberContactsService memberContactsService,
-            @Lazy MemberContactsStarService memberContactsStarService) {
+            @Lazy MemberContactsStarService memberContactsStarService,
+            SysConfigService sysConfigService) {
         this.businessProductService = businessProductService;
         this.sysUserService = sysUserService;
         this.memberTeamService = memberTeamService;
@@ -102,6 +108,7 @@ public class BusinessDetailServiceImpl extends
         this.businessContactsService = businessContactsService;
         this.memberContactsService = memberContactsService;
         this.memberContactsStarService = memberContactsStarService;
+        this.sysConfigService = sysConfigService;
         this.mapper = mapper;
     }
 
@@ -128,6 +135,9 @@ public class BusinessDetailServiceImpl extends
                 businessProductService.saveDO(businessProductDO);
             });
         }
+
+        SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
+                SysConfigKeyEnum.CONTACTS_REMINDER.getType());
         xxlJobApiUtils.changeTask(
                 XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                         .executorHandler("customerContactReminderHandler").author("liuyuepan")
@@ -135,7 +145,8 @@ public class BusinessDetailServiceImpl extends
                         .bizId(bizId).nextTime(saveDO.getNextTime()).name(saveDO.getBusinessName())
                         .operateType(1)
                         .messageType(CrmEnum.BUSINESS.getRemarks())
-                        .contactsType(CrmEnum.BUSINESS.getType()).build());
+                        .contactsType(CrmEnum.BUSINESS.getType()
+                        ).offsetValue(sysConfigDO.getValue()).build());
 
         return bizId;
     }
@@ -183,6 +194,8 @@ public class BusinessDetailServiceImpl extends
             }
 
             if (!nextTime.isEqual(updateDO.getNextTime())) {
+                SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
+                        SysConfigKeyEnum.CONTACTS_REMINDER.getType());
                 xxlJobApiUtils.changeTask(
                         XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
                                 .title("crm执行器")
@@ -192,7 +205,8 @@ public class BusinessDetailServiceImpl extends
                                 .bizId(updateDO.getBizId()).nextTime(updateDO.getNextTime())
                                 .name(updateDO.getBusinessName()).operateType(2)
                                 .messageType(CrmEnum.BUSINESS.getRemarks())
-                                .contactsType(CrmEnum.BUSINESS.getType()).build());
+                                .contactsType(CrmEnum.BUSINESS.getType())
+                                .offsetValue(sysConfigDO.getValue()).build());
             }
         }
 
