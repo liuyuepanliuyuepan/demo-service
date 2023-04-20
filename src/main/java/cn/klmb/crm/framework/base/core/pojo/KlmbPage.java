@@ -67,6 +67,11 @@ public class KlmbPage<T> {
     private List<T> content;
 
     /**
+     * 额外数据
+     */
+    private Object extraData;
+
+    /**
      * 设置总数，计算页数和偏移量
      *
      * @param totalElements 总数
