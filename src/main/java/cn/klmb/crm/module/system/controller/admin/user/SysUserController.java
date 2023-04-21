@@ -221,7 +221,10 @@ public class SysUserController {
                             .filter(e -> !CollUtil.contains(finalCollect, e.getRoleId())).collect(
                                     Collectors.toList());
                 }
+
+                System.out.println(list);
             }
+
 
         }
 

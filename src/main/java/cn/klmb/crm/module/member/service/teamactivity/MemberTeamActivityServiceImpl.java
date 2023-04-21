@@ -55,16 +55,13 @@ public class MemberTeamActivityServiceImpl extends
 
     private void updateLastContent(MemberTeamActivityDO saveDO) {
         if (StrUtil.isNotBlank(saveDO.getActivityTypeId())) {
-            MemberUserDO memberUserDO = memberUserService.getByBizId(saveDO.getActivityTypeId());
-            if (ObjectUtil.isNotNull(memberUserDO)) {
-                memberUserDO.setLastContent(saveDO.getContent());
-                memberUserDO.setLastTime(LocalDateTime.now());
-                memberUserDO.setFollowup(1);
-                if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
-                    memberUserDO.setNextTime(saveDO.getNextTime());
-                }
-                memberUserService.updateDO(memberUserDO);
+            MemberUserDO memberUserDO = MemberUserDO.builder().bizId(saveDO.getActivityTypeId())
+                    .lastContent(saveDO.getContent()).lastTime(LocalDateTime.now()).followup(1)
+                    .build();
+            if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
+                memberUserDO.setNextTime(saveDO.getNextTime());
             }
+            memberUserService.updateDO(memberUserDO);
         }
     }
 }

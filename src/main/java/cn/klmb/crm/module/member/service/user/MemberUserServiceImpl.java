@@ -411,10 +411,10 @@ public class MemberUserServiceImpl extends
         MemberUserDO memberUserDO = super.getByBizId(entity.getBizId());
         LocalDateTime nextTime = memberUserDO.getNextTime();
         boolean success = super.updateDO(entity);
-        if (!nextTime.isEqual(entity.getNextTime())) {
+        if (!nextTime.isEqual(entity.getNextTime())
+                && LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) != 0) {
             SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
                     SysConfigKeyEnum.CONTACTS_REMINDER.getType());
-            log.info("bbbbbbbbbb");
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                     .executorHandler("customerContactReminderHandler").author("liuyuepan")
                     .ownerUserId(entity.getOwnerUserId())
@@ -424,6 +424,13 @@ public class MemberUserServiceImpl extends
                     .contactsType(CrmEnum.CUSTOMER.getType())
                     .offsetValue(sysConfigDO.getValue())
                     .build());
+        }
+        if (LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) == 0) {
+            changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                    .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                    .bizId(entity.getBizId()).operateType(3)
+                    .messageType(CrmEnum.CUSTOMER.getRemarks())
+                    .contactsType(CrmEnum.CUSTOMER.getType()).build());
         }
         return success;
     }
