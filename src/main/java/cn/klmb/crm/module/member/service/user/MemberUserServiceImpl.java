@@ -397,11 +397,20 @@ public class MemberUserServiceImpl extends
         super.removeByBizIds(bizIds);
         bizIds.forEach(e -> {
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                    .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                    .bizId(e).operateType(3)
-                    .messageType(CrmEnum.CUSTOMER.getRemarks())
+                    .executorHandler("customerContactReminderHandler").author("liuyuepan").bizId(e)
+                    .operateType(3).messageType(CrmEnum.CUSTOMER.getRemarks())
                     .contactsType(CrmEnum.CUSTOMER.getType()).build());
         });
+        //同时删除客户与公海的关联关系
+        List<MemberUserPoolRelationDO> list = relationService.list(
+                new LambdaQueryWrapper<MemberUserPoolRelationDO>().in(
+                                MemberUserPoolRelationDO::getCustomerId, bizIds)
+                        .eq(MemberUserPoolRelationDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(list)) {
+            List<String> collect = list.stream().map(MemberUserPoolRelationDO::getBizId)
+                    .collect(Collectors.toList());
+            relationService.removeByBizIds(collect);
+        }
 
     }
 
