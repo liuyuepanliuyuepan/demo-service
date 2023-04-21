@@ -174,4 +174,11 @@ public class MemberUserDO extends KlmbBaseDO {
     private String model;
 
 
+    /**
+     * 前负责人
+     */
+    @TableField(exist = false)
+    private String preOwnerUserName;
+
+
 }

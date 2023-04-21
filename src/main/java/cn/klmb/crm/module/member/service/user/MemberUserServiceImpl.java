@@ -15,6 +15,7 @@ import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserScrollPageReqVO;
@@ -410,10 +411,10 @@ public class MemberUserServiceImpl extends
         MemberUserDO memberUserDO = super.getByBizId(entity.getBizId());
         LocalDateTime nextTime = memberUserDO.getNextTime();
         boolean success = super.updateDO(entity);
-        if (!nextTime.isEqual(entity.getNextTime())) {
+        if (!nextTime.isEqual(entity.getNextTime())
+                && LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) != 0) {
             SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
                     SysConfigKeyEnum.CONTACTS_REMINDER.getType());
-            log.info("bbbbbbbbbb");
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                     .executorHandler("customerContactReminderHandler").author("liuyuepan")
                     .ownerUserId(entity.getOwnerUserId())
@@ -423,6 +424,13 @@ public class MemberUserServiceImpl extends
                     .contactsType(CrmEnum.CUSTOMER.getType())
                     .offsetValue(sysConfigDO.getValue())
                     .build());
+        }
+        if (LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) == 0) {
+            changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
+                    .executorHandler("customerContactReminderHandler").author("liuyuepan")
+                    .bizId(entity.getBizId()).operateType(3)
+                    .messageType(CrmEnum.CUSTOMER.getRemarks())
+                    .contactsType(CrmEnum.CUSTOMER.getType()).build());
         }
         return success;
     }
@@ -442,12 +450,23 @@ public class MemberUserServiceImpl extends
         }
         List<MemberUserDO> list = mapper
                 .nearbyMember(lng, lat, type, radius, ownerUserId, childUserIds);
-
         if (CollUtil.isNotEmpty(list)) {
             list.forEach(e -> {
+                MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                        e.getContactsId());
+                if (ObjectUtil.isNotNull(memberContactsDO)) {
+                    e.setContactsName(memberContactsDO.getName());
+                    e.setContactsMobile(memberContactsDO.getMobile());
+                }
                 SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
                 if (ObjectUtil.isNotNull(sysUserDO)) {
                     e.setOwnerUserName(sysUserDO.getNickname());
+                }
+                if (StrUtil.equals(e.getModel(), "公海") && StrUtil.isNotBlank(
+                        e.getPreOwnerUserId())) {
+                    SysUserDO userDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                    e.setPreOwnerUserName(
+                            ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
                 }
             });
         }
@@ -480,7 +499,6 @@ public class MemberUserServiceImpl extends
                     .set(MemberUserDO::getPreOwnerUserId, memberUserDO.getOwnerUserId())
                     .set(MemberUserDO::getPoolTime, LocalDateTime.now())
                     .set(MemberUserDO::getIsReceive, null)
-                    .set(MemberUserDO::getContactsId, null)
                     .eq(MemberUserDO::getBizId, memberUserDO.getBizId()).update();
             MemberUserPoolRelationDO relation = new MemberUserPoolRelationDO();
             relation.setCustomerId(bizId);
@@ -489,6 +507,14 @@ public class MemberUserServiceImpl extends
 
             //同时判断客户是否存在定时任务，如果存在删除该定时任务
             removeXxlJobTask(bizId);
+
+            //前负责人踢出团队
+            MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+            memberTeamSaveBO.setUserIds(
+                    Collections.singletonList(memberUserDO.getOwnerUserId()));
+            memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+            memberTeamService.deleteMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+
         }
         if (ownerRecordList.size() > 0) {
             memberOwnerRecordService.saveBatchDO(ownerRecordList);
@@ -496,26 +522,11 @@ public class MemberUserServiceImpl extends
         if (poolRelationList.size() > 0) {
             relationService.saveBatchDO(poolRelationList);
         }
-        //根据客户查询联系人信息并删除联系人
-        List<MemberContactsDO> contactsList = memberContactsService.list(
-                new LambdaQueryWrapper<MemberContactsDO>().in(MemberContactsDO::getCustomerId,
-                        poolBO.getCustomerIds()).eq(MemberContactsDO::getDeleted, false));
-        if (CollUtil.isNotEmpty(contactsList)) {
-            memberContactsService.removeByBizIds(
-                    contactsList.stream().map(MemberContactsDO::getBizId).collect(
-                            Collectors.toList()));
-        }
-        //根据客户查询团队成员信息并删除团队成员
-        List<MemberTeamDO> memberTeamDOS = memberTeamService.list(
-                new LambdaQueryWrapper<MemberTeamDO>().eq(MemberTeamDO::getType,
-                                CrmEnum.CUSTOMER.getType())
-                        .in(MemberTeamDO::getTypeId, poolBO.getCustomerIds()));
-        if (CollUtil.isNotEmpty(memberTeamDOS)) {
-            memberTeamService.removeByBizIds(
-                    memberTeamDOS.stream().map(MemberTeamDO::getBizId).collect(
-                            Collectors.toList()));
+        LambdaUpdateWrapper<MemberContactsDO> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.set(MemberContactsDO::getOwnerUserId, null);
+        wrapper.in(MemberContactsDO::getCustomerId, poolBO.getCustomerIds());
+        memberContactsService.update(wrapper);
 
-        }
 
     }
 
@@ -562,6 +573,13 @@ public class MemberUserServiceImpl extends
             memberOwnerRecordDO.setPostOwnerUserId(poolBO.getUserId());
             memberOwnerRecordDO.setCreateTime(LocalDateTime.now());
             records.add(memberOwnerRecordDO);
+
+            //为 领取人创建团队
+            MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+            memberTeamSaveBO.setPower(3);
+            memberTeamSaveBO.setBizIds(Collections.singletonList(id));
+            memberTeamSaveBO.setUserIds(Collections.singletonList(poolBO.getUserId()));
+            memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
         }
         if (records.size() > 0) {
             memberOwnerRecordService.saveBatchDO(records);
@@ -580,6 +598,7 @@ public class MemberUserServiceImpl extends
                 .set(MemberUserDO::getUpdateTime, LocalDateTime.now())
                 .set(MemberUserDO::getIsReceive, poolBO.getIsReceive())
                 .in(MemberUserDO::getBizId, poolBO.getCustomerIds()));
+
 
     }
 

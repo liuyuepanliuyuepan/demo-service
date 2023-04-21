@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.system.entity.user;
 
 import cn.klmb.crm.framework.base.core.entity.KlmbBaseDO;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import java.time.LocalDateTime;
 import lombok.Data;
@@ -101,5 +102,11 @@ public class SysUserDO extends KlmbBaseDO {
      * 飞书用户openId
      */
     private String openId;
+
+    /**
+     * 部门名称
+     */
+    @TableField(exist = false)
+    private String deptName;
 
 }

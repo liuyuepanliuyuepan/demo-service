@@ -100,6 +100,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         if (ObjectUtil.isNotNull(userInfo) && StrUtil.isNotBlank(userInfo.getDeptId())) {
             SysDeptDO sysDeptDO = sysDeptService.getByBizId(userInfo.getDeptId());
             userInfo.setDeptName(ObjectUtil.isNotNull(sysDeptDO) ? sysDeptDO.getName() : null);
+            userInfo.setEmail(userInfo.getEmail());
         }
         return tokenAfterLoginSuccess;
     }
@@ -133,6 +134,7 @@ public class SysAuthServiceImpl implements SysAuthService {
         if (ObjectUtil.isNotNull(userInfo) && StrUtil.isNotBlank(userInfo.getDeptId())) {
             SysDeptDO sysDeptDO = sysDeptService.getByBizId(userInfo.getDeptId());
             userInfo.setDeptName(ObjectUtil.isNotNull(sysDeptDO) ? sysDeptDO.getName() : null);
+            userInfo.setEmail(userInfo.getEmail());
         }
         return tokenAfterLoginSuccess;
 
@@ -167,6 +169,8 @@ public class SysAuthServiceImpl implements SysAuthService {
         if (ObjectUtil.isNotNull(userInfo) && StrUtil.isNotBlank(userInfo.getDeptId())) {
             SysDeptDO sysDeptDO = sysDeptService.getByBizId(userInfo.getDeptId());
             userInfo.setDeptName(ObjectUtil.isNotNull(sysDeptDO) ? sysDeptDO.getName() : null);
+            userInfo.setEmail(userInfo.getEmail());
+
         }
         return tokenAfterLoginSuccess;
     }

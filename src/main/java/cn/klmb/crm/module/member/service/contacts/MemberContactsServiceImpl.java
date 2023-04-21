@@ -135,6 +135,13 @@ public class MemberContactsServiceImpl extends
                 .sortingFields(reqVO.getSortingFields())
                 .build();
         MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
+        if (StrUtil.isNotBlank(queryDTO.getCustomerId())) {
+            MemberUserDO memberUserDO = memberUserService.getByBizId(queryDTO.getCustomerId());
+            if (StrUtil.isBlank(memberUserDO.getOwnerUserId())) {
+                klmbPage.setContent(Collections.EMPTY_LIST);
+                return klmbPage;
+            }
+        }
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
             if (CollUtil.isEmpty(childUserIds)) {
                 klmbPage.setContent(Collections.EMPTY_LIST);

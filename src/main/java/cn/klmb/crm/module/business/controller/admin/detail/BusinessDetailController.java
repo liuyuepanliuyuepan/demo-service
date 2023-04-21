@@ -1,7 +1,9 @@
 package cn.klmb.crm.module.business.controller.admin.detail;
 
+import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDeleteReqVO;
@@ -12,6 +14,7 @@ import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpda
 import cn.klmb.crm.module.business.controller.admin.detail.vo.CrmRelevanceBusinessBO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.UpdateBusinessStatusReqVO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
@@ -128,8 +131,13 @@ public class BusinessDetailController {
     @PreAuthorize("@ss.hasPermission('business:detail:query')")
     public CommonResult<List<MembersTeamSelectVO>> getMembers(
             @PathVariable("businessId") @ApiParam("商机ID") String businessId) {
+        BusinessDetailDO businessDetailDO = businessDetailService.getByBizId(businessId);
+        if (ObjectUtil.isNull(businessDetailDO)) {
+            throw exception(ErrorCodeConstants.BUSINESS_NOT_EXISTS);
+        }
         CrmEnum crmEnum = CrmEnum.BUSINESS;
-        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, businessId);
+        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, businessId,
+                businessDetailDO.getOwnerUserId());
         return CommonResult.success(members);
     }
 
