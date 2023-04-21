@@ -292,7 +292,8 @@ public class SysUserServiceImpl extends
     @Override
     public SysUserRespVO getUserDetailByUserId(String userId) {
         SysUserDO sysUserDO = super.getByBizId(userId);
-        if (StrUtil.isNotBlank(sysUserDO.getDeptId()) && !StrUtil.equals(sysUserDO.getDeptId(),
+        if (ObjectUtil.isNotNull(sysUserDO) && StrUtil.isNotBlank(sysUserDO.getDeptId())
+                && !StrUtil.equals(sysUserDO.getDeptId(),
                 "0")) {
             SysDeptDO sysDeptDO = sysDeptService.getByBizId(sysUserDO.getDeptId());
             sysUserDO.setDeptName(sysDeptDO.getName());
