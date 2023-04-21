@@ -397,11 +397,20 @@ public class MemberUserServiceImpl extends
         super.removeByBizIds(bizIds);
         bizIds.forEach(e -> {
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                    .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                    .bizId(e).operateType(3)
-                    .messageType(CrmEnum.CUSTOMER.getRemarks())
+                    .executorHandler("customerContactReminderHandler").author("liuyuepan").bizId(e)
+                    .operateType(3).messageType(CrmEnum.CUSTOMER.getRemarks())
                     .contactsType(CrmEnum.CUSTOMER.getType()).build());
         });
+        //同时删除客户与公海的关联关系
+        List<MemberUserPoolRelationDO> list = relationService.list(
+                new LambdaQueryWrapper<MemberUserPoolRelationDO>().in(
+                                MemberUserPoolRelationDO::getCustomerId, bizIds)
+                        .eq(MemberUserPoolRelationDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(list)) {
+            List<String> collect = list.stream().map(MemberUserPoolRelationDO::getBizId)
+                    .collect(Collectors.toList());
+            relationService.removeByBizIds(collect);
+        }
 
     }
 
@@ -411,15 +420,16 @@ public class MemberUserServiceImpl extends
         MemberUserDO memberUserDO = super.getByBizId(entity.getBizId());
         LocalDateTime nextTime = memberUserDO.getNextTime();
         boolean success = super.updateDO(entity);
+        MemberUserDO memberUserDOCopy = super.getByBizId(entity.getBizId());
         if (!nextTime.isEqual(entity.getNextTime())
                 && LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) != 0) {
             SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
                     SysConfigKeyEnum.CONTACTS_REMINDER.getType());
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                     .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                    .ownerUserId(entity.getOwnerUserId())
+                    .ownerUserId(memberUserDOCopy.getOwnerUserId())
                     .bizId(entity.getBizId()).nextTime(entity.getNextTime())
-                    .name(entity.getName()).operateType(2)
+                    .name(memberUserDOCopy.getName()).operateType(2)
                     .messageType(CrmEnum.CUSTOMER.getRemarks())
                     .contactsType(CrmEnum.CUSTOMER.getType())
                     .offsetValue(sysConfigDO.getValue())
@@ -445,9 +455,6 @@ public class MemberUserServiceImpl extends
         }
         List<String> childUserIds = sysUserService.queryChildUserId(
                 userId);
-        if (ObjectUtil.isNull(type)) {
-            type = 1;
-        }
         List<MemberUserDO> list = mapper
                 .nearbyMember(lng, lat, type, radius, ownerUserId, childUserIds);
         if (CollUtil.isNotEmpty(list)) {
