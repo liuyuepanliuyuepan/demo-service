@@ -5,7 +5,7 @@
   <select id="nearbyMember" resultType="cn.klmb.crm.module.member.entity.user.MemberUserDO">
     select
     a.biz_id, a.name,a.location,a.detail_address,a.mobile,a.tel,
-    a.lng,a.lat, a.owner_user_id,a.pre_owner_user_id,
+    a.lng,a.lat, a.owner_user_id,a.pre_owner_user_id,a.last_time,
     (IF(a.owner_user_id is null, '公海', '客户')) as model,
     ROUND(
     6378.138 * 2 * ASIN(
