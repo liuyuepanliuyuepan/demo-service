@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.system.service.user;
 
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
+import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserRespVO;
 import cn.klmb.crm.module.system.dto.user.SysUserQueryDTO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import java.util.List;
@@ -85,6 +86,14 @@ public interface SysUserService extends KlmbBaseService<SysUserDO, SysUserQueryD
      */
     List<String> queryUserByDeptIds(List<String> ids);
 
+
+    /**
+     * 根据userId来查询用户详细信息
+     *
+     * @param userId
+     * @return
+     */
+    SysUserRespVO getUserDetailByUserId(String userId);
 
 }
 

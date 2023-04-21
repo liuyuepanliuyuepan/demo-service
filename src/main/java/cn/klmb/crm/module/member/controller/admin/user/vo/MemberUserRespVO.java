@@ -52,4 +52,11 @@ public class MemberUserRespVO extends MemberUserBaseVO {
     @ApiModelProperty(value = "是否在公海")
     private Boolean existPool;
 
+    /**
+     * 前负责人
+     */
+    @ApiModelProperty(value = "前负责人")
+    private String preOwnerUserName;
+
+
 }

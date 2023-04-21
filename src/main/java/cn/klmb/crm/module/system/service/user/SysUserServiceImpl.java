@@ -17,8 +17,11 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.common.enums.CommonStatusEnum;
 import cn.klmb.crm.framework.common.util.collection.CollectionUtils;
 import cn.klmb.crm.framework.common.util.data.RecursionUtil;
+import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserRespVO;
+import cn.klmb.crm.module.system.convert.user.SysUserConvert;
 import cn.klmb.crm.module.system.dao.user.SysUserMapper;
 import cn.klmb.crm.module.system.dto.user.SysUserQueryDTO;
+import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.dept.SysDeptService;
@@ -284,6 +287,17 @@ public class SysUserServiceImpl extends
             queryWrapper.eq(SysUserDO::getDeptId, ids.get(0));
         }
         return listObjs(queryWrapper, Object::toString);
+    }
+
+    @Override
+    public SysUserRespVO getUserDetailByUserId(String userId) {
+        SysUserDO sysUserDO = super.getByBizId(userId);
+        if (StrUtil.isNotBlank(sysUserDO.getDeptId()) && !StrUtil.equals(sysUserDO.getDeptId(),
+                "0")) {
+            SysDeptDO sysDeptDO = sysDeptService.getByBizId(sysUserDO.getDeptId());
+            sysUserDO.setDeptName(sysDeptDO.getName());
+        }
+        return SysUserConvert.INSTANCE.convert01(sysUserDO);
     }
 
 }
