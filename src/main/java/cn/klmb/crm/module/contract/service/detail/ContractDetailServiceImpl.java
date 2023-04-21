@@ -58,8 +58,7 @@ public class ContractDetailServiceImpl extends
 
 
     @Override
-    public String saveDefinition(ContractDetailDO saveDO) {
-        String bizId = "";
+    public ContractDetailDO saveDefinition(ContractDetailDO saveDO) {
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -71,20 +70,18 @@ public class ContractDetailServiceImpl extends
         saveDO.setNum("");
 
         // todo 操作记录记录
-        if (super.saveDO(saveDO)) {
-            bizId = saveDO.getBizId();
-        }
+        super.saveDO(saveDO);
 
         // 发送合同到期提醒
         xxlJobApiUtils.changeTask(
                 XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                        .executorHandler("contractEndReminderHandler").author(saveDO.getContactsId())
+                        .executorHandler("contractEndReminderHandler").author("zzp")
                         .ownerUserId(saveDO.getOwnerUserId())
-                        .bizId(bizId).nextTime(saveDO.getEndTime()).name(saveDO.getName())
+                        .bizId(saveDO.getBizId()).nextTime(saveDO.getEndTime()).name(saveDO.getName())
                         .operateType(1)
                         .messageType(CrmEnum.CUSTOMER.getRemarks())
                         .contactsType(CrmEnum.CONTRACT.getType()).build());
-        return bizId;
+        return saveDO;
     }
 
     @Override
@@ -210,6 +207,7 @@ public class ContractDetailServiceImpl extends
     public boolean updateDO(ContractDetailDO entity) {
         ContractDetailDO contractDetailDO = super.getByBizId(entity.getBizId());
         LocalDateTime endTime = contractDetailDO.getEndTime();
+        // todo 对状态有一些判断  已通过的合同 作废后才能编辑
         boolean success = super.updateDO(entity);
         if (!endTime.isEqual(entity.getEndTime())) {
             xxlJobApiUtils.changeTask(

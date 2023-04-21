@@ -94,10 +94,12 @@ public class ContractDetailController {
     @PreAuthorize("@ss.hasPermission('contract:detail:save')")
     public CommonResult<String> save(@Valid @RequestBody ContractDetailSaveReqVO saveReqVO) {
         ContractDetailDO saveDO = ContractDetailConvert.INSTANCE.convert(saveReqVO);
-        String bizId = contractDetailService.saveDefinition(saveDO);
+        saveDO = contractDetailService.saveDefinition(saveDO);
         // 保存对应产品信息
-        contractProductService.saveDefinition(saveReqVO.getContractProductSaveReqVOList(),bizId);
-        return success(bizId);
+        contractProductService.saveDefinition(saveReqVO.getContractProductSaveReqVOList(),saveDO.getBizId());
+
+        // todo 添加团队成员  默认负责人为团队成员 权限最大
+        return success(saveDO.getBizId());
     }
 
     @DeleteMapping(value = "/delete/{bizId}")

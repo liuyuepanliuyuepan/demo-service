@@ -20,7 +20,7 @@ public interface ContractDetailService extends KlmbBaseService<ContractDetailDO,
      * @param saveDO 表单数据
      * @return 业务id
      */
-    String saveDefinition(ContractDetailDO saveDO);
+    ContractDetailDO saveDefinition(ContractDetailDO saveDO);
 
     /**
      * 合同管理分页查询
