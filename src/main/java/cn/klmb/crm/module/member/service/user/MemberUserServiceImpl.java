@@ -411,15 +411,16 @@ public class MemberUserServiceImpl extends
         MemberUserDO memberUserDO = super.getByBizId(entity.getBizId());
         LocalDateTime nextTime = memberUserDO.getNextTime();
         boolean success = super.updateDO(entity);
+        MemberUserDO memberUserDOCopy = super.getByBizId(entity.getBizId());
         if (!nextTime.isEqual(entity.getNextTime())
                 && LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) != 0) {
             SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
                     SysConfigKeyEnum.CONTACTS_REMINDER.getType());
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                     .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                    .ownerUserId(entity.getOwnerUserId())
+                    .ownerUserId(memberUserDOCopy.getOwnerUserId())
                     .bizId(entity.getBizId()).nextTime(entity.getNextTime())
-                    .name(entity.getName()).operateType(2)
+                    .name(memberUserDOCopy.getName()).operateType(2)
                     .messageType(CrmEnum.CUSTOMER.getRemarks())
                     .contactsType(CrmEnum.CUSTOMER.getType())
                     .offsetValue(sysConfigDO.getValue())
