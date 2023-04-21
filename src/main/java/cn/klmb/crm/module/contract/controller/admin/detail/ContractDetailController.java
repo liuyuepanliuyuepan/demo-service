@@ -14,11 +14,14 @@ import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.*;
 import cn.klmb.crm.module.contract.convert.detail.ContractDetailConvert;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
+import cn.klmb.crm.module.contract.enums.ContractErrorCodeConstants;
 import cn.klmb.crm.module.contract.service.detail.ContractDetailService;
 import cn.klmb.crm.module.contract.service.product.ContractProductService;
 import cn.klmb.crm.module.contract.service.star.ContractStarService;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
+import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
@@ -34,6 +37,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -98,7 +102,11 @@ public class ContractDetailController {
         // 保存对应产品信息
         contractProductService.saveDefinition(saveReqVO.getContractProductSaveReqVOList(),saveDO.getBizId());
 
-        // todo 添加团队成员  默认负责人为团队成员 权限最大
+        MemberTeamDO memberTeamDO = MemberTeamDO.builder()
+                .power(3).type(CrmEnum.CONTRACT.getType()).typeId(saveDO.getBizId())
+                .userId(saveDO.getOwnerUserId())
+                .build();
+        memberTeamService.saveDO(memberTeamDO);
         return success(saveDO.getBizId());
     }
 
@@ -195,7 +203,7 @@ public class ContractDetailController {
 
             // teamMemberIds   该合同瞎的请他团队成员
             CrmEnum crmEnum = CrmEnum.BUSINESS;
-            List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, e.getBizId());
+            List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, e.getBizId(),e.getOwnerUserId());
             if (ObjectUtil.isNotNull(members)) {
                 e.setTeamMemberIds(members.stream().map(MembersTeamSelectVO::getNickName).collect(
                         Collectors.toList()).stream().collect(Collectors.joining(",")));
@@ -203,6 +211,55 @@ public class ContractDetailController {
         });
         return success(ContractDetailConvert.INSTANCE.convert(page));
     }
+    
+    /*****************************************合同内的团队成员******************************************************/
+    @GetMapping("/getMembers/{contractBizId}")
+    @ApiOperation("获取团队成员")
+    @PreAuthorize("@ss.hasPermission('contract:detail:query')")
+    public CommonResult<List<MembersTeamSelectVO>> getMembers(
+            @PathVariable("contractBizId") @ApiParam("合同id") String contractBizId) {
+        CrmEnum crmEnum = CrmEnum.CONTRACT;
+        ContractDetailDO contractDetailDO = contractDetailService.getByBizId(contractBizId);
+        if (contractDetailDO == null) {
+            throw exception(ContractErrorCodeConstants.CONTRACT_NOT_EXIST);
+        }
+        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, contractBizId,
+                contractDetailDO.getOwnerUserId());
+        return CommonResult.success(members);
+    }
 
-    // 团队列表
+    @PostMapping("/addMembers")
+    @ApiOperation("新增团队成员")
+    @PreAuthorize("@ss.hasPermission('contract:detail:save')")
+    public CommonResult<Boolean> addMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+        memberTeamService.addMember(CrmEnum.CONTRACT, memberTeamSaveBO);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/updateMembers")
+    @ApiOperation("编辑团队成员")
+    @PreAuthorize("@ss.hasPermission('contract:detail:update')")
+    public CommonResult<Boolean> updateMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+        memberTeamService.addMember(CrmEnum.CONTRACT, memberTeamSaveBO);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/deleteMembers")
+    @ApiOperation("删除团队成员")
+    @PreAuthorize("@ss.hasPermission('contract:detail:delete')")
+    public CommonResult<Boolean> deleteMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+        memberTeamService.deleteMember(CrmEnum.CONTRACT, memberTeamSaveBO);
+        return CommonResult.success(true);
+    }
+
+    @PostMapping("/exitTeam/{contractId}")
+    @ApiOperation("退出团队")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "contractId", value = "合同id", dataTypeClass = String.class, paramType = "path")})
+    @PreAuthorize("@ss.hasPermission('contract:detail:update')")
+    public CommonResult<Boolean> exitTeam(@PathVariable("contractId") String contractId) {
+        memberTeamService.exitTeam(CrmEnum.CONTRACT, contractId);
+        return CommonResult.success(true);
+    }
+    
 }

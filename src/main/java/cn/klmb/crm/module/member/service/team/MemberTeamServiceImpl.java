@@ -9,6 +9,8 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.common.Const;
 import cn.klmb.crm.framework.common.util.servlet.ApplicationContextHolder;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
+import cn.klmb.crm.module.contract.service.detail.ContractDetailService;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.dao.team.MemberTeamMapper;
@@ -158,6 +160,15 @@ public class MemberTeamServiceImpl extends
                         .eq(MemberContactsDO::getBizId, typeId)
                         .one();
                 return new Object[]{contacts.getOwnerUserId(), contacts.getName()};
+            }
+            case CONTRACT: {
+                ContractDetailDO contractDetailDO = ApplicationContextHolder.getBean(
+                                ContractDetailService.class)
+                        .lambdaQuery()
+                        .select(ContractDetailDO::getOwnerUserId, ContractDetailDO::getName)
+                        .eq(ContractDetailDO::getBizId, typeId)
+                        .one();
+                return new Object[]{contractDetailDO.getOwnerUserId(), contractDetailDO.getName()};
             }
             default: {
                 return new Object[0];

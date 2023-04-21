@@ -13,6 +13,7 @@ public enum SysConfigKeyEnum {
     /**
      * 系统配置
      */
-    CONTACTS_REMINDER("sys.customer.expiration.reminder");
+    CONTACTS_REMINDER("sys.customer.expiration.reminder"),
+    CONTRACT_REMINDER("sys.contract.expiration.reminder");
     private final String type;
 }

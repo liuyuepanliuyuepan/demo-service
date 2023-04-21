@@ -3,6 +3,8 @@ package cn.klmb.crm.module.member.service.teamactivity;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
+import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
+import cn.klmb.crm.module.contract.service.detail.ContractDetailService;
 import cn.klmb.crm.module.member.dao.teamactivity.MemberTeamActivityMapper;
 import cn.klmb.crm.module.member.dto.teamactivity.MemberTeamActivityQueryDTO;
 import cn.klmb.crm.module.member.entity.teamactivity.MemberTeamActivityDO;
@@ -24,10 +26,11 @@ public class MemberTeamActivityServiceImpl extends
         MemberTeamActivityService {
 
     private final MemberUserService memberUserService;
-
+    private final ContractDetailService contractDetailService;
     public MemberTeamActivityServiceImpl(MemberUserService memberUserService,
-            MemberTeamActivityMapper mapper) {
+            ContractDetailService contractDetailService, MemberTeamActivityMapper mapper) {
         this.memberUserService = memberUserService;
+        this.contractDetailService = contractDetailService;
         this.mapper = mapper;
     }
 
@@ -55,16 +58,38 @@ public class MemberTeamActivityServiceImpl extends
 
     private void updateLastContent(MemberTeamActivityDO saveDO) {
         if (StrUtil.isNotBlank(saveDO.getActivityTypeId())) {
-            MemberUserDO memberUserDO = memberUserService.getByBizId(saveDO.getActivityTypeId());
-            if (ObjectUtil.isNotNull(memberUserDO)) {
-                memberUserDO.setLastContent(saveDO.getContent());
-                memberUserDO.setLastTime(LocalDateTime.now());
-                memberUserDO.setFollowup(1);
-                if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
-                    memberUserDO.setNextTime(saveDO.getNextTime());
-                }
-                memberUserService.updateDO(memberUserDO);
+            // activityTypeId todo 合同跟进日志修改
+            int typeId = saveDO.getActivityType();
+            switch (typeId) {
+                case 2 :
+                    // 客户
+                    MemberUserDO memberUserDO = memberUserService.getByBizId(saveDO.getActivityTypeId());
+                    if (ObjectUtil.isNotNull(memberUserDO)) {
+                        memberUserDO.setLastContent(saveDO.getContent());
+                        memberUserDO.setLastTime(LocalDateTime.now());
+                        memberUserDO.setFollowup(1);
+                        if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
+                            memberUserDO.setNextTime(saveDO.getNextTime());
+                        }
+                        memberUserService.updateDO(memberUserDO);
+                    }
+                    break;
+                case 6 :
+                    // 合同
+                    if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
+                        ContractDetailDO contractDetailDO = contractDetailService.getByBizId(
+                                saveDO.getActivityTypeId());
+                        if (ObjectUtil.isNotNull(contractDetailDO)) {
+                            contractDetailDO.setEndTime(saveDO.getNextTime());
+                            contractDetailService.updateDO(contractDetailDO);
+                        }
+                    }
+                    break;
+                default:
+
+                    break;
             }
+
         }
     }
 }
