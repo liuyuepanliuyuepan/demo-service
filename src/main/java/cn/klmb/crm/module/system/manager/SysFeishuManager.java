@@ -147,7 +147,6 @@ public class SysFeishuManager {
      * 发送CRM客户联系时间提醒的飞书通知（异步）
      */
     public void sendMsg(String userId, String content) {
-        try {
             User userInfo = getUserInfo(userId);
             String msgCode = RandomUtil.randomNumbers(6);
             String[] contentArray = StrUtil.split(content, 30000);
@@ -173,9 +172,6 @@ public class SysFeishuManager {
                 log.info("CRM-飞书机器人返回结果【{}】", result);
             }
 
-        } catch (Exception e) {
-            throw exception(ErrorCodeConstants.FEISHU_BOT_SEND_MSG_ERROR, e.getMessage());
-        }
     }
 
 

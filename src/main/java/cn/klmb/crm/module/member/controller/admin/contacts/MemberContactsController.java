@@ -233,6 +233,12 @@ public class MemberContactsController {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
         MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
+        if (StrUtil.isNotBlank(queryDTO.getCustomerId())) {
+            MemberUserDO memberUserDO = memberUserService.getByBizId(queryDTO.getCustomerId());
+            if (StrUtil.isBlank(memberUserDO.getOwnerUserId())) {
+                return CommonResult.success(Collections.emptyList());
+            }
+        }
         List<MemberContactsDO> entities = memberContactsService.list(
                 new LambdaQueryWrapper<MemberContactsDO>().eq(MemberContactsDO::getCustomerId,
                                 queryDTO.getCustomerId()).eq(MemberContactsDO::getDeleted, false)

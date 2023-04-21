@@ -24,9 +24,12 @@ import cn.klmb.crm.module.member.entity.contactsstar.MemberContactsStarDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contactsstar.MemberContactsStarService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
+import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
+import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
+import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -61,17 +64,20 @@ public class MemberContactsServiceImpl extends
 
     private final BusinessContactsService businessContactsService;
 
+    private final SysConfigService sysConfigService;
+
     public MemberContactsServiceImpl(MemberContactsMapper mapper, SysUserService sysUserService,
             MemberUserService memberUserService,
             MemberContactsStarService memberContactsStarService, XxlJobApiUtils xxlJobApiUtils,
             @Lazy BusinessDetailService businessDetailService,
-            BusinessContactsService businessContactsService) {
+            BusinessContactsService businessContactsService, SysConfigService sysConfigService) {
         this.sysUserService = sysUserService;
         this.memberUserService = memberUserService;
         this.memberContactsStarService = memberContactsStarService;
         this.xxlJobApiUtils = xxlJobApiUtils;
         this.businessDetailService = businessDetailService;
         this.businessContactsService = businessContactsService;
+        this.sysConfigService = sysConfigService;
         this.mapper = mapper;
     }
 
@@ -104,14 +110,16 @@ public class MemberContactsServiceImpl extends
             businessContactsService.saveDO(
                     BusinessContactsDO.builder().businessId(businessId).contactsId(bizId).build());
         }
+        SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
+                SysConfigKeyEnum.CONTACTS_REMINDER.getType());
         xxlJobApiUtils.changeTask(
                 XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                         .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                        .ownerUserId(entity.getOwnerUserId())
-                        .bizId(bizId).nextTime(entity.getNextTime()).name(entity.getName())
-                        .operateType(1)
+                        .ownerUserId(entity.getOwnerUserId()).bizId(bizId)
+                        .nextTime(entity.getNextTime()).name(entity.getName()).operateType(1)
                         .messageType(CrmEnum.CONTACTS.getRemarks())
-                        .contactsType(CrmEnum.CONTACTS.getType()).build());
+                        .contactsType(CrmEnum.CONTACTS.getType())
+                        .offsetValue(sysConfigDO.getValue()).build());
         return bizId;
     }
 
@@ -127,6 +135,13 @@ public class MemberContactsServiceImpl extends
                 .sortingFields(reqVO.getSortingFields())
                 .build();
         MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
+        if (StrUtil.isNotBlank(queryDTO.getCustomerId())) {
+            MemberUserDO memberUserDO = memberUserService.getByBizId(queryDTO.getCustomerId());
+            if (StrUtil.isBlank(memberUserDO.getOwnerUserId())) {
+                klmbPage.setContent(Collections.EMPTY_LIST);
+                return klmbPage;
+            }
+        }
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
             if (CollUtil.isEmpty(childUserIds)) {
                 klmbPage.setContent(Collections.EMPTY_LIST);
@@ -245,14 +260,16 @@ public class MemberContactsServiceImpl extends
         LocalDateTime nextTime = memberContactsDO.getNextTime();
         boolean success = super.updateDO(entity);
         if (!nextTime.isEqual(entity.getNextTime())) {
+            SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
+                    SysConfigKeyEnum.CONTACTS_REMINDER.getType());
             xxlJobApiUtils.changeTask(
                     XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                             .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                            .ownerUserId(entity.getOwnerUserId())
-                            .bizId(entity.getBizId()).nextTime(entity.getNextTime())
-                            .name(entity.getName()).operateType(2)
+                            .ownerUserId(entity.getOwnerUserId()).bizId(entity.getBizId())
+                            .nextTime(entity.getNextTime()).name(entity.getName()).operateType(2)
                             .messageType(CrmEnum.CONTACTS.getRemarks())
-                            .contactsType(CrmEnum.CONTACTS.getType()).build());
+                            .contactsType(CrmEnum.CONTACTS.getType())
+                            .offsetValue(sysConfigDO.getValue()).build());
         }
         return success;
     }

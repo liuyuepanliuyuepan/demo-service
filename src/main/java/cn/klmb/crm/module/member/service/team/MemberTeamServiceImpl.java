@@ -18,8 +18,7 @@ import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
-import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
-import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserRespVO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.dept.SysDeptService;
@@ -175,48 +174,34 @@ public class MemberTeamServiceImpl extends
      * @return data
      */
     @Override
-    public List<MembersTeamSelectVO> getMembers(CrmEnum crmEnum, String typeId) {
-        MemberUserDO memberUserDO = memberUserService.getByBizId(typeId);
-        if (memberUserDO == null) {
-            throw exception(
-                    cn.klmb.crm.module.member.enums.ErrorCodeConstants.MEMBER_USER_NOT_EXISTS);
-        }
-        String ownerUserId = memberUserDO.getOwnerUserId();
+    public List<MembersTeamSelectVO> getMembers(CrmEnum crmEnum, String typeId,
+            String ownerUserId) {
         List<MembersTeamSelectVO> selectVOS = new ArrayList<>();
+        if (StrUtil.isBlank(ownerUserId)) {
+            return Collections.emptyList();
+        }
         List<MemberTeamDO> teamMembers = lambdaQuery().eq(MemberTeamDO::getType, crmEnum.getType())
                 .eq(MemberTeamDO::getTypeId, typeId).list();
         for (MemberTeamDO teamMember : teamMembers) {
             if (Objects.equals(teamMember.getUserId(), ownerUserId)) {
-                SysUserDO sysUserDO = sysUserService.getByBizId(ownerUserId);
+                SysUserRespVO sysUserRespVO = sysUserService.getUserDetailByUserId(
+                        ownerUserId);
                 MembersTeamSelectVO selectVO = new MembersTeamSelectVO();
                 selectVO.setUserId(ownerUserId);
-                selectVO.setNickName(sysUserDO.getNickname());
+                selectVO.setNickName(sysUserRespVO.getNickname());
                 selectVO.setExpiresTime(null);
                 selectVO.setPower(3);
-                if (StrUtil.isNotBlank(sysUserDO.getDeptId())) {
-                    if (StrUtil.equals(sysUserDO.getDeptId(), "0")) {
-                        selectVO.setDeptName("admin");
-                    } else {
-                        SysDeptDO sysDeptDO = sysDeptService.getByBizId(sysUserDO.getDeptId());
-                        selectVO.setDeptName(sysDeptDO.getName());
-                    }
-                }
+                selectVO.setDeptName(sysUserRespVO.getDeptName());
                 selectVOS.add(selectVO);
             }
             if (ObjectUtil.notEqual(teamMember.getUserId(), ownerUserId)) {
                 MembersTeamSelectVO selectVO = new MembersTeamSelectVO();
-                SysUserDO sysUserDO = sysUserService.getByBizId(teamMember.getUserId());
+                SysUserRespVO sysUserRespVO = sysUserService.getUserDetailByUserId(
+                        teamMember.getUserId());
                 selectVO.setUserId(teamMember.getUserId());
                 selectVO.setPower(teamMember.getPower());
-                if (StrUtil.isNotBlank(sysUserDO.getDeptId())) {
-                    if (StrUtil.equals(sysUserDO.getDeptId(), "0")) {
-                        selectVO.setDeptName("admin");
-                    } else {
-                        SysDeptDO sysDeptDO = sysDeptService.getByBizId(sysUserDO.getDeptId());
-                        selectVO.setDeptName(sysDeptDO.getName());
-                    }
-                }
-                selectVO.setNickName(sysUserDO.getNickname());
+                selectVO.setDeptName(sysUserRespVO.getDeptName());
+                selectVO.setNickName(sysUserRespVO.getNickname());
                 if (ObjectUtil.isNotNull(teamMember.getExpiresTime())) {
                     selectVO.setExpiresTime(teamMember.getExpiresTime()
                             .format(DateTimeFormatter.ofPattern(

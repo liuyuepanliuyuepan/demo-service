@@ -297,7 +297,13 @@ public class MemberUserController {
     public CommonResult<List<MembersTeamSelectVO>> getMembers(
             @PathVariable("customerId") @ApiParam("客户ID") String customerId) {
         CrmEnum crmEnum = CrmEnum.CUSTOMER;
-        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, customerId);
+        MemberUserDO memberUserDO = memberUserService.getByBizId(customerId);
+        if (memberUserDO == null) {
+            throw exception(
+                    cn.klmb.crm.module.member.enums.ErrorCodeConstants.MEMBER_USER_NOT_EXISTS);
+        }
+        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, customerId,
+                memberUserDO.getOwnerUserId());
         return CommonResult.success(members);
     }
 
@@ -378,6 +384,22 @@ public class MemberUserController {
                             Collectors.toList()));
             klmbPage = memberUserService.page(convert,
                     klmbPage);
+            List<MemberUserDO> content = klmbPage.getContent();
+            if (CollUtil.isNotEmpty(content)) {
+                content.forEach(e -> {
+                    MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                            e.getContactsId());
+                    if (ObjectUtil.isNotNull(memberContactsDO)) {
+                        e.setContactsName(memberContactsDO.getName());
+                        e.setContactsMobile(memberContactsDO.getMobile());
+                    }
+                    if (StrUtil.isNotBlank(e.getPreOwnerUserId())) {
+                        SysUserDO sysUserDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                        e.setPreOwnerUserName(
+                                ObjectUtil.isNotNull(sysUserDO) ? sysUserDO.getNickname() : null);
+                    }
+                });
+            }
         } else {
             klmbPage.setContent(Collections.EMPTY_LIST);
         }
@@ -411,6 +433,21 @@ public class MemberUserController {
                             Collectors.toList()));
             KlmbScrollPage<MemberUserDO> page = memberUserService.pageScroll(
                     convert, klmbPage);
+            if (CollUtil.isNotEmpty(page.getContent())) {
+                page.getContent().forEach(e -> {
+                    MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                            e.getContactsId());
+                    if (ObjectUtil.isNotNull(memberContactsDO)) {
+                        e.setContactsName(memberContactsDO.getName());
+                        e.setContactsMobile(memberContactsDO.getMobile());
+                    }
+                    if (StrUtil.isNotBlank(e.getPreOwnerUserId())) {
+                        SysUserDO sysUserDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                        e.setPreOwnerUserName(
+                                ObjectUtil.isNotNull(sysUserDO) ? sysUserDO.getNickname() : null);
+                    }
+                });
+            }
             respPage = new KlmbScrollPage<>();
             respPage = MemberUserConvert.INSTANCE.convert(page);
             return success(respPage);
