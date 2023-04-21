@@ -455,9 +455,6 @@ public class MemberUserServiceImpl extends
         }
         List<String> childUserIds = sysUserService.queryChildUserId(
                 userId);
-        if (ObjectUtil.isNull(type)) {
-            type = 1;
-        }
         List<MemberUserDO> list = mapper
                 .nearbyMember(lng, lat, type, radius, ownerUserId, childUserIds);
         if (CollUtil.isNotEmpty(list)) {
