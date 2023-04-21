@@ -15,6 +15,7 @@ import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserScrollPageReqVO;
@@ -499,6 +500,14 @@ public class MemberUserServiceImpl extends
 
             //同时判断客户是否存在定时任务，如果存在删除该定时任务
             removeXxlJobTask(bizId);
+
+            //前负责人踢出团队
+            MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+            memberTeamSaveBO.setUserIds(
+                    Collections.singletonList(memberUserDO.getOwnerUserId()));
+            memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+            memberTeamService.deleteMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+
         }
         if (ownerRecordList.size() > 0) {
             memberOwnerRecordService.saveBatchDO(ownerRecordList);
@@ -510,6 +519,7 @@ public class MemberUserServiceImpl extends
         wrapper.set(MemberContactsDO::getOwnerUserId, null);
         wrapper.in(MemberContactsDO::getCustomerId, poolBO.getCustomerIds());
         memberContactsService.update(wrapper);
+
 
     }
 
@@ -556,6 +566,13 @@ public class MemberUserServiceImpl extends
             memberOwnerRecordDO.setPostOwnerUserId(poolBO.getUserId());
             memberOwnerRecordDO.setCreateTime(LocalDateTime.now());
             records.add(memberOwnerRecordDO);
+
+            //为 领取人创建团队
+            MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+            memberTeamSaveBO.setPower(3);
+            memberTeamSaveBO.setBizIds(Collections.singletonList(id));
+            memberTeamSaveBO.setUserIds(Collections.singletonList(poolBO.getUserId()));
+            memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
         }
         if (records.size() > 0) {
             memberOwnerRecordService.saveBatchDO(records);
@@ -574,6 +591,7 @@ public class MemberUserServiceImpl extends
                 .set(MemberUserDO::getUpdateTime, LocalDateTime.now())
                 .set(MemberUserDO::getIsReceive, poolBO.getIsReceive())
                 .in(MemberUserDO::getBizId, poolBO.getCustomerIds()));
+
 
     }
 

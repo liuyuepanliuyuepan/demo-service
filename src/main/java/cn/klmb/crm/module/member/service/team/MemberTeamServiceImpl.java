@@ -83,9 +83,9 @@ public class MemberTeamServiceImpl extends
         } else {
             memberTeamSaveBO.setExpiresTime(null);
         }
-        if (memberTeamSaveBO.getPower() != 1 && memberTeamSaveBO.getPower() != 2) {
-            throw exception(ErrorCodeConstants.SYSTEM_NO_VALID);
-        }
+//        if (memberTeamSaveBO.getPower() != 1 && memberTeamSaveBO.getPower() != 2) {
+//            throw exception(ErrorCodeConstants.SYSTEM_NO_VALID);
+//        }
         if (memberTeamSaveBO.getUserIds().size() == 0) {
             return;
         }
@@ -177,9 +177,6 @@ public class MemberTeamServiceImpl extends
     public List<MembersTeamSelectVO> getMembers(CrmEnum crmEnum, String typeId,
             String ownerUserId) {
         List<MembersTeamSelectVO> selectVOS = new ArrayList<>();
-        if (StrUtil.isBlank(ownerUserId)) {
-            return Collections.emptyList();
-        }
         List<MemberTeamDO> teamMembers = lambdaQuery().eq(MemberTeamDO::getType, crmEnum.getType())
                 .eq(MemberTeamDO::getTypeId, typeId).list();
         for (MemberTeamDO teamMember : teamMembers) {
