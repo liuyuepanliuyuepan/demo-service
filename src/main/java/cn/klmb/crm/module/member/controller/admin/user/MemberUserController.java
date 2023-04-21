@@ -172,6 +172,11 @@ public class MemberUserController {
         if (ObjectUtil.isNotNull(sysUserDO)) {
             saveDO.setOwnerUserName(sysUserDO.getNickname());
         }
+        if (StrUtil.isNotBlank(saveDO.getPreOwnerUserId())) {
+            SysUserDO userDO = sysUserService.getByBizId(saveDO.getPreOwnerUserId());
+            saveDO.setPreOwnerUserName(
+                    ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
+        }
         List<MemberUserStarDO> starDOList = memberUserStarService.list(
                 new LambdaQueryWrapper<MemberUserStarDO>().eq(
                                 MemberUserStarDO::getCustomerId, bizId)
@@ -219,6 +224,11 @@ public class MemberUserController {
                                 .eq(MemberUserStarDO::getUserId, userId)
                                 .eq(MemberUserStarDO::getDeleted, false));
                 e.setStar(CollUtil.isNotEmpty(starDOList));
+                if (StrUtil.isNotBlank(e.getPreOwnerUserId())) {
+                    SysUserDO userDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                    e.setPreOwnerUserName(
+                            ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
+                }
             });
         }
         return success(MemberUserConvert.INSTANCE.convert(page));
@@ -261,6 +271,11 @@ public class MemberUserController {
                                 .eq(MemberUserStarDO::getUserId, userId)
                                 .eq(MemberUserStarDO::getDeleted, false));
                 e.setStar(CollUtil.isNotEmpty(starDOList));
+                if (StrUtil.isNotBlank(e.getPreOwnerUserId())) {
+                    SysUserDO userDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                    e.setPreOwnerUserName(
+                            ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
+                }
             });
         }
         return success(respPage);
