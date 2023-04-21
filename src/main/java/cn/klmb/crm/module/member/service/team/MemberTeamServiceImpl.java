@@ -181,24 +181,28 @@ public class MemberTeamServiceImpl extends
                 .eq(MemberTeamDO::getTypeId, typeId).list();
         for (MemberTeamDO teamMember : teamMembers) {
             if (Objects.equals(teamMember.getUserId(), ownerUserId)) {
+                MembersTeamSelectVO selectVO = new MembersTeamSelectVO();
                 SysUserRespVO sysUserRespVO = sysUserService.getUserDetailByUserId(
                         ownerUserId);
-                MembersTeamSelectVO selectVO = new MembersTeamSelectVO();
+                if (ObjectUtil.isNotNull(sysUserRespVO)) {
+                    selectVO.setNickName(sysUserRespVO.getNickname());
+                    selectVO.setDeptName(sysUserRespVO.getDeptName());
+                }
                 selectVO.setUserId(ownerUserId);
-                selectVO.setNickName(sysUserRespVO.getNickname());
                 selectVO.setExpiresTime(null);
                 selectVO.setPower(3);
-                selectVO.setDeptName(sysUserRespVO.getDeptName());
                 selectVOS.add(selectVO);
             }
             if (ObjectUtil.notEqual(teamMember.getUserId(), ownerUserId)) {
                 MembersTeamSelectVO selectVO = new MembersTeamSelectVO();
                 SysUserRespVO sysUserRespVO = sysUserService.getUserDetailByUserId(
                         teamMember.getUserId());
+                if (ObjectUtil.isNotNull(selectVO)) {
+                    selectVO.setDeptName(sysUserRespVO.getDeptName());
+                    selectVO.setNickName(sysUserRespVO.getNickname());
+                }
                 selectVO.setUserId(teamMember.getUserId());
                 selectVO.setPower(teamMember.getPower());
-                selectVO.setDeptName(sysUserRespVO.getDeptName());
-                selectVO.setNickName(sysUserRespVO.getNickname());
                 if (ObjectUtil.isNotNull(teamMember.getExpiresTime())) {
                     selectVO.setExpiresTime(teamMember.getExpiresTime()
                             .format(DateTimeFormatter.ofPattern(
