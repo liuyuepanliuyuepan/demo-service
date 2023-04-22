@@ -89,7 +89,7 @@ public class MemberUserBaseVO {
     @ApiModelProperty(value = "跟进状态(0未跟进1已跟进)")
     private Integer followup;
 
-    @ApiModelProperty(value = "上级客户id", required = true, example = "24980")
+    @ApiModelProperty(value = "上级客户id", example = "24980")
     private String pid;
 
     /**

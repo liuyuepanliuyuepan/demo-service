@@ -111,7 +111,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.info(info.getMsg(), new RuntimeException());
+            logger.info("启动xxl-job任务失败:" + info.getMsg());
         }
     }
 
@@ -136,7 +136,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.info(info.getMsg(), new RuntimeException());
+            logger.info("删除xxl-job任务失败:" + info.getMsg());
         }
     }
 
@@ -173,7 +173,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.info(info.getMsg(), new RuntimeException());
+            logger.info("修改xxl-job任务失败:" + info.getMsg());
         }
     }
 
@@ -220,11 +220,6 @@ public class XxlJobApiUtils {
         String result = HttpClientUtils.doFormRequest(clientConfig, form, cookie);
         XxlJobTaskManagerInfo info = JSONUtil.toBean(JSONUtil.parseObj(result),
                 XxlJobTaskManagerInfo.class);
-
-        if (ObjectUtil.isNull(info) || CollectionUtil.isEmpty(info.getData())) {
-            logger.info("xxl-job任务管理不存在", new RuntimeException());
-        }
-
         return info;
     }
 
@@ -260,7 +255,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.info(info.getMsg(), new RuntimeException());
+            logger.info("创建xxl-job任务失败:" + info.getMsg());
         }
 
         return info;
@@ -284,9 +279,6 @@ public class XxlJobApiUtils {
 
         XxlJobResponseInfo info = JSONUtil.toBean(JSONUtil.parseObj(result),
                 XxlJobResponseInfo.class);
-        if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.info(info.getMsg(), new RuntimeException());
-        }
     }
 
 
@@ -312,7 +304,7 @@ public class XxlJobApiUtils {
         XxlJobResponseInfo info = JSONUtil.toBean(JSONUtil.parseObj(result),
                 XxlJobResponseInfo.class);
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.info(info.getMsg(), new RuntimeException());
+            logger.info("编辑xxl-job执行器失败:" + info.getMsg());
         }
     }
 
@@ -369,7 +361,7 @@ public class XxlJobApiUtils {
                 XxlJobResponseInfo.class);
 
         if (ObjectUtil.isNull(info) || info.getCode() != HttpStatus.OK.value()) {
-            logger.info(info.getMsg(), new RuntimeException());
+            logger.info("创建xxl-job执行器失败:" + info.getMsg());
         }
         return info;
     }
@@ -420,25 +412,25 @@ public class XxlJobApiUtils {
             if (LocalDateTimeUtil.between(LocalDateTime.now(), xxlJobChangeTaskDTO.getNextTime())
                     .toMinutes() <= 60L) {
                 sendMessage(xxlJobChangeTaskDTO.getName(), xxlJobChangeTaskDTO.getOwnerUserId(),
-                        xxlJobChangeTaskDTO.getMessageType(),
-                        xxlJobChangeTaskDTO.getNextTime().format(
-                                DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
+                        xxlJobChangeTaskDTO.getMessageType(), xxlJobChangeTaskDTO.getNextTime()
+                                .format(DateTimeFormatter.ofPattern(
+                                        DatePattern.NORM_DATETIME_PATTERN)));
                 //删除掉已经在xxl-job 中存在的任务
-                List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
-                if (CollUtil.isNotEmpty(data)) {
-                    for (XxlJobInfo datum : data) {
-                        List<String> split = StrUtil.split(datum.getExecutorParam(),
-                                CharUtil.COMMA);
-                        if (CollUtil.contains(split, xxlJobChangeTaskDTO.getOwnerUserId())) {
-                            deleteTask(datum.getId());
+                if (ObjectUtil.isNotNull(xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
+                        xxlJobTaskManagerInfo.getData())) {
+                    List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
+                    if (CollUtil.isNotEmpty(data)) {
+                        for (XxlJobInfo datum : data) {
+                            List<String> split = StrUtil.split(datum.getExecutorParam(),
+                                    CharUtil.COMMA);
+                            if (CollUtil.contains(split, xxlJobChangeTaskDTO.getOwnerUserId())) {
+                                deleteTask(datum.getId());
+                            }
                         }
                     }
                 }
                 return;
             }
-//            SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
-//                    SysConfigKeyEnum.CONTACTS_REMINDER.getType());
-//            String value = sysConfigDO.getValue();
             String nextTimeStr = LocalDateTimeUtil.offset(xxlJobChangeTaskDTO.getNextTime(),
                             -(Long.parseLong(xxlJobChangeTaskDTO.getOffsetValue())),
                             ChronoUnit.HOURS)
@@ -454,8 +446,7 @@ public class XxlJobApiUtils {
                             DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
             xxlJobInfo.setExecutorParam(CollUtil.join(list, ","));
             if (xxlJobChangeTaskDTO.getOperateType() == 2 && ObjectUtil.isNotNull(
-                    xxlJobTaskManagerInfo)
-                    && CollUtil.isNotEmpty(
+                    xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
                     xxlJobTaskManagerInfo.getData())) {
                 // 增加edit标志时为了防止在执行更新用户下次联系时间时，定时任务创建不上
                 boolean edit = false;
@@ -480,6 +471,13 @@ public class XxlJobApiUtils {
                         startTask(Long.parseLong(task.getContent()));
                     }
                 }
+            } else if (xxlJobChangeTaskDTO.getOperateType() == 2 && (
+                    ObjectUtil.isNull(xxlJobTaskManagerInfo) || CollUtil.isEmpty(
+                            xxlJobTaskManagerInfo.getData()))) {
+                XxlJobResponseInfo task = createTask(xxlJobInfo);
+                if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
+                    startTask(Long.parseLong(task.getContent()));
+                }
             }
 
             if (xxlJobChangeTaskDTO.getOperateType() == 1) {
@@ -503,7 +501,7 @@ public class XxlJobApiUtils {
                 }
             }
         }
-
+        System.out.println();
     }
 
     private void sendMessage(String name, String ownerUserId, String messageType, String nextTime) {

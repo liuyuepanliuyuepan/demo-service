@@ -3,7 +3,6 @@ package cn.klmb.crm.framework.job.util;
 
 import static okhttp3.ConnectionSpec.CLEARTEXT;
 
-import cn.hutool.json.JSONUtil;
 import cn.klmb.crm.framework.job.config.HttpClientConfig;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -53,13 +52,12 @@ public class HttpClientUtils {
             Request request = new Request.Builder().url(config.getUrl()).post(formBody).build();
             Response response = client.newCall(request).execute();
             if (response.isSuccessful() && response.body() != null) {
-                System.out.println(JSONUtil.toJsonStr(response));
                 return response.headers();
             } else if (response.body() != null) {
                 return null;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.info("xxl-job远程登录失败" + e.getMessage());
         }
         return null;
     }
@@ -77,13 +75,12 @@ public class HttpClientUtils {
                     .post(formBody).build();
             Response response = client.newCall(request).execute();
             if (response.isSuccessful() && response.body() != null) {
-                System.out.println(JSONUtil.toJsonStr(response));
                 return response.body().string();
             } else if (response.body() != null) {
                 return response.body().string();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.info("xxl-job远程调用发送失败" + e.getMessage());
         }
         return null;
     }
@@ -112,7 +109,7 @@ public class HttpClientUtils {
                 return response.body().string();
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.info("xxl-job远程调用发送失败" + e.getMessage());
         }
         return null;
     }
