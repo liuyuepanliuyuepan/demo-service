@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.system.service.dept;
 
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
+import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.DEPT_EXISTS_USER;
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.DEPT_EXITS_CHILDREN;
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.DEPT_NAME_DUPLICATE;
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.DEPT_NOT_ENABLE;
@@ -19,10 +20,14 @@ import cn.klmb.crm.framework.common.util.data.RecursionUtil;
 import cn.klmb.crm.module.system.dao.dept.SysDeptMapper;
 import cn.klmb.crm.module.system.dto.dept.SysDeptQueryDTO;
 import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
+import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.dept.SysDeptIdEnum;
+import cn.klmb.crm.module.system.service.user.SysUserService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 
@@ -34,9 +39,13 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class SysDeptServiceImpl extends
-        KlmbBaseTreeServiceImpl<SysDeptDO, SysDeptQueryDTO, SysDeptMapper> implements SysDeptService {
+        KlmbBaseTreeServiceImpl<SysDeptDO, SysDeptQueryDTO, SysDeptMapper> implements
+        SysDeptService {
 
-    public SysDeptServiceImpl(SysDeptMapper mapper) {
+    private final SysUserService sysUserService;
+
+    public SysDeptServiceImpl(SysDeptMapper mapper, @Lazy SysUserService sysUserService) {
+        this.sysUserService = sysUserService;
         this.mapper = mapper;
     }
 
@@ -70,6 +79,13 @@ public class SysDeptServiceImpl extends
             // 校验是否有子部门
             if (mapper.selectCountByTreeParentId(bizId) > 0) {
                 throw exception(DEPT_EXITS_CHILDREN);
+            }
+            //校验部门中是否存在员工
+            List<SysUserDO> sysUserDOS = sysUserService.list(
+                    new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getDeptId, bizId)
+                            .eq(SysUserDO::getDeleted, false).eq(SysUserDO::getStatus, 0));
+            if (CollUtil.isNotEmpty(sysUserDOS)) {
+                throw exception(DEPT_EXISTS_USER);
             }
         });
         super.removeByBizIds(bizIds);

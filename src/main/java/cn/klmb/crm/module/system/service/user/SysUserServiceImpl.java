@@ -5,8 +5,10 @@ import static cn.hutool.core.util.RandomUtil.BASE_NUMBER;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.USER_EMAIL_EXISTS;
+import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.USER_IS_PARENT;
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.USER_MOBILE_EXISTS;
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.USER_NOT_EXISTS;
+import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.USER_PARENT_IS_NOT_SELF;
 import static cn.klmb.crm.module.system.enums.ErrorCodeConstants.USER_USERNAME_EXISTS;
 
 import cn.hutool.core.collection.CollUtil;
@@ -86,6 +88,11 @@ public class SysUserServiceImpl extends
         // 校验正确性
         checkCreateOrUpdate(updateDO.getBizId(), updateDO.getUsername(), updateDO.getMobile(),
                 updateDO.getEmail(), updateDO.getDeptId());
+        //校验更新用户直属上级时，直属上级不能为自己
+        if (StrUtil.isNotBlank(updateDO.getParentId()) && StrUtil.equals(updateDO.getParentId(),
+                updateDO.getBizId())) {
+            throw exception(USER_PARENT_IS_NOT_SELF);
+        }
         // 更新用户
         return super.updateDO(updateDO);
     }
@@ -299,6 +306,27 @@ public class SysUserServiceImpl extends
             sysUserDO.setDeptName(sysDeptDO.getName());
         }
         return SysUserConvert.INSTANCE.convert01(sysUserDO);
+    }
+
+    @Override
+    public void removeByBizIds(List<String> bizIds) {
+        if (CollUtil.isEmpty(bizIds)) {
+            return;
+        }
+        List<SysUserDO> entities = this.listByBizIds(bizIds);
+        if (CollUtil.isEmpty(entities)) {
+            return;
+        }
+        entities.forEach(e -> {
+            List<SysUserDO> sysUserDOS = super.list(
+                    new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getParentId, e.getBizId())
+                            .eq(SysUserDO::getDeleted, false).eq(SysUserDO::getStatus, 0));
+            if (CollUtil.isNotEmpty(sysUserDOS)) {
+                throw exception(USER_IS_PARENT);
+            }
+
+        });
+        super.removeBatchByIds(entities);
     }
 
 }

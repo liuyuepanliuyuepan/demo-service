@@ -113,6 +113,11 @@ public interface ErrorCodeConstants {
     ErrorCode USER_IS_DISABLE = new ErrorCode(1002003006, "名字为【{}】的用户已被禁用");
     ErrorCode USER_COUNT_MAX = new ErrorCode(1002003008,
             "创建用户失败，原因：超过租户最大租户配额({})！");
+    ErrorCode USER_IS_PARENT = new ErrorCode(1002003009,
+            "该用户与其他用户存在直属关系,无法删除");
+
+    ErrorCode USER_PARENT_IS_NOT_SELF = new ErrorCode(1002003010,
+            "直属上级不能为自己");
 
     // ========== 部门模块 1002004000 ==========
     ErrorCode DEPT_NAME_DUPLICATE = new ErrorCode(1002004000, "已经存在该名字的部门");
