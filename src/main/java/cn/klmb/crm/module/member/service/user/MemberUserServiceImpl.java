@@ -315,7 +315,10 @@ public class MemberUserServiceImpl extends
             e.setDealStatus(dealStatus);
             if (ObjectUtil.equals(dealStatus, 1)) {
                 e.setDealTime(LocalDateTime.now());
+            } else {
+                e.setDealTime(null);
             }
+
         });
         super.updateBatchByBizId(memberUserDOS);
     }

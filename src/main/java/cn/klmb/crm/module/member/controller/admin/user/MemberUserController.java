@@ -127,7 +127,7 @@ public class MemberUserController {
     @ApiOperation("修改客户成交状态")
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> setDealStatus(
-            @RequestBody MemberUserBatchUpdateReqVO updateReqVO) {
+            @Valid @RequestBody MemberUserBatchUpdateReqVO updateReqVO) {
         memberUserService.setDealStatus(updateReqVO.getDealStatus(), updateReqVO.getBizIds());
         return success(true);
     }
