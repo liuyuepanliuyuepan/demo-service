@@ -3,7 +3,7 @@ package cn.klmb.crm.module.system.controller.admin.auth.vo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,8 +19,7 @@ public class SysAuthLoginReqVO {
 
     @ApiModelProperty(value = "账号", required = true, example = "super_admin")
     @NotEmpty(message = "登录账号不能为空")
-    @Length(min = 4, max = 30, message = "账号长度为 4-30 位")
-    @Pattern(regexp = "^[a-zA-Z0-9_]+$", message = "用户账号由 数字、字母、_ 组成")
+    @Size(max = 30, message = "账号长度不能超过30个字符")
     private String username;
 
     @ApiModelProperty(value = "密码", required = true, example = "123456")
