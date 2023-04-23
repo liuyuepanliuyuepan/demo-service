@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -72,7 +71,6 @@ public class SysRoleServiceImpl extends
     }
 
     @CacheEvict(cacheNames = SYS_ROLE, allEntries = true)
-    @CachePut(cacheNames = SYS_ROLE_BIZ_ID, key = "#updateDO.bizId")
     @Override
     public boolean updateDO(SysRoleDO updateDO) {
         // 校验是否可以更新
@@ -97,7 +95,6 @@ public class SysRoleServiceImpl extends
     }
 
     @CacheEvict(cacheNames = SYS_ROLE, allEntries = true)
-    @CachePut(cacheNames = SYS_ROLE_BIZ_ID, key = "#bizId")
     @Override
     public void updateStatus(String bizId, Integer status) {
         // 校验是否可以更新
