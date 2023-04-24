@@ -13,4 +13,11 @@ import cn.klmb.crm.module.product.entity.detail.ProductDetailDO;
 public interface ProductDetailService extends
         KlmbBaseService<ProductDetailDO, ProductDetailQueryDTO> {
 
+
+    /**
+     * 产品标星
+     *
+     * @param bizId
+     */
+    void star(String bizId);
 }
