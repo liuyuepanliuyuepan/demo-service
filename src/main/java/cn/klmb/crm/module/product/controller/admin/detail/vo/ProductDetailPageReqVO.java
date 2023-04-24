@@ -33,4 +33,7 @@ public class ProductDetailPageReqVO extends PageParam {
     @ApiModelProperty(value = "负责人ID")
     private String ownerUserId;
 
+    @ApiModelProperty(value = "场景ID(1全部产品,9上架的产品,10下架的产品,4我关注的,默认传1)")
+    private Integer sceneId;
+
 }

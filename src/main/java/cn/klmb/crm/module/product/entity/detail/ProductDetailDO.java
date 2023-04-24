@@ -65,4 +65,24 @@ public class ProductDetailDO extends KlmbBaseDO {
     @TableField(typeHandler = JacksonTypeHandler.class)
     private List<String> detailFileIds;
 
+    /**
+     * 负责人
+     */
+    @TableField(exist = false)
+    private String ownerUserName;
+
+
+    /**
+     * 是否标星
+     */
+    @TableField(exist = false)
+    private Boolean star;
+
+
+    /**
+     * 产品类型
+     */
+    @TableField(exist = false)
+    private String categoryName;
+
 }

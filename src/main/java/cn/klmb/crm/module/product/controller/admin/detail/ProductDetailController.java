@@ -15,12 +15,16 @@ import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailSaveRe
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailUpdateReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductStatusVO;
 import cn.klmb.crm.module.product.convert.detail.ProductDetailConvert;
-import cn.klmb.crm.module.product.dto.detail.ProductDetailQueryDTO;
+import cn.klmb.crm.module.product.entity.category.ProductCategoryDO;
 import cn.klmb.crm.module.product.entity.detail.ProductDetailDO;
+import cn.klmb.crm.module.product.enums.ShelfStatusEnum;
+import cn.klmb.crm.module.product.service.category.ProductCategoryService;
 import cn.klmb.crm.module.product.service.detail.ProductDetailService;
 import cn.klmb.crm.module.system.entity.file.SysFileDO;
+import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.file.SysFileService;
+import cn.klmb.crm.module.system.service.user.SysUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -28,6 +32,7 @@ import io.swagger.annotations.ApiOperation;
 import java.util.Collections;
 import java.util.List;
 import javax.validation.Valid;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -55,10 +60,17 @@ public class ProductDetailController {
 
     private final SysFileService sysFileService;
 
+    private final SysUserService sysUserService;
+
+    private final ProductCategoryService productCategoryService;
+
     public ProductDetailController(ProductDetailService productDetailService,
-            SysFileService sysFileService) {
+            SysFileService sysFileService, SysUserService sysUserService,
+            @Lazy ProductCategoryService productCategoryService) {
         this.productDetailService = productDetailService;
         this.sysFileService = sysFileService;
+        this.sysUserService = sysUserService;
+        this.productCategoryService = productCategoryService;
     }
 
     @PostMapping(value = "/save")
@@ -71,6 +83,7 @@ public class ProductDetailController {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
         ProductDetailDO saveDO = ProductDetailConvert.INSTANCE.convert(saveReqVO);
+        saveDO.setStatus(ShelfStatusEnum.ON_SHELF.getValue());
         String bizId = "";
         if (StrUtil.isBlank(saveDO.getOwnerUserId())) {
             saveDO.setOwnerUserId(userId);
@@ -132,6 +145,18 @@ public class ProductDetailController {
                 List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(detailFileIds);
                 convert.setDetailFileInfo(sysFileDOS);
             }
+            if (StrUtil.isNotBlank(convert.getCategoryId())) {
+                ProductCategoryDO productCategoryDO = productCategoryService.getByBizId(
+                        convert.getCategoryId());
+                convert.setCategoryName(
+                        ObjectUtil.isNotNull(productCategoryDO) ? productCategoryDO.getName()
+                                : null);
+            }
+            SysUserDO sysUserDO = sysUserService.getByBizId(convert.getOwnerUserId());
+            if (ObjectUtil.isNotNull(sysUserDO)) {
+                convert.setOwnerUserName(sysUserDO.getNickname());
+            }
+
         }
         return success(convert);
     }
@@ -140,13 +165,7 @@ public class ProductDetailController {
     @ApiOperation(value = "产品分页查询")
     @PreAuthorize("@ss.hasPermission('product:detail:query')")
     public CommonResult<KlmbPage<ProductDetailRespVO>> page(@Valid ProductDetailPageReqVO reqVO) {
-        KlmbPage<ProductDetailDO> klmbPage = KlmbPage.<ProductDetailDO>builder()
-                .pageNo(reqVO.getPageNo())
-                .pageSize(reqVO.getPageSize())
-                .build();
-        ProductDetailQueryDTO queryDTO = ProductDetailConvert.INSTANCE.convert(reqVO);
-        KlmbPage<ProductDetailDO> page = productDetailService.page(queryDTO, klmbPage);
-        return success(ProductDetailConvert.INSTANCE.convert(page));
+        return success(productDetailService.page(reqVO));
     }
 
     @PostMapping("/star/{bizId}")

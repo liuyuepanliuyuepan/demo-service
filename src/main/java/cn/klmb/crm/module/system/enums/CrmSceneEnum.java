@@ -25,7 +25,9 @@ public enum CrmSceneEnum implements IntArrayValuable {
 
     ING(8, "进行中的商机"),
 
-    TRANSFORM(99, "已转化的线索"),
+    ON_SHELF(9, "上架的产品"),
+
+    UNDER_SHELF(10, "下架的产品"),
     ;
 
 

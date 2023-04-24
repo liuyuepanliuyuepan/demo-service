@@ -33,4 +33,30 @@ public class ProductDetailRespVO extends ProductDetailBaseVO {
     @ApiModelProperty(value = "详情图详细信息")
     private List<SysFileDO> detailFileInfo;
 
+
+    /**
+     * 负责人
+     */
+    @ApiModelProperty(value = "负责人")
+    private String ownerUserName;
+
+
+    /**
+     * 是否标星
+     */
+    @ApiModelProperty(value = "是否标星")
+    private Boolean star;
+
+    /**
+     * 上下架状态(1上架，0下架)
+     */
+    @ApiModelProperty(value = "上下架状态(1上架，0下架)")
+    private Integer status;
+
+    /**
+     * 产品类型
+     */
+    @ApiModelProperty(value = "产品类型")
+    private String categoryName;
+
 }
