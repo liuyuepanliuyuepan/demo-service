@@ -21,7 +21,6 @@ import cn.klmb.crm.module.business.convert.detail.BusinessDetailConvert;
 import cn.klmb.crm.module.business.convert.product.BusinessProductConvert;
 import cn.klmb.crm.module.business.dao.detail.BusinessDetailMapper;
 import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
-import cn.klmb.crm.module.business.dto.product.BusinessProductQueryDTO;
 import cn.klmb.crm.module.business.entity.contacts.BusinessContactsDO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.entity.product.BusinessProductDO;
@@ -245,12 +244,7 @@ public class BusinessDetailServiceImpl extends
         BusinessDetailRespVO respVO = BusinessDetailConvert.INSTANCE.convert(businessDetailDO);
         List<BusinessProductRespVO> productRespList = Collections.emptyList();
         if (ObjectUtil.isNotNull(respVO)) {
-            List<BusinessProductDO> businessProductList = businessProductService.list(
-                    BusinessProductQueryDTO.builder().businessId(bizId).build());
-            if (CollUtil.isNotEmpty(businessProductList)) {
-                productRespList = BusinessProductConvert.INSTANCE.convert(
-                        businessProductList);
-            }
+            productRespList = businessProductService.getBusinessProductByBusinessId(bizId);
         }
         respVO.setBusinessProductRespList(productRespList);
         return respVO;

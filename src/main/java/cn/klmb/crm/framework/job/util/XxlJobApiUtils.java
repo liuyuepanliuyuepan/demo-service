@@ -501,7 +501,6 @@ public class XxlJobApiUtils {
                 }
             }
         }
-        System.out.println();
     }
 
     private void sendMessage(String name, String ownerUserId, String messageType, String nextTime) {

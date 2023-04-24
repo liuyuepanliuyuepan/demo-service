@@ -32,4 +32,13 @@ public interface ProductDetailService extends
      * @return 表单分页列表
      */
     KlmbPage<ProductDetailRespVO> page(ProductDetailPageReqVO reqVO);
+
+
+    /**
+     * 根据业务id查询产品详细信息
+     *
+     * @param bizId 业务id
+     * @return 实体
+     */
+    ProductDetailRespVO getProductDetailByBizId(String bizId);
 }

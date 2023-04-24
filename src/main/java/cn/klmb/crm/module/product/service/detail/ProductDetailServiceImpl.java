@@ -19,9 +19,11 @@ import cn.klmb.crm.module.product.entity.userstar.ProductUserStarDO;
 import cn.klmb.crm.module.product.enums.ShelfStatusEnum;
 import cn.klmb.crm.module.product.service.category.ProductCategoryService;
 import cn.klmb.crm.module.product.service.userstar.ProductUserStarService;
+import cn.klmb.crm.module.system.entity.file.SysFileDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
+import cn.klmb.crm.module.system.service.file.SysFileService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.util.List;
@@ -46,12 +48,15 @@ public class ProductDetailServiceImpl extends
 
     private final ProductCategoryService productCategoryService;
 
+    private final SysFileService sysFileService;
+
     public ProductDetailServiceImpl(ProductUserStarService productUserStarService,
             ProductDetailMapper mapper, SysUserService sysUserService,
-            @Lazy ProductCategoryService productCategoryService) {
+            @Lazy ProductCategoryService productCategoryService, SysFileService sysFileService) {
         this.productUserStarService = productUserStarService;
         this.sysUserService = sysUserService;
         this.productCategoryService = productCategoryService;
+        this.sysFileService = sysFileService;
         this.mapper = mapper;
     }
 
@@ -143,6 +148,40 @@ public class ProductDetailServiceImpl extends
             });
         }
         return ProductDetailConvert.INSTANCE.convert(klmbPage);
+    }
+
+    @Override
+    public ProductDetailRespVO getProductDetailByBizId(String bizId) {
+        ProductDetailDO saveDO = super.getByBizId(bizId);
+        if (ObjectUtil.isNull(saveDO)) {
+            throw exception(cn.klmb.crm.module.product.enums.ErrorCodeConstants.PRODUCT_NOT_EXISTS);
+        }
+        ProductDetailRespVO convert = ProductDetailConvert.INSTANCE.convert(saveDO);
+        if (ObjectUtil.isNotNull(convert)) {
+            List<String> mainFileIds = convert.getMainFileIds();
+            List<String> detailFileIds = convert.getDetailFileIds();
+            if (CollUtil.isNotEmpty(mainFileIds)) {
+                List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(mainFileIds);
+                convert.setMainFileInfo(sysFileDOS);
+            }
+            if (CollUtil.isNotEmpty(detailFileIds)) {
+                List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(detailFileIds);
+                convert.setDetailFileInfo(sysFileDOS);
+            }
+            if (StrUtil.isNotBlank(convert.getCategoryId())) {
+                ProductCategoryDO productCategoryDO = productCategoryService.getByBizId(
+                        convert.getCategoryId());
+                convert.setCategoryName(
+                        ObjectUtil.isNotNull(productCategoryDO) ? productCategoryDO.getName()
+                                : null);
+            }
+            SysUserDO sysUserDO = sysUserService.getByBizId(convert.getOwnerUserId());
+            if (ObjectUtil.isNotNull(sysUserDO)) {
+                convert.setOwnerUserName(sysUserDO.getNickname());
+            }
+
+        }
+        return convert;
     }
 
 }

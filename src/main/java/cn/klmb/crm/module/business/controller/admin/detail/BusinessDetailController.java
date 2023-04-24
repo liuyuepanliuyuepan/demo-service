@@ -68,7 +68,7 @@ public class BusinessDetailController {
     }
 
     @PostMapping(value = "/save")
-    @ApiOperation(value = "新增")
+    @ApiOperation(value = "新增商机")
     @PreAuthorize("@ss.hasPermission('business:detail:save')")
     public CommonResult<String> save(@Valid @RequestBody BusinessDetailSaveReqVO saveReqVO) {
         return success(businessDetailService.saveBusiness(saveReqVO));
@@ -83,23 +83,16 @@ public class BusinessDetailController {
     }
 
     @PutMapping(value = "/update")
-    @ApiOperation(value = "更新")
+    @ApiOperation(value = "更新商机")
     @PreAuthorize("@ss.hasPermission('business:detail:update')")
     public CommonResult<Boolean> update(@Valid @RequestBody BusinessDetailUpdateReqVO updateReqVO) {
         businessDetailService.updateBusiness(updateReqVO);
         return success(true);
     }
 
-//    @PutMapping("/update-status")
-//    @ApiOperation("修改状态")
-//    @PreAuthorize("@ss.hasPermission('business:detail:update')")
-//    public CommonResult<Boolean> updateStatus(@Valid @RequestBody UpdateStatusReqVO reqVO) {
-//        businessDetailService.updateStatus(reqVO.getBizId(), reqVO.getStatus());
-//        return success(true);
-//    }
 
     @GetMapping(value = "/detail/{bizId}")
-    @ApiOperation(value = "详情")
+    @ApiOperation(value = "商机详情")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "bizId", value = "业务id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('business:detail:query')")
@@ -109,7 +102,7 @@ public class BusinessDetailController {
     }
 
     @GetMapping({"/page"})
-    @ApiOperation(value = "分页查询")
+    @ApiOperation(value = "商机分页查询")
     @PreAuthorize("@ss.hasPermission('business:detail:query')")
     public CommonResult<KlmbPage<BusinessDetailRespVO>> page(@Valid BusinessDetailPageReqVO reqVO) {
         return success(businessDetailService.page(reqVO));
@@ -210,5 +203,6 @@ public class BusinessDetailController {
         return success(businessDetailService.pageContacts(reqVO));
     }
 
+//商机滚动分页
 
 }
