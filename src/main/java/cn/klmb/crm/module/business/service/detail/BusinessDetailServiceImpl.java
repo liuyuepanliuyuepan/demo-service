@@ -6,6 +6,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
@@ -13,6 +14,7 @@ import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailScrollPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpdateReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.CrmRelevanceBusinessBO;
 import cn.klmb.crm.module.business.controller.admin.product.vo.BusinessProductRespVO;
@@ -362,6 +364,123 @@ public class BusinessDetailServiceImpl extends
             });
         }
         return BusinessDetailConvert.INSTANCE.convert(klmbPage);
+    }
+
+    @Override
+    public KlmbScrollPage<BusinessDetailRespVO> pageScroll(BusinessDetailScrollPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        List<String> childUserIds = sysUserService.queryChildUserId(
+                userId);
+        KlmbScrollPage<BusinessDetailDO> klmbPage = KlmbScrollPage.<BusinessDetailDO>builder()
+                .lastBizId(reqVO.getLastBizId())
+                .pageSize(reqVO.getPageSize())
+                .asc(reqVO.getAsc())
+                .build();
+
+        BusinessDetailQueryDTO queryDTO = BusinessDetailConvert.INSTANCE.convert(reqVO);
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
+            queryDTO.setOwnerUserId(userId);
+            klmbPage = super.pageScroll(queryDTO, klmbPage);
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
+            if (CollUtil.isNotEmpty(childUserIds)) {
+                queryDTO.setOwnerUserIds(childUserIds);
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
+            List<BusinessUserStarDO> businessUserStarDOS = businessUserStarService.list(
+                    new LambdaQueryWrapper<BusinessUserStarDO>().eq(BusinessUserStarDO::getUserId,
+                            userId).eq(BusinessUserStarDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(businessUserStarDOS)) {
+                List<String> collect = businessUserStarDOS.stream()
+                        .map(BusinessUserStarDO::getBusinessId).collect(
+                                Collectors.toList());
+                queryDTO.setBizIds(collect);
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.WIN.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                queryDTO.setBusinessStatus(BusinessStatusEnum.WIN.getType().toString());
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.LOSE.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                queryDTO.setBusinessStatus(BusinessStatusEnum.LOSE.getType().toString());
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.INVALID.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                queryDTO.setBusinessStatus(BusinessStatusEnum.INVALID.getType().toString());
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ING.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                queryDTO.setBusinessStatus(BusinessStatusEnum.ING.getType().toString());
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+        List<BusinessDetailDO> content = klmbPage.getContent();
+        if (CollUtil.isNotEmpty(content)) {
+            content.forEach(e -> {
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+
+                List<BusinessUserStarDO> businessUserStarDOS = businessUserStarService.list(
+                        new LambdaQueryWrapper<BusinessUserStarDO>().eq(
+                                        BusinessUserStarDO::getBusinessId, e.getBizId())
+                                .eq(BusinessUserStarDO::getUserId, userId)
+                                .eq(BusinessUserStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(businessUserStarDOS));
+
+                if (StrUtil.isNotBlank(e.getCustomerId())) {
+                    MemberUserDO memberUserDO = memberUserService.getByBizId(
+                            e.getCustomerId());
+                    e.setCustomerName(
+                            ObjectUtil.isNotNull(memberUserDO) ? memberUserDO.getName() : null);
+                }
+            });
+        }
+        KlmbScrollPage<BusinessDetailRespVO> respPage = new KlmbScrollPage<>();
+        respPage = BusinessDetailConvert.INSTANCE.convert(klmbPage);
+        return respPage;
     }
 
     @Override

@@ -5,11 +5,13 @@ import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDeleteReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailScrollPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpdateReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.CrmRelevanceBusinessBO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.UpdateBusinessStatusReqVO;
@@ -203,6 +205,18 @@ public class BusinessDetailController {
         return success(businessDetailService.pageContacts(reqVO));
     }
 
-//商机滚动分页
+
+    @GetMapping({"/page-scroll"})
+    @ApiOperation(value = "商机滚动分页", notes = "只支持根据bizId顺序进行正、倒序查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
+            @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
+    @PreAuthorize("@ss.hasPermission('business:detail:query')")
+    public CommonResult<KlmbScrollPage<BusinessDetailRespVO>> pageScroll(
+            @Valid BusinessDetailScrollPageReqVO reqVO) {
+        return success(businessDetailService.pageScroll(reqVO));
+    }
+
 
 }
