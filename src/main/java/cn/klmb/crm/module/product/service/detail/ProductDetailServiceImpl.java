@@ -6,10 +6,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailRespVO;
+import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailScrollPageReqVO;
 import cn.klmb.crm.module.product.convert.detail.ProductDetailConvert;
 import cn.klmb.crm.module.product.dao.detail.ProductDetailMapper;
 import cn.klmb.crm.module.product.dto.detail.ProductDetailQueryDTO;
@@ -26,6 +28,7 @@ import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.file.SysFileService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
@@ -145,6 +148,17 @@ public class ProductDetailServiceImpl extends
                             ObjectUtil.isNotNull(productCategoryDO) ? productCategoryDO.getName()
                                     : null);
                 }
+
+                List<String> mainFileIds = e.getMainFileIds();
+                List<String> detailFileIds = e.getDetailFileIds();
+                if (CollUtil.isNotEmpty(mainFileIds)) {
+                    List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(mainFileIds);
+                    e.setMainFileInfo(sysFileDOS);
+                }
+                if (CollUtil.isNotEmpty(detailFileIds)) {
+                    List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(detailFileIds);
+                    e.setDetailFileInfo(sysFileDOS);
+                }
             });
         }
         return ProductDetailConvert.INSTANCE.convert(klmbPage);
@@ -182,6 +196,91 @@ public class ProductDetailServiceImpl extends
 
         }
         return convert;
+    }
+
+    @Override
+    public KlmbScrollPage<ProductDetailRespVO> pageScroll(ProductDetailScrollPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+
+        KlmbScrollPage<ProductDetailDO> klmbPage = KlmbScrollPage.<ProductDetailDO>builder()
+                .lastBizId(reqVO.getLastBizId())
+                .pageSize(reqVO.getPageSize())
+                .asc(reqVO.getAsc())
+                .build();
+
+        ProductDetailQueryDTO queryDTO = ProductDetailConvert.INSTANCE.convert(reqVO);
+        //全部产品
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
+            klmbPage = super.pageScroll(queryDTO, klmbPage);
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ON_SHELF.getType())) {
+            queryDTO.setStatus(ShelfStatusEnum.ON_SHELF.getValue());
+            klmbPage = super.pageScroll(queryDTO, klmbPage);
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.UNDER_SHELF.getType())) {
+            queryDTO.setStatus(ShelfStatusEnum.UNDER_SHELF.getValue());
+            klmbPage = super.pageScroll(queryDTO, klmbPage);
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
+            List<ProductUserStarDO> productUserStarDOS = productUserStarService.list(
+                    new LambdaQueryWrapper<ProductUserStarDO>().eq(ProductUserStarDO::getUserId,
+                            userId).eq(ProductUserStarDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(productUserStarDOS)) {
+                List<String> collect = productUserStarDOS.stream()
+                        .map(ProductUserStarDO::getProductId).collect(Collectors.toList());
+                queryDTO.setBizIds(collect);
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        List<ProductDetailDO> content = klmbPage.getContent();
+        if (CollUtil.isNotEmpty(content)) {
+            content.forEach(e -> {
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+
+                List<ProductUserStarDO> productUserStarDOS = productUserStarService.list(
+                        new LambdaQueryWrapper<ProductUserStarDO>().eq(
+                                        ProductUserStarDO::getProductId, e.getBizId())
+                                .eq(ProductUserStarDO::getUserId, userId)
+                                .eq(ProductUserStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(productUserStarDOS));
+
+                if (StrUtil.isNotBlank(e.getCategoryId())) {
+                    ProductCategoryDO productCategoryDO = productCategoryService.getByBizId(
+                            e.getCategoryId());
+                    e.setCategoryName(
+                            ObjectUtil.isNotNull(productCategoryDO) ? productCategoryDO.getName()
+                                    : null);
+                }
+
+                List<String> mainFileIds = e.getMainFileIds();
+                List<String> detailFileIds = e.getDetailFileIds();
+                if (CollUtil.isNotEmpty(mainFileIds)) {
+                    List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(mainFileIds);
+                    e.setMainFileInfo(sysFileDOS);
+                }
+                if (CollUtil.isNotEmpty(detailFileIds)) {
+                    List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(detailFileIds);
+                    e.setDetailFileInfo(sysFileDOS);
+                }
+            });
+        }
+        KlmbScrollPage<ProductDetailRespVO> respPage = new KlmbScrollPage<>();
+        respPage = ProductDetailConvert.INSTANCE.convert(klmbPage);
+        if (CollUtil.isEmpty(respPage.getContent())) {
+            respPage.setContent(Collections.EMPTY_LIST);
+        }
+        return respPage;
     }
 
 }

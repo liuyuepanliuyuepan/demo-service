@@ -1,9 +1,11 @@
 package cn.klmb.crm.module.product.convert.detail;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailRespVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailSaveReqVO;
+import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailScrollPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailUpdateReqVO;
 import cn.klmb.crm.module.product.dto.detail.ProductDetailQueryDTO;
 import cn.klmb.crm.module.product.entity.detail.ProductDetailDO;
@@ -32,5 +34,11 @@ public interface ProductDetailConvert {
     ProductDetailRespVO convert(ProductDetailDO saveDO);
 
     ProductDetailQueryDTO convert(ProductDetailPageReqVO reqVO);
+
+
+    ProductDetailQueryDTO convert(ProductDetailScrollPageReqVO bean);
+
+    KlmbScrollPage<ProductDetailRespVO> convert(KlmbScrollPage<ProductDetailDO> page);
+
 
 }

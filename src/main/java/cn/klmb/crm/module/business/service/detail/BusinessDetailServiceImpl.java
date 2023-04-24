@@ -480,6 +480,9 @@ public class BusinessDetailServiceImpl extends
         }
         KlmbScrollPage<BusinessDetailRespVO> respPage = new KlmbScrollPage<>();
         respPage = BusinessDetailConvert.INSTANCE.convert(klmbPage);
+        if (CollUtil.isEmpty(respPage.getContent())) {
+            respPage.setContent(Collections.EMPTY_LIST);
+        }
         return respPage;
     }
 

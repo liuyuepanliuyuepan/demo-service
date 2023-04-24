@@ -21,6 +21,10 @@ public class ProductDetailRespVO extends ProductDetailBaseVO {
     @ApiModelProperty(value = "创建时间", required = true)
     private LocalDateTime createTime;
 
+    @ApiModelProperty(value = "更新时间", required = true)
+    private LocalDateTime updateTime;
+
+
     /**
      * 主图详细信息
      */

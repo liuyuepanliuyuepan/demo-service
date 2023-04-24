@@ -5,11 +5,14 @@ import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDeleteReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailRespVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailSaveReqVO;
+import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailScrollPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailUpdateReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductStatusVO;
 import cn.klmb.crm.module.product.convert.detail.ProductDetailConvert;
@@ -21,7 +24,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import java.util.Collections;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -74,12 +76,10 @@ public class ProductDetailController {
     }
 
     @DeleteMapping(value = "/delete/{bizId}")
-    @ApiOperation(value = "删除产品")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "bizId", value = "主键", dataTypeClass = String.class, paramType = "path")})
+    @ApiOperation(value = "批量删除产品")
     @PreAuthorize("@ss.hasPermission('product:detail:delete')")
-    public CommonResult<Boolean> deleteByBizId(@PathVariable String bizId) {
-        productDetailService.removeByBizIds(Collections.singletonList(bizId));
+    public CommonResult<Boolean> deleteByBizId(@Valid @RequestBody ProductDeleteReqVO reqVO) {
+        productDetailService.removeByBizIds(reqVO.getBizIds());
         return success(true);
     }
 
@@ -125,7 +125,18 @@ public class ProductDetailController {
         productDetailService.star(bizId);
         return success(true);
     }
-    //滚动分页
+
+    @GetMapping({"/page-scroll"})
+    @ApiOperation(value = "产品滚动分页", notes = "只支持根据bizId顺序进行正、倒序查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
+            @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
+    @PreAuthorize("@ss.hasPermission('product:detail:query')")
+    public CommonResult<KlmbScrollPage<ProductDetailRespVO>> pageScroll(
+            @Valid ProductDetailScrollPageReqVO reqVO) {
+        return success(productDetailService.pageScroll(reqVO));
+    }
 
     //转移负责人
 

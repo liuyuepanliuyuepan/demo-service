@@ -1,9 +1,11 @@
 package cn.klmb.crm.module.product.service.detail;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailRespVO;
+import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailScrollPageReqVO;
 import cn.klmb.crm.module.product.dto.detail.ProductDetailQueryDTO;
 import cn.klmb.crm.module.product.entity.detail.ProductDetailDO;
 
@@ -41,4 +43,13 @@ public interface ProductDetailService extends
      * @return 实体
      */
     ProductDetailRespVO getProductDetailByBizId(String bizId);
+
+
+    /**
+     * 产品滚动分页
+     *
+     * @param reqVO
+     * @return
+     */
+    KlmbScrollPage<ProductDetailRespVO> pageScroll(ProductDetailScrollPageReqVO reqVO);
 }

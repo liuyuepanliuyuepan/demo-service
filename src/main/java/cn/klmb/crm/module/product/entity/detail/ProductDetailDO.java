@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.product.entity.detail;
 
 import cn.klmb.crm.framework.base.core.entity.KlmbBaseDO;
+import cn.klmb.crm.module.system.entity.file.SysFileDO;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
@@ -84,5 +85,18 @@ public class ProductDetailDO extends KlmbBaseDO {
      */
     @TableField(exist = false)
     private String categoryName;
+
+
+    /**
+     * 主图详细信息
+     */
+    @TableField(exist = false)
+    private List<SysFileDO> mainFileInfo;
+
+    /**
+     * 详情图详细信息
+     */
+    @TableField(exist = false)
+    private List<SysFileDO> detailFileInfo;
 
 }

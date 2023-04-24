@@ -79,7 +79,7 @@ public class BusinessDetailController {
     @DeleteMapping(value = "/batch-delete")
     @ApiOperation(value = "批量删除")
     @PreAuthorize("@ss.hasPermission('business:detail:delete')")
-    public CommonResult<Boolean> deleteByBizId(@RequestBody BusinessDeleteReqVO reqVO) {
+    public CommonResult<Boolean> deleteByBizId(@Valid @RequestBody BusinessDeleteReqVO reqVO) {
         businessDetailService.removeByBizIds(reqVO.getBizIds());
         return success(true);
     }
