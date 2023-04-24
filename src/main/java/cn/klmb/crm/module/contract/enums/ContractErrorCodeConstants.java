@@ -13,4 +13,6 @@ public interface ContractErrorCodeConstants {
 
     ErrorCode CONTRACT_TRANSFER_ERROR = new ErrorCode(1012000001, "已作废的合同不能转移");
     ErrorCode CONTRACT_NOT_EXIST = new ErrorCode(1012000002, "合同不存在");
+
+    ErrorCode CONTRACT_DATE_ERROR = new ErrorCode(1012000003, "合同结束时间应大于开始时间");
 }

@@ -106,11 +106,6 @@ public class ContractDetailDO extends KlmbBaseDO {
      */
     private String oldBizId;
 
-    /**
-     * 审核状态
-     */
-    private Integer checkStatus;
-
     @TableField(exist = false)
     @ApiModelProperty(value = "客户名称")
     private String memberUserName;

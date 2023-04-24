@@ -2,6 +2,7 @@ package cn.klmb.crm.module.contract.dto.detail;
 
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery;
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery.Operator;
+import cn.klmb.crm.framework.base.core.annotations.DtoKeywordQuery;
 import cn.klmb.crm.framework.base.core.pojo.KlmbBaseQueryDTO;
 import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ public class ContractDetailQueryDTO extends KlmbBaseQueryDTO {
     /**
      * 合同名称
      */
-    @DtoFieldQuery(queryType = Operator.LIKE)
+    @DtoKeywordQuery
     private String name;
     /**
      * 客户id
@@ -52,7 +53,7 @@ public class ContractDetailQueryDTO extends KlmbBaseQueryDTO {
     /**
      * 合同编号
      */
-    @DtoFieldQuery
+    @DtoKeywordQuery
     private String num;
     /**
      * 开始时间
@@ -105,8 +106,6 @@ public class ContractDetailQueryDTO extends KlmbBaseQueryDTO {
     @DtoFieldQuery
     private String paymentType;
 
-    @DtoFieldQuery
-    private Integer checkStatus;
     /**
      * 最后跟进时间
      */
@@ -132,5 +131,11 @@ public class ContractDetailQueryDTO extends KlmbBaseQueryDTO {
      */
     @DtoFieldQuery(queryType = Operator.IN, fieldName = "ownerUserId")
     private List<String> ownerUserIds;
+
+    /**
+     * 客户id列表
+     */
+    @DtoFieldQuery(queryType = Operator.IN, fieldName = "memberUserId")
+    private List<String> memberUserIds;
 
 }

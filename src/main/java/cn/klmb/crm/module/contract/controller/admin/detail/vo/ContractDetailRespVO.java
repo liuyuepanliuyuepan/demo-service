@@ -52,6 +52,4 @@ public class ContractDetailRespVO extends ContractDetailBaseVO {
     @ApiModelProperty(value = "是否标星")
     private Boolean star;
 
-    // todo  签约状态
-
 }

@@ -3,6 +3,7 @@ package cn.klmb.crm.module.contract.controller.admin.detail;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
@@ -11,7 +12,11 @@ import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
-import cn.klmb.crm.module.contract.controller.admin.detail.vo.*;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractChangeOwnerUserVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailSaveReqVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailUpdateReqVO;
 import cn.klmb.crm.module.contract.convert.detail.ContractDetailConvert;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
 import cn.klmb.crm.module.contract.enums.ContractErrorCodeConstants;
@@ -33,6 +38,7 @@ import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -43,7 +49,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
-import org.springframework.security.access.prepost.PreAuthorize;import org.springframework.validation.annotation.Validated;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -100,7 +108,8 @@ public class ContractDetailController {
         ContractDetailDO saveDO = ContractDetailConvert.INSTANCE.convert(saveReqVO);
         saveDO = contractDetailService.saveDefinition(saveDO);
         // 保存对应产品信息
-        contractProductService.saveDefinition(saveReqVO.getContractProductSaveReqVOList(),saveDO.getBizId());
+        contractProductService.saveDefinition(saveReqVO.getContractProductSaveReqVOList(),
+                saveDO.getBizId());
 
         MemberTeamDO memberTeamDO = MemberTeamDO.builder()
                 .power(3).type(CrmEnum.CONTRACT.getType()).typeId(saveDO.getBizId())
@@ -113,7 +122,7 @@ public class ContractDetailController {
     @DeleteMapping(value = "/delete/{bizId}")
     @ApiOperation(value = "删除")
     @ApiImplicitParams({
-    @ApiImplicitParam(name = "bizId", value = "主键", dataTypeClass = String.class, paramType = "path")})
+            @ApiImplicitParam(name = "bizId", value = "主键", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('contract:detail:delete')")
     public CommonResult<Boolean> deleteByBizId(@PathVariable String bizId) {
         contractDetailService.removeByBizIds(Collections.singletonList(bizId));
@@ -140,7 +149,8 @@ public class ContractDetailController {
     @PostMapping(value = "/changeOwnerUser")
     @ApiOperation(value = "修改合同负责人")
     @PreAuthorize("@ss.hasPermission('contract:detail:update')")
-    public CommonResult<Boolean> changeOwnerUser(@Valid @RequestBody ContractChangeOwnerUserVO crmChangeOwnerUserVO) {
+    public CommonResult<Boolean> changeOwnerUser(
+            @Valid @RequestBody ContractChangeOwnerUserVO crmChangeOwnerUserVO) {
         contractDetailService.changeOwnerUser(crmChangeOwnerUserVO);
         return success(true);
     }
@@ -148,7 +158,7 @@ public class ContractDetailController {
     @GetMapping(value = "/detail/{bizId}")
     @ApiOperation(value = "详情")
     @ApiImplicitParams({
-    @ApiImplicitParam(name = "bizId", value = "业务id", dataTypeClass = String.class, paramType = "path")})
+            @ApiImplicitParam(name = "bizId", value = "业务id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('contract:detail:query')")
     public CommonResult<ContractDetailRespVO> getByBizId(@PathVariable String bizId) {
         ContractDetailDO saveDO = contractDetailService.getByBizId(bizId);
@@ -165,9 +175,20 @@ public class ContractDetailController {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
         reqVO.setUserId(userId);
+        if (StringUtils.isNotBlank(reqVO.getKeyword())) {
+            List<MemberUserDO> memberUserDOS = memberUserService.list(
+                    new LambdaQueryWrapper<MemberUserDO>().like(MemberUserDO::getName,
+                            reqVO.getKeyword()).eq(MemberUserDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(memberUserDOS)) {
+                // 客户名称的模糊匹配
+                List<String> memberUserIds = memberUserDOS.stream().map(MemberUserDO::getBizId)
+                        .collect(Collectors.toList());
+                reqVO.setMemberUserIds(memberUserIds);
+            }
+        }
         KlmbPage<ContractDetailDO> page = contractDetailService.pageDefinition(reqVO);
         List<ContractDetailDO> content = page.getContent();
-        content.forEach(e->{
+        content.forEach(e -> {
             // 商机名称
             BusinessDetailRespVO business = businessDetailService.getBusinessByBizId(
                     e.getBusinessId());
@@ -199,11 +220,13 @@ public class ContractDetailController {
             // 负责人所在团队
             SysUserDO owner = sysUserService.getByBizId(e.getOwnerUserId());
             SysDeptDO deptDO = sysDeptService.getByBizId(owner.getDeptId());
-            e.setOwnerDeptName(deptDO.getName());
-
+            if (ObjectUtil.isNotNull(deptDO)) {
+                e.setOwnerDeptName(deptDO.getName());
+            }
             // teamMemberIds   该合同瞎的请他团队成员
-            CrmEnum crmEnum = CrmEnum.BUSINESS;
-            List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, e.getBizId(),e.getOwnerUserId());
+            CrmEnum crmEnum = CrmEnum.CONTRACT;
+            List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, e.getBizId(),
+                    e.getOwnerUserId());
             if (ObjectUtil.isNotNull(members)) {
                 e.setTeamMemberIds(members.stream().map(MembersTeamSelectVO::getNickName).collect(
                         Collectors.toList()).stream().collect(Collectors.joining(",")));
@@ -211,7 +234,7 @@ public class ContractDetailController {
         });
         return success(ContractDetailConvert.INSTANCE.convert(page));
     }
-    
+
     /*****************************************合同内的团队成员******************************************************/
     @GetMapping("/getMembers/{contractBizId}")
     @ApiOperation("获取团队成员")
@@ -261,5 +284,5 @@ public class ContractDetailController {
         memberTeamService.exitTeam(CrmEnum.CONTRACT, contractId);
         return CommonResult.success(true);
     }
-    
+
 }

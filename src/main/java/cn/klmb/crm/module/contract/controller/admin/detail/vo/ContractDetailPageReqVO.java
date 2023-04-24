@@ -30,4 +30,9 @@ public class ContractDetailPageReqVO extends PageParam {
     @ApiModelProperty(value = "当前用户id(无需传值)")
     private String userId;
 
+    /**
+     * 无需传值
+     */
+    @ApiModelProperty(value = "客户ids(无需传值)")
+    private List<String> memberUserIds;
 }
