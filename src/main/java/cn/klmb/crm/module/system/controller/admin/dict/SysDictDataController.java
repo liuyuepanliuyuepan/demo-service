@@ -4,6 +4,7 @@ import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
+import cn.klmb.crm.framework.common.enums.CommonStatusEnum;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.system.controller.admin.dict.vo.data.SysDictDataPageReqVO;
 import cn.klmb.crm.module.system.controller.admin.dict.vo.data.SysDictDataRespVO;
@@ -112,7 +113,8 @@ public class SysDictDataController {
     @ApiImplicitParam(name = "dictType", value = "字典类型", dataTypeClass = String.class, paramType = "path")
     public CommonResult<List<SysDictDataSimpleRespVO>> listByType(@PathVariable String dictType) {
         return success(SysDictDataConvert.INSTANCE.convert(
-                sysDictDataService.list(SysDictDataQueryDTO.builder().dictType(dictType).build())));
+                sysDictDataService.list(SysDictDataQueryDTO.builder().dictType(dictType).status(
+                        CommonStatusEnum.ENABLE.getStatus()).build())));
     }
 
     @GetMapping({"/page"})
