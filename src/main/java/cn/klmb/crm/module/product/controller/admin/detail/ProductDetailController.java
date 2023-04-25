@@ -3,6 +3,7 @@ package cn.klmb.crm.module.product.controller.admin.detail;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
@@ -64,7 +65,9 @@ public class ProductDetailController {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
         ProductDetailDO saveDO = ProductDetailConvert.INSTANCE.convert(saveReqVO);
-        saveDO.setStatus(ShelfStatusEnum.ON_SHELF.getValue());
+        if (ObjectUtil.isNull(saveDO.getStatus())) {
+            saveDO.setStatus(ShelfStatusEnum.ON_SHELF.getValue());
+        }
         String bizId = "";
         if (StrUtil.isBlank(saveDO.getOwnerUserId())) {
             saveDO.setOwnerUserId(userId);
