@@ -107,4 +107,15 @@ public interface BusinessDetailService extends
      * @return 表单分页列表
      */
     KlmbPage<MemberContactsRespVO> pageContacts(MemberContactsPageReqVO reqVO);
+
+
+    /**
+     * 根据商机信息查询联系人列表
+     *
+     * @param reqVO 查询条件
+     * @return 表单分页列表
+     */
+    List<MemberContactsRespVO> listContacts(MemberContactsPageReqVO reqVO);
+
+
 }

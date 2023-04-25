@@ -24,6 +24,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
+import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -146,6 +147,15 @@ public class BusinessDetailController {
     public CommonResult<KlmbPage<MemberContactsRespVO>> pageContacts(
             @Valid MemberContactsPageReqVO reqVO) {
         return success(businessDetailService.pageContacts(reqVO));
+    }
+
+
+    @GetMapping({"/list_contacts"})
+    @ApiOperation(value = "根据商机信息查询联系人列表")
+    @PreAuthorize("@ss.hasPermission('business:detail:query')")
+    public CommonResult<List<MemberContactsRespVO>> listContacts(
+            @Valid MemberContactsPageReqVO reqVO) {
+        return success(businessDetailService.listContacts(reqVO));
     }
 
 

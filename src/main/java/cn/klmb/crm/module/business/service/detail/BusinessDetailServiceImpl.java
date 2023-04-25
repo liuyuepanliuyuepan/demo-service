@@ -589,6 +589,58 @@ public class BusinessDetailServiceImpl extends
         return MemberContactsConvert.INSTANCE.convert(klmbPage);
     }
 
+    @Override
+    public List<MemberContactsRespVO> listContacts(MemberContactsPageReqVO reqVO) {
+        List<MemberContactsDO> entities = null;
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        if (StrUtil.isBlank(reqVO.getBusinessId())) {
+            return Collections.emptyList();
+        }
+        List<BusinessContactsDO> businessContactsDOS = businessContactsService.list(
+                new LambdaQueryWrapper<BusinessContactsDO>().eq(BusinessContactsDO::getBusinessId,
+                        reqVO.getBusinessId()).eq(BusinessContactsDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(businessContactsDOS)) {
+            List<String> collect = businessContactsDOS.stream()
+                    .map(BusinessContactsDO::getContactsId).collect(Collectors.toList());
+            entities = memberContactsService.list(
+                    new LambdaQueryWrapper<MemberContactsDO>().in(MemberContactsDO::getBizId,
+                                    collect).eq(MemberContactsDO::getDeleted, false)
+                            .orderByDesc(MemberContactsDO::getCreateTime));
+        }
+
+        if (CollUtil.isNotEmpty(entities)) {
+            entities.forEach(e -> {
+                MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
+                if (ObjectUtil.isNotNull(memberUserDO)) {
+                    e.setCustomerName(memberUserDO.getName());
+                    e.setIsFirstContacts(
+                            StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                }
+                if (StrUtil.isNotBlank(e.getParentContactsId())) {
+                    MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                            e.getParentContactsId());
+                    e.setParentContactsName(memberContactsDO.getName());
+                }
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+                List<MemberContactsStarDO> starDOList = memberContactsStarService.list(
+                        new LambdaQueryWrapper<MemberContactsStarDO>().eq(
+                                        MemberContactsStarDO::getContactsId, e.getBizId())
+                                .eq(MemberContactsStarDO::getUserId, userId)
+                                .eq(MemberContactsStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(starDOList));
+
+            });
+        }
+        return MemberContactsConvert.INSTANCE.convert(entities);
+    }
+
 
     //获取当前用户下的全部商机bizId
     private List<String> getALLBusiness(List<String> childUserIds, String userId) {
