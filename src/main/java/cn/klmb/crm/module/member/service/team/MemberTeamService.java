@@ -6,6 +6,7 @@ import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.dto.team.MemberTeamQueryDTO;
 import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -47,6 +48,17 @@ public interface MemberTeamService extends KlmbBaseService<MemberTeamDO, MemberT
      * @param reqVO
      */
     void exitTeam(MemberTeamReqVO reqVO);
+
+    /**
+     * 添加单条团队成员数据
+     *
+     * @param type   对应类型
+     * @param typeId 对应类型ID
+     * @param userId 用户ID
+     * @param power  读写类型
+     */
+    void addSingleMember(Integer type, String typeId, String userId, Integer power,
+            LocalDateTime expiresTime);
 
 
 }

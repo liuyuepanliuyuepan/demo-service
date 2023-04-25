@@ -3,6 +3,7 @@ package cn.klmb.crm.module.member.service.team;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
@@ -297,6 +298,27 @@ public class MemberTeamServiceImpl extends
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
         deleteMembers(reqVO.getType(), reqVO.getTypeId(), Collections.singletonList(userId));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addSingleMember(Integer type, String typeId, String userId, Integer power,
+            LocalDateTime expiresTime) {
+ /*
+          添加单条数据前先尝试删除，防止出现多余的数据
+         */
+        lambdaUpdate()
+                .eq(MemberTeamDO::getUserId, userId)
+                .eq(MemberTeamDO::getTypeId, typeId)
+                .eq(MemberTeamDO::getType, type)
+                .remove();
+        if (ObjectUtil.isNotNull(expiresTime) && LocalDateTimeUtil.toEpochMilli(expiresTime) == 0) {
+            expiresTime = null;
+        }
+
+        super.saveDO(MemberTeamDO.builder().userId(userId).typeId(typeId).type(type).power(power)
+                .expiresTime(expiresTime)
+                .build());
     }
 
 

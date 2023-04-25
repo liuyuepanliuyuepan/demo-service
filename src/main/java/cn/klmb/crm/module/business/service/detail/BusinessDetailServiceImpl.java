@@ -33,6 +33,7 @@ import cn.klmb.crm.module.business.service.product.BusinessProductService;
 import cn.klmb.crm.module.business.service.userstar.BusinessUserStarService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
 import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
@@ -644,16 +645,43 @@ public class BusinessDetailServiceImpl extends
 
     @Override
     public void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO) {
-        //逻辑分为两步 1. 变更负责人  2. 将原负责人移出 或者转为团队成员
+        //逻辑分为两步 1. 变更负责人  2. 将原负责人移出 或者转为团队成员 3.同时变更定时任务
         List<String> bizIds = changOwnerUserBO.getBizIds();
         if (CollUtil.isEmpty(bizIds)) {
             return;
         }
         bizIds.forEach(bizId -> {
             BusinessDetailDO businessDetailDO = super.getByBizId(bizId);
-            if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !Objects.equals(
-                    businessDetailDO.getOwnerUserId(), changOwnerUserBO.getOwnerUserId())) {
+            String oldOwnerUserId = businessDetailDO.getOwnerUserId();
+            if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
+                    oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                memberTeamService.addSingleMember(CrmEnum.BUSINESS.getType(), bizId,
+                        changOwnerUserBO.getOwnerUserId(), changOwnerUserBO.getPower(),
+                        changOwnerUserBO.getExpiresTime());
+            }
+            businessDetailDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+            super.updateDO(businessDetailDO);
 
+            if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
+                MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+                memberTeamSaveBO.setUserIds(
+                        Collections.singletonList(oldOwnerUserId));
+                memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+                memberTeamSaveBO.setType(CrmEnum.BUSINESS.getType());
+                memberTeamService.deleteMember(memberTeamSaveBO);
+            }
+
+            //更新定时任务
+            if (!StrUtil.equals(
+                    oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                xxlJobApiUtils.changeTaskOwnerUser(
+                        XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                .title("crm执行器")
+                                .executorHandler("customerContactReminderHandler")
+                                .author("liuyuepan")
+                                .ownerUserId(changOwnerUserBO.getOwnerUserId())
+                                .bizId(bizId)
+                                .contactsType(CrmEnum.BUSINESS.getType()).build());
             }
         });
 
