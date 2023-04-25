@@ -126,14 +126,4 @@ public interface BusinessDetailService extends
      */
     void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO);
 
-//    /**
-//     * 添加单条团队成员数据
-//     *
-//     * @param crmEnum 对应类型
-//     * @param typeId  对应类型ID
-//     * @param userId  用户ID
-//     * @param power   读写类型
-//     */
-//    public void addSingleMember(CrmEnum crmEnum, Integer typeId, Long userId, Integer power, Date expiresTime, String name);
-
 }

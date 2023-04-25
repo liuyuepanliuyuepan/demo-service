@@ -9,6 +9,7 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailRespVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailScrollPageReqVO;
@@ -28,6 +29,7 @@ import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.file.SysFileService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -281,6 +283,18 @@ public class ProductDetailServiceImpl extends
             respPage.setContent(Collections.EMPTY_LIST);
         }
         return respPage;
+    }
+
+    @Override
+    public void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO) {
+        List<String> bizIds = changOwnerUserBO.getBizIds();
+        if (CollUtil.isEmpty(bizIds)) {
+            return;
+        }
+        LambdaUpdateWrapper<ProductDetailDO> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.in(ProductDetailDO::getBizId, bizIds);
+        wrapper.set(ProductDetailDO::getOwnerUserId, changOwnerUserBO.getOwnerUserId());
+        update(wrapper);
     }
 
 }

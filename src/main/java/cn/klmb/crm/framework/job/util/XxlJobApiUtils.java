@@ -534,5 +534,38 @@ public class XxlJobApiUtils {
         return xxlJobTaskManagerInfo;
 
     }
+
+    /**
+     * 变更xxl任务负责人
+     *
+     * @param xxlJobChangeTaskDTO
+     */
+    @Async
+    public void changeTaskOwnerUser(XxlJobChangeTaskDTO xxlJobChangeTaskDTO) {
+        XxlJobTaskManagerInfo taskManagerInfo = getTaskManagerInfo(xxlJobChangeTaskDTO);
+        if (ObjectUtil.isNotNull(
+                taskManagerInfo) && CollUtil.isNotEmpty(
+                taskManagerInfo.getData())) {
+            List<XxlJobInfo> data = taskManagerInfo.getData();
+            for (XxlJobInfo datum : data) {
+                String executorParam = datum.getExecutorParam();
+                List<String> split = StrUtil.split(executorParam, CharUtil.COMMA);
+                String typeId = split.get(2);
+                String type = split.get(1);
+                String ownerUserId = split.get(0);
+                String nextTime = split.get(3);
+                if (StrUtil.equals(xxlJobChangeTaskDTO.getBizId(), typeId) && !StrUtil.equals(
+                        ownerUserId, xxlJobChangeTaskDTO.getOwnerUserId())) {
+                    List<String> list = Arrays.asList(xxlJobChangeTaskDTO.getOwnerUserId(), type,
+                            typeId, nextTime);
+                    datum.setExecutorParam(CollUtil.join(list, ","));
+                    editTask(datum);
+                    startTask(datum.getId());
+                }
+            }
+        }
+
+
+    }
 }
 

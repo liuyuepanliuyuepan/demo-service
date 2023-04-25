@@ -3,6 +3,7 @@ package cn.klmb.crm.module.product.service.detail;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailRespVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailScrollPageReqVO;
@@ -52,4 +53,12 @@ public interface ProductDetailService extends
      * @return
      */
     KlmbScrollPage<ProductDetailRespVO> pageScroll(ProductDetailScrollPageReqVO reqVO);
+
+
+    /**
+     * 修改产品负责人
+     *
+     * @param changOwnerUserBO data
+     */
+    void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO);
 }

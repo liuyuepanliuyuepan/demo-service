@@ -8,6 +8,7 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDeleteReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailPageReqVO;
 import cn.klmb.crm.module.product.controller.admin.detail.vo.ProductDetailRespVO;
@@ -137,7 +138,14 @@ public class ProductDetailController {
         return success(productDetailService.pageScroll(reqVO));
     }
 
-    //转移负责人
 
+    @PostMapping("/change-owner-user")
+    @ApiOperation("修改产品负责人")
+    @PreAuthorize("@ss.hasPermission('product:detail:post')")
+    public CommonResult<Boolean> changeOwnerUser(
+            @RequestBody CrmChangeOwnerUserBO crmChangeOwnerUserBO) {
+        productDetailService.changeOwnerUser(crmChangeOwnerUserBO);
+        return success(true);
+    }
 
 }

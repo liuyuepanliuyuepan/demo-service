@@ -162,7 +162,6 @@ public class BusinessDetailController {
         return success(businessDetailService.pageScroll(reqVO));
     }
 
-    //修改商机负责人
 
     @PostMapping("/change-owner-user")
     @ApiOperation("修改商机负责人")
