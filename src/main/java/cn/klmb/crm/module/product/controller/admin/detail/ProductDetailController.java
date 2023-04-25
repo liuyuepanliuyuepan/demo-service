@@ -75,10 +75,10 @@ public class ProductDetailController {
         return success(bizId);
     }
 
-    @DeleteMapping(value = "/delete/{bizId}")
+    @DeleteMapping(value = "/batch-delete")
     @ApiOperation(value = "批量删除产品")
     @PreAuthorize("@ss.hasPermission('product:detail:delete')")
-    public CommonResult<Boolean> deleteByBizId(@Valid @RequestBody ProductDeleteReqVO reqVO) {
+    public CommonResult<Boolean> batchDelete(@Valid @RequestBody ProductDeleteReqVO reqVO) {
         productDetailService.removeByBizIds(reqVO.getBizIds());
         return success(true);
     }

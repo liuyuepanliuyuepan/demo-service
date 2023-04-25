@@ -17,8 +17,7 @@ import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
-import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
-import cn.klmb.crm.module.member.service.team.MemberTeamService;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
@@ -51,15 +50,8 @@ public class BusinessDetailController {
 
     private final BusinessDetailService businessDetailService;
 
-    private final MemberTeamService memberTeamService;
-
-    private final MemberContactsService memberContactsService;
-
-    public BusinessDetailController(BusinessDetailService businessDetailService,
-            MemberTeamService memberTeamService, MemberContactsService memberContactsService) {
+    public BusinessDetailController(BusinessDetailService businessDetailService) {
         this.businessDetailService = businessDetailService;
-        this.memberTeamService = memberTeamService;
-        this.memberContactsService = memberContactsService;
     }
 
     @PostMapping(value = "/save")
@@ -169,6 +161,17 @@ public class BusinessDetailController {
     public CommonResult<KlmbScrollPage<BusinessDetailRespVO>> pageScroll(
             @Valid BusinessDetailScrollPageReqVO reqVO) {
         return success(businessDetailService.pageScroll(reqVO));
+    }
+
+    //修改商机负责人
+
+    @PostMapping("/change-owner-user")
+    @ApiOperation("修改商机负责人")
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> changeOwnerUser(
+            @RequestBody CrmChangeOwnerUserBO crmChangeOwnerUserBO) {
+        businessDetailService.changeOwnerUser(crmChangeOwnerUserBO);
+        return success(true);
     }
 
 

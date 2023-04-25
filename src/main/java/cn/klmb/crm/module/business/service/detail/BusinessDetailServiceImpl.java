@@ -33,6 +33,7 @@ import cn.klmb.crm.module.business.service.product.BusinessProductService;
 import cn.klmb.crm.module.business.service.userstar.BusinessUserStarService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
 import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
@@ -639,6 +640,24 @@ public class BusinessDetailServiceImpl extends
             });
         }
         return MemberContactsConvert.INSTANCE.convert(entities);
+    }
+
+    @Override
+    public void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO) {
+        //逻辑分为两步 1. 变更负责人  2. 将原负责人移出 或者转为团队成员
+        List<String> bizIds = changOwnerUserBO.getBizIds();
+        if (CollUtil.isEmpty(bizIds)) {
+            return;
+        }
+        bizIds.forEach(bizId -> {
+            BusinessDetailDO businessDetailDO = super.getByBizId(bizId);
+            if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !Objects.equals(
+                    businessDetailDO.getOwnerUserId(), changOwnerUserBO.getOwnerUserId())) {
+
+            }
+        });
+
+
     }
 
 

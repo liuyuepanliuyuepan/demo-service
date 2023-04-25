@@ -48,4 +48,5 @@ public interface MemberTeamService extends KlmbBaseService<MemberTeamDO, MemberT
      */
     void exitTeam(MemberTeamReqVO reqVO);
 
+
 }

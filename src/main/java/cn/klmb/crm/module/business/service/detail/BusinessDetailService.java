@@ -13,6 +13,7 @@ import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import java.util.List;
 
 
@@ -117,5 +118,22 @@ public interface BusinessDetailService extends
      */
     List<MemberContactsRespVO> listContacts(MemberContactsPageReqVO reqVO);
 
+
+    /**
+     * 修改商机负责人
+     *
+     * @param changOwnerUserBO data
+     */
+    void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO);
+
+//    /**
+//     * 添加单条团队成员数据
+//     *
+//     * @param crmEnum 对应类型
+//     * @param typeId  对应类型ID
+//     * @param userId  用户ID
+//     * @param power   读写类型
+//     */
+//    public void addSingleMember(CrmEnum crmEnum, Integer typeId, Long userId, Integer power, Date expiresTime, String name);
 
 }
