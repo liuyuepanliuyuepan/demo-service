@@ -118,7 +118,7 @@ public class MemberUserController {
 
     @PostMapping(value = "/batch-delete")
     @ApiOperation(value = "批量删除客户")
-    @PreAuthorize("@ss.hasPermission('member:user:delete')")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> deleteByBizIds(@RequestBody MemberUserDeleteReqVO reqVO) {
         memberUserService.removeByBizIds(reqVO.getBizIds());
         return success(true);

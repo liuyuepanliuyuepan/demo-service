@@ -27,7 +27,6 @@ import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,9 +60,9 @@ public class BusinessDetailController {
         return success(businessDetailService.saveBusiness(saveReqVO));
     }
 
-    @DeleteMapping(value = "/batch-delete")
+    @PostMapping(value = "/batch-delete")
     @ApiOperation(value = "批量删除")
-    @PreAuthorize("@ss.hasPermission('business:detail:delete')")
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
     public CommonResult<Boolean> deleteByBizId(@Valid @RequestBody BusinessDeleteReqVO reqVO) {
         businessDetailService.removeByBizIds(reqVO.getBizIds());
         return success(true);
