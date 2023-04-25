@@ -94,7 +94,8 @@ public class BusinessDetailServiceImpl extends
 
     public BusinessDetailServiceImpl(BusinessProductService businessProductService,
             BusinessDetailMapper mapper, SysUserService sysUserService,
-            MemberTeamService memberTeamService, BusinessUserStarService businessUserStarService,
+            @Lazy MemberTeamService memberTeamService,
+            BusinessUserStarService businessUserStarService,
             MemberUserService memberUserService, XxlJobApiUtils xxlJobApiUtils,
             BusinessContactsService businessContactsService,
             MemberContactsService memberContactsService,
@@ -136,6 +137,10 @@ public class BusinessDetailServiceImpl extends
                 businessProductService.saveDO(businessProductDO);
             });
         }
+
+        memberTeamService.saveDO(
+                MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.BUSINESS.getType())
+                        .typeId(bizId).build());
 
         SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
                 SysConfigKeyEnum.CONTACTS_REMINDER.getType());

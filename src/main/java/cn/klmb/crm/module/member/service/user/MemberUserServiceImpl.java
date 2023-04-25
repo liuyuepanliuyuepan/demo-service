@@ -523,7 +523,8 @@ public class MemberUserServiceImpl extends
             memberTeamSaveBO.setUserIds(
                     Collections.singletonList(memberUserDO.getOwnerUserId()));
             memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
-            memberTeamService.deleteMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+            memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+            memberTeamService.deleteMember(memberTeamSaveBO);
 
         }
         if (ownerRecordList.size() > 0) {
@@ -589,7 +590,8 @@ public class MemberUserServiceImpl extends
             memberTeamSaveBO.setPower(3);
             memberTeamSaveBO.setBizIds(Collections.singletonList(id));
             memberTeamSaveBO.setUserIds(Collections.singletonList(poolBO.getUserId()));
-            memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+            memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+            memberTeamService.addMember(memberTeamSaveBO);
         }
         if (records.size() > 0) {
             memberOwnerRecordService.saveBatchDO(records);

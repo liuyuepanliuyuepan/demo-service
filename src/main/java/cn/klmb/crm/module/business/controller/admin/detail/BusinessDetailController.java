@@ -1,9 +1,7 @@
 package cn.klmb.crm.module.business.controller.admin.detail;
 
-import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
@@ -16,22 +14,16 @@ import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpda
 import cn.klmb.crm.module.business.controller.admin.detail.vo.CrmRelevanceBusinessBO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.UpdateBusinessStatusReqVO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
-import cn.klmb.crm.module.business.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
-import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
-import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
-import cn.klmb.crm.module.system.enums.CrmEnum;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
-import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -119,55 +111,6 @@ public class BusinessDetailController {
                 new UpdateWrapper<BusinessDetailDO>().in("biz_id", reqVO.getBizIds())
                         .set("status", reqVO.getBusinessStatus()));
         return success(true);
-    }
-
-    @GetMapping("/getMembers/{businessId}")
-    @ApiOperation("获取团队成员")
-    @PreAuthorize("@ss.hasPermission('business:detail:query')")
-    public CommonResult<List<MembersTeamSelectVO>> getMembers(
-            @PathVariable("businessId") @ApiParam("商机ID") String businessId) {
-        BusinessDetailDO businessDetailDO = businessDetailService.getByBizId(businessId);
-        if (ObjectUtil.isNull(businessDetailDO)) {
-            throw exception(ErrorCodeConstants.BUSINESS_NOT_EXISTS);
-        }
-        CrmEnum crmEnum = CrmEnum.BUSINESS;
-        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, businessId,
-                businessDetailDO.getOwnerUserId());
-        return CommonResult.success(members);
-    }
-
-    @PostMapping("/addMembers")
-    @ApiOperation("新增团队成员")
-    @PreAuthorize("@ss.hasPermission('business:detail:post')")
-    public CommonResult<Boolean> addMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.addMember(CrmEnum.BUSINESS, memberTeamSaveBO);
-        return CommonResult.success(true);
-    }
-
-    @PostMapping("/updateMembers")
-    @ApiOperation("编辑团队成员")
-    @PreAuthorize("@ss.hasPermission('business:detail:post')")
-    public CommonResult<Boolean> updateMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.addMember(CrmEnum.BUSINESS, memberTeamSaveBO);
-        return CommonResult.success(true);
-    }
-
-    @PostMapping("/deleteMembers")
-    @ApiOperation("删除团队成员")
-    @PreAuthorize("@ss.hasPermission('business:detail:post')")
-    public CommonResult<Boolean> deleteMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.deleteMember(CrmEnum.BUSINESS, memberTeamSaveBO);
-        return CommonResult.success(true);
-    }
-
-    @PostMapping("/exitTeam/{businessId}")
-    @ApiOperation("退出团队")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "businessId", value = "商机id", dataTypeClass = String.class, paramType = "path")})
-    @PreAuthorize("@ss.hasPermission('business:detail:post')")
-    public CommonResult<Boolean> exitTeam(@PathVariable("businessId") String businessId) {
-        memberTeamService.exitTeam(CrmEnum.BUSINESS, businessId);
-        return CommonResult.success(true);
     }
 
     @PostMapping("/star/{bizId}")

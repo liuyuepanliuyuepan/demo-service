@@ -11,6 +11,7 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamReqVO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserBatchUpdateReqVO;
@@ -317,8 +318,9 @@ public class MemberUserController {
             throw exception(
                     cn.klmb.crm.module.member.enums.ErrorCodeConstants.MEMBER_USER_NOT_EXISTS);
         }
-        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, customerId,
-                memberUserDO.getOwnerUserId());
+        List<MembersTeamSelectVO> members = memberTeamService.getMembers(
+                MemberTeamReqVO.builder().type(CrmEnum.CUSTOMER.getType()).typeId(customerId)
+                        .build());
         return CommonResult.success(members);
     }
 
@@ -326,7 +328,8 @@ public class MemberUserController {
     @ApiOperation("新增团队成员")
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> addMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+        memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+        memberTeamService.addMember(memberTeamSaveBO);
         return CommonResult.success(true);
     }
 
@@ -334,7 +337,7 @@ public class MemberUserController {
     @ApiOperation("编辑团队成员")
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> updateMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+        memberTeamService.addMember(memberTeamSaveBO);
         return CommonResult.success(true);
     }
 
@@ -342,7 +345,8 @@ public class MemberUserController {
     @ApiOperation("删除团队成员")
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> deleteMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.deleteMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+        memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+        memberTeamService.deleteMember(memberTeamSaveBO);
         return CommonResult.success(true);
     }
 
@@ -352,7 +356,10 @@ public class MemberUserController {
             @ApiImplicitParam(name = "customerId", value = "客户id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> exitTeam(@PathVariable("customerId") String customerId) {
-        memberTeamService.exitTeam(CrmEnum.CUSTOMER, customerId);
+
+        memberTeamService.exitTeam(
+                MemberTeamReqVO.builder().type(CrmEnum.CUSTOMER.getType()).typeId(customerId)
+                        .build());
         return CommonResult.success(true);
     }
 
