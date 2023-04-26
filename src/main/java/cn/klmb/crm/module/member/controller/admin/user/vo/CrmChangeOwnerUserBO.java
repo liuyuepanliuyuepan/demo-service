@@ -16,7 +16,7 @@ import lombok.ToString;
 public class CrmChangeOwnerUserBO {
 
     @ApiModelProperty(value = "对应的类型(1 线索 2 客户 3 联系人 4 产品 5 商机 6 合同 7回款)")
-    private String type;
+    private Integer type;
 
     @ApiModelProperty("变更的bizId列表")
     private List<String> bizIds;

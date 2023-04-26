@@ -270,6 +270,24 @@ public class MemberTeamServiceImpl extends
                     memberTeamSaveBO.setType(CrmEnum.CONTACTS.getType());
                     deleteMember(new MemberTeamSaveBO(customerIds, memberTeamSaveBO));
                 }
+
+                if (memberTeamSaveBO.getChangeType().contains(2)) {
+                    LambdaQueryWrapper<BusinessDetailDO> queryWrapper = new LambdaQueryWrapper<>();
+                    queryWrapper.eq(BusinessDetailDO::getCustomerId, bizId);
+                    queryWrapper.select(BusinessDetailDO::getBizId);
+                    List<String> businessIds = ApplicationContextHolder.getBean(
+                                    BusinessDetailService.class)
+                            .listObjs(queryWrapper, TypeUtils::castToString);
+                    memberTeamSaveBO.setType(CrmEnum.BUSINESS.getType());
+                    deleteMember(new MemberTeamSaveBO(businessIds, memberTeamSaveBO));
+                }
+//                if (crmMemberSaveBO.getChangeType().contains(3)) {
+//                    LambdaQueryWrapper<CrmContract> queryWrapper = new LambdaQueryWrapper<>();
+//                    queryWrapper.eq(CrmContract::getCustomerId, typeId);
+//                    queryWrapper.select(CrmContract::getContractId);
+//                    List<Integer> ids = ApplicationContextHolder.getBean(ICrmContractService.class).listObjs(queryWrapper, TypeUtils::castToInt);
+//                    deleteMember(CrmEnum.CONTRACT, new CrmMemberSaveBO(ids, crmMemberSaveBO));
+//                }
             }
             deleteMembers(type, bizId, memberTeamSaveBO.getUserIds());
         }
