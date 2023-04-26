@@ -11,6 +11,7 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailFullRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
@@ -54,6 +55,7 @@ import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -260,7 +262,12 @@ public class BusinessDetailServiceImpl extends
     }
 
     @Override
-    public KlmbPage<BusinessDetailRespVO> page(BusinessDetailPageReqVO reqVO) {
+    public BusinessDetailFullRespVO page(BusinessDetailPageReqVO reqVO) {
+        //定义BusinessDetailFullRespVO
+        BusinessDetailFullRespVO fullRespVO = new BusinessDetailFullRespVO();
+        //定义商机总金额 businessSumMoney
+        BigDecimal businessSumMoney = new BigDecimal(0.00);
+        List<BusinessDetailDO> businessDetailDOS = null;
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -280,18 +287,24 @@ public class BusinessDetailServiceImpl extends
             if (CollUtil.isNotEmpty(bizIds)) {
                 queryDTO.setBizIds(bizIds);
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
             queryDTO.setOwnerUserId(userId);
             klmbPage = super.page(queryDTO, klmbPage);
+            //查询符合条件的商机总金额
+            businessDetailDOS = super.list(queryDTO);
         }
 
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
             if (CollUtil.isNotEmpty(childUserIds)) {
                 queryDTO.setOwnerUserIds(childUserIds);
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -305,6 +318,8 @@ public class BusinessDetailServiceImpl extends
                                 Collectors.toList());
                 queryDTO.setBizIds(collect);
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -315,6 +330,8 @@ public class BusinessDetailServiceImpl extends
                 queryDTO.setBizIds(bizIds);
                 queryDTO.setBusinessStatus(BusinessStatusEnum.WIN.getType().toString());
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -325,6 +342,8 @@ public class BusinessDetailServiceImpl extends
                 queryDTO.setBizIds(bizIds);
                 queryDTO.setBusinessStatus(BusinessStatusEnum.LOSE.getType().toString());
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -335,6 +354,8 @@ public class BusinessDetailServiceImpl extends
                 queryDTO.setBizIds(bizIds);
                 queryDTO.setBusinessStatus(BusinessStatusEnum.INVALID.getType().toString());
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -345,6 +366,8 @@ public class BusinessDetailServiceImpl extends
                 queryDTO.setBizIds(bizIds);
                 queryDTO.setBusinessStatus(BusinessStatusEnum.ING.getType().toString());
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
         List<BusinessDetailDO> content = klmbPage.getContent();
@@ -370,7 +393,16 @@ public class BusinessDetailServiceImpl extends
                 }
             });
         }
-        return BusinessDetailConvert.INSTANCE.convert(klmbPage);
+        KlmbPage<BusinessDetailRespVO> convert = BusinessDetailConvert.INSTANCE.convert(klmbPage);
+        if (CollUtil.isNotEmpty(businessDetailDOS)) {
+            businessSumMoney = businessDetailDOS.stream()
+                    .map(BusinessDetailDO::getMoney)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        }
+        fullRespVO.setKlmbPage(convert);
+        fullRespVO.setBusinessSumMoney(businessSumMoney);
+        return fullRespVO;
     }
 
     @Override

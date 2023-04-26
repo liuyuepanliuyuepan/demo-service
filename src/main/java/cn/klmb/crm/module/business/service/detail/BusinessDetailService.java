@@ -3,6 +3,7 @@ package cn.klmb.crm.module.business.service.detail;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailFullRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
@@ -66,7 +67,7 @@ public interface BusinessDetailService extends
      * @param reqVO 查询条件
      * @return 表单分页列表
      */
-    KlmbPage<BusinessDetailRespVO> page(BusinessDetailPageReqVO reqVO);
+    BusinessDetailFullRespVO page(BusinessDetailPageReqVO reqVO);
 
     /**
      * 商机滚动分页
