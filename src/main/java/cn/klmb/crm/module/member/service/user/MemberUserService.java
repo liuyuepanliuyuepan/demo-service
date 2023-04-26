@@ -4,6 +4,7 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserScrollPageReqVO;
@@ -113,5 +114,13 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      * @param xxlJobChangeTaskDTO
      */
     void changeTask(XxlJobChangeTaskDTO xxlJobChangeTaskDTO);
+
+
+    /**
+     * 修改客户负责人
+     *
+     * @param changOwnerUserBO data
+     */
+    void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO);
 
 }

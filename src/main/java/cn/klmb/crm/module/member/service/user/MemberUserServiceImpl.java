@@ -15,7 +15,10 @@ import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserScrollPageReqVO;
@@ -31,7 +34,6 @@ import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.record.MemberOwnerRecordService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
-import cn.klmb.crm.module.member.service.userpool.MemberUserPoolService;
 import cn.klmb.crm.module.member.service.userpoolrelation.MemberUserPoolRelationService;
 import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
 import cn.klmb.crm.module.system.entity.config.SysConfigDO;
@@ -50,6 +52,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -81,17 +84,17 @@ public class MemberUserServiceImpl extends
 
     private final MemberContactsService memberContactsService;
 
-    private final MemberUserPoolService memberUserPoolService;
-
     private final SysConfigService sysConfigService;
+
+    private final BusinessDetailService businessDetailService;
 
 
     public MemberUserServiceImpl(SysUserService sysUserService, MemberUserMapper mapper,
             MemberUserStarService memberUserStarService, @Lazy MemberTeamService memberTeamService,
             XxlJobApiUtils xxlJobApiUtils, MemberOwnerRecordService memberOwnerRecordService,
             MemberUserPoolRelationService relationService,
-            @Lazy MemberContactsService memberContactsService,
-            MemberUserPoolService memberUserPoolService, SysConfigService sysConfigService) {
+            @Lazy MemberContactsService memberContactsService, SysConfigService sysConfigService,
+            @Lazy BusinessDetailService businessDetailService) {
         this.sysUserService = sysUserService;
         this.memberUserStarService = memberUserStarService;
         this.memberTeamService = memberTeamService;
@@ -99,8 +102,8 @@ public class MemberUserServiceImpl extends
         this.memberOwnerRecordService = memberOwnerRecordService;
         this.relationService = relationService;
         this.memberContactsService = memberContactsService;
-        this.memberUserPoolService = memberUserPoolService;
         this.sysConfigService = sysConfigService;
+        this.businessDetailService = businessDetailService;
         this.mapper = mapper;
     }
 
@@ -616,8 +619,86 @@ public class MemberUserServiceImpl extends
 
     @Override
     public void changeTask(XxlJobChangeTaskDTO xxlJobChangeTaskDTO) {
-        xxlJobApiUtils.changeTask(
-                xxlJobChangeTaskDTO
-        );
+        xxlJobApiUtils.changeTask(xxlJobChangeTaskDTO);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO) {
+        //1. 变更负责人  2. 将原负责人移除或者转为团队成员 3. 同步变更负责人至联系人、商机、合同  4. 同时变更定时任务
+        //获取当前用户id及其下属用户，用于更新负责人至联系人、商机、合同
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        List<String> userList = new ArrayList<>();
+        userList.add(userId);
+        userList.addAll(sysUserService.queryChildUserId(userId));
+
+        List<String> bizIds = changOwnerUserBO.getBizIds();
+        if (CollUtil.isEmpty(bizIds)) {
+            return;
+        }
+        bizIds.forEach(bizId -> {
+            MemberUserDO memberUserDO = super.getByBizId(bizId);
+            String oldOwnerUserId = memberUserDO.getOwnerUserId();
+            if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
+                    oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                memberTeamService.addSingleMember(CrmEnum.CUSTOMER.getType(), bizId,
+                        changOwnerUserBO.getOwnerUserId(), changOwnerUserBO.getPower(),
+                        changOwnerUserBO.getExpiresTime());
+            }
+            memberUserDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+            memberUserDO.setFollowup(0);
+            memberUserDO.setIsReceive(1);
+            memberUserDO.setReceiveTime(LocalDateTime.now());
+            super.updateDO(memberUserDO);
+            if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
+                MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+                memberTeamSaveBO.setUserIds(Collections.singletonList(oldOwnerUserId));
+                memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+                memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+                memberTeamService.deleteMember(memberTeamSaveBO);
+            }
+            //更新定时任务
+            if (!StrUtil.equals(oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                xxlJobApiUtils.changeTaskOwnerUser(
+                        XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                .title("crm执行器").executorHandler("customerContactReminderHandler")
+                                .author("liuyuepan").ownerUserId(changOwnerUserBO.getOwnerUserId())
+                                .bizId(bizId).contactsType(CrmEnum.CUSTOMER.getType()).build());
+            }
+            changOwnerUserBO.getChangeType().forEach(type -> {
+                switch (type) {
+                    case 1: {
+                        List<String> contactsBizIds = memberContactsService.lambdaQuery()
+                                .select(MemberContactsDO::getBizId)
+                                .eq(MemberContactsDO::getCustomerId, bizId)
+                                .in(MemberContactsDO::getOwnerUserId, userList).list().stream()
+                                .map(MemberContactsDO::getBizId).collect(Collectors.toList());
+                        changOwnerUserBO.setBizIds(contactsBizIds);
+                        changOwnerUserBO.setType(CrmEnum.CONTACTS.getType());
+                        memberContactsService.changeOwnerUser(changOwnerUserBO);
+                        break;
+                    }
+                    case 2: {
+                        List<String> businessBizIds = businessDetailService.lambdaQuery()
+                                .select(BusinessDetailDO::getBizId)
+                                .eq(BusinessDetailDO::getCustomerId, bizId)
+                                .in(BusinessDetailDO::getOwnerUserId, userList).list().stream()
+                                .map(BusinessDetailDO::getBizId).collect(Collectors.toList());
+                        CrmChangeOwnerUserBO changOwnerUser = new CrmChangeOwnerUserBO();
+                        changOwnerUser.setPower(changOwnerUserBO.getPower());
+                        changOwnerUser.setTransferType(changOwnerUserBO.getTransferType());
+                        changOwnerUser.setBizIds(businessBizIds);
+                        changOwnerUser.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+                        businessDetailService.changeOwnerUser(changOwnerUser);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            });
+        });
     }
 }

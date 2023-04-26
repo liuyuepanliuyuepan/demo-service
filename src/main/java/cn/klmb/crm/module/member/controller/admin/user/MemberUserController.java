@@ -14,6 +14,7 @@ import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamReqVO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserBatchUpdateReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserDeleteReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
@@ -488,5 +489,14 @@ public class MemberUserController {
         return CommonResult.success(true);
     }
 
+
+    @PostMapping("/change-owner-user")
+    @ApiOperation("修改客户负责人")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
+    public CommonResult<Boolean> changeOwnerUser(
+            @RequestBody CrmChangeOwnerUserBO crmChangeOwnerUserBO) {
+        memberUserService.changeOwnerUser(crmChangeOwnerUserBO);
+        return success(true);
+    }
 
 }
