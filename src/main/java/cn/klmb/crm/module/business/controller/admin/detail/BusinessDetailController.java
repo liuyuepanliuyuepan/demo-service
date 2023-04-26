@@ -6,6 +6,7 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDeleteReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailFullRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
@@ -90,7 +91,7 @@ public class BusinessDetailController {
     @GetMapping({"/page"})
     @ApiOperation(value = "商机分页查询")
     @PreAuthorize("@ss.hasPermission('business:detail:query')")
-    public CommonResult<KlmbPage<BusinessDetailRespVO>> page(@Valid BusinessDetailPageReqVO reqVO) {
+    public CommonResult<BusinessDetailFullRespVO> page(@Valid BusinessDetailPageReqVO reqVO) {
         return success(businessDetailService.page(reqVO));
     }
 
