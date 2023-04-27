@@ -47,7 +47,7 @@ public class MemberTeamController {
     @PostMapping("/add")
     @ApiOperation("新增团队成员")
     @PreAuthorize("@ss.hasPermission('member:team:save')")
-    public CommonResult<Boolean> addMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+    public CommonResult<Boolean> addMembers(@Valid @RequestBody MemberTeamSaveBO memberTeamSaveBO) {
         memberTeamService.addMember(memberTeamSaveBO);
         return CommonResult.success(true);
     }
@@ -55,7 +55,8 @@ public class MemberTeamController {
     @PostMapping("/update")
     @ApiOperation("编辑团队成员")
     @PreAuthorize("@ss.hasPermission('member:team:post')")
-    public CommonResult<Boolean> updateMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+    public CommonResult<Boolean> updateMembers(
+            @Valid @RequestBody MemberTeamSaveBO memberTeamSaveBO) {
         memberTeamService.addMember(memberTeamSaveBO);
         return CommonResult.success(true);
     }
@@ -63,7 +64,8 @@ public class MemberTeamController {
     @PostMapping("/delete")
     @ApiOperation("删除团队成员")
     @PreAuthorize("@ss.hasPermission('member:team:delete')")
-    public CommonResult<Boolean> deleteMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
+    public CommonResult<Boolean> deleteMembers(
+            @Valid @RequestBody MemberTeamSaveBO memberTeamSaveBO) {
         memberTeamService.deleteMember(memberTeamSaveBO);
         return CommonResult.success(true);
     }
@@ -71,7 +73,7 @@ public class MemberTeamController {
     @PostMapping("/exitTeam")
     @ApiOperation("退出团队")
     @PreAuthorize("@ss.hasPermission('member:team:post')")
-    public CommonResult<Boolean> exitTeam(@Valid MemberTeamReqVO reqVO) {
+    public CommonResult<Boolean> exitTeam(@Valid @RequestBody MemberTeamReqVO reqVO) {
         memberTeamService.exitTeam(reqVO);
         return CommonResult.success(true);
     }
