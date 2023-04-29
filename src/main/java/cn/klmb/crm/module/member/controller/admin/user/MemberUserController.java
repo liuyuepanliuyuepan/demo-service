@@ -319,9 +319,10 @@ public class MemberUserController {
             throw exception(
                     cn.klmb.crm.module.member.enums.ErrorCodeConstants.MEMBER_USER_NOT_EXISTS);
         }
-        List<MembersTeamSelectVO> members = memberTeamService.getMembers(
-                MemberTeamReqVO.builder().type(CrmEnum.CUSTOMER.getType()).typeId(customerId)
-                        .build());
+        MemberTeamReqVO reqVO = new MemberTeamReqVO();
+        reqVO.setType(CrmEnum.CUSTOMER.getType());
+        reqVO.setTypeId(customerId);
+        List<MembersTeamSelectVO> members = memberTeamService.getMembers(reqVO);
         return CommonResult.success(members);
     }
 
@@ -357,10 +358,10 @@ public class MemberUserController {
             @ApiImplicitParam(name = "customerId", value = "客户id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> exitTeam(@PathVariable("customerId") String customerId) {
-
-        memberTeamService.exitTeam(
-                MemberTeamReqVO.builder().type(CrmEnum.CUSTOMER.getType()).typeId(customerId)
-                        .build());
+        MemberTeamReqVO reqVO = new MemberTeamReqVO();
+        reqVO.setType(CrmEnum.CUSTOMER.getType());
+        reqVO.setTypeId(customerId);
+        memberTeamService.exitTeam(reqVO);
         return CommonResult.success(true);
     }
 
