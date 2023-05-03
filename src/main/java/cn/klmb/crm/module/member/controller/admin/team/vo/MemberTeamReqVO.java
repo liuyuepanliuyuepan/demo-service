@@ -4,13 +4,11 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import lombok.Builder;
 import lombok.Data;
 import lombok.ToString;
 
 @ApiModel("管理后台 - crm团队成员 Request VO")
 @Data
-@Builder
 @ToString(callSuper = true)
 public class MemberTeamReqVO {
 
