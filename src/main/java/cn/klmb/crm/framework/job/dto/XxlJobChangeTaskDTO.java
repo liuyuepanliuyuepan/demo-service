@@ -68,7 +68,7 @@ public class XxlJobChangeTaskDTO {
 
 
     /**
-     * 提前多久触发定时任务 单位小时
+     * 提前多久触发定时任务 单位小时(废弃)
      */
     private String offsetValue;
 

@@ -7,6 +7,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.CharUtil;
+import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -18,8 +19,10 @@ import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobResponseInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.mq.message.WebSocketServer;
+import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.notify.SysNotifyMessageDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
 import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.notify.SysNotifyMessageService;
@@ -386,6 +389,35 @@ public class XxlJobApiUtils {
     }
 
 
+    public static void main(String[] args) {
+        LocalDateTime localDateTime = LocalDateTimeUtil.beginOfDay(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        int currentMinute = now.getMinute();
+        int minuteValue = 1;
+        double sub = NumberUtil.sub(currentMinute, minuteValue);
+        //减
+        LocalDateTime localDateTime1 = now.minusMinutes((long) sub);
+        System.out.println(localDateTime1);
+
+    }
+
+    private void sendMessage(String name, String ownerUserId, String messageType, String nextTime) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("name", name);
+        map.put("contractType", messageType);
+        map.put("nextTime", nextTime);
+        String bizId = sysNotifySendService.sendSingleNotifyToAdmin(ownerUserId,
+                "contactsRemind", map);
+        SysNotifyMessageDO sysNotifyMessageDO = sysNotifyMessageService.getByBizId(
+                bizId);
+        webSocketServer.sendOneMessage(ownerUserId,
+                JSONUtil.toJsonStr(JSONUtil.parse(sysNotifyMessageDO)));
+        SysUserDO sysUserDO = sysUserService.getByBizId(ownerUserId);
+        String fsUserId = sysUserDO.getFsUserId();
+        sysFeishuManager.sendMsg(fsUserId, sysNotifyMessageDO.getTemplateContent());
+
+    }
+
     /**
      * 创建任务
      *
@@ -431,61 +463,61 @@ public class XxlJobApiUtils {
                 }
                 return;
             }
-            String nextTimeStr = LocalDateTimeUtil.offset(xxlJobChangeTaskDTO.getNextTime(),
-                            -(Long.parseLong(xxlJobChangeTaskDTO.getOffsetValue())),
-                            ChronoUnit.HOURS)
-                    .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN));
-            xxlJobInfo.setJobDesc(
-                    StrUtil.format("{}{}下次联系时间{}定时任务！", xxlJobChangeTaskDTO.getMessageType(),
-                            xxlJobChangeTaskDTO.getName(), nextTimeStr));
-            xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(nextTimeStr));
-            List<String> list = Arrays.asList(xxlJobChangeTaskDTO.getOwnerUserId(),
-                    (xxlJobChangeTaskDTO.getContactsType().toString()),
-                    xxlJobChangeTaskDTO.getBizId(),
-                    xxlJobChangeTaskDTO.getNextTime().format(
-                            DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
-            xxlJobInfo.setExecutorParam(CollUtil.join(list, ","));
-            if (xxlJobChangeTaskDTO.getOperateType() == 2 && ObjectUtil.isNotNull(
-                    xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
-                    xxlJobTaskManagerInfo.getData())) {
-                // 增加edit标志时为了防止在执行更新用户下次联系时间时，定时任务创建不上
-                boolean edit = false;
-                List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
-                for (XxlJobInfo datum : data) {
-                    String executorParam = datum.getExecutorParam();
-                    List<String> split = StrUtil.split(executorParam, CharUtil.COMMA);
-                    String s = split.get(2);
-                    if (StrUtil.equals(xxlJobChangeTaskDTO.getBizId(), s)) {
-                        datum.setScheduleConf(xxlJobInfo.getScheduleConf());
-                        datum.setJobDesc(xxlJobInfo.getJobDesc());
-                        datum.setExecutorParam(xxlJobInfo.getExecutorParam());
-                        editTask(datum);
-                        startTask(datum.getId());
-                        edit = true;
-                        break;
+            String nextTimeStr = getTime(xxlJobChangeTaskDTO.getNextTime());
+            if (StrUtil.isNotBlank(nextTimeStr)) {
+                xxlJobInfo.setJobDesc(
+                        StrUtil.format("{}{}下次联系时间{}定时任务！", xxlJobChangeTaskDTO.getMessageType(),
+                                xxlJobChangeTaskDTO.getName(), nextTimeStr));
+                xxlJobInfo.setScheduleConf(CronUtil.onlyOnce(nextTimeStr));
+                List<String> list = Arrays.asList(xxlJobChangeTaskDTO.getOwnerUserId(),
+                        (xxlJobChangeTaskDTO.getContactsType().toString()),
+                        xxlJobChangeTaskDTO.getBizId(),
+                        xxlJobChangeTaskDTO.getNextTime().format(
+                                DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)));
+                xxlJobInfo.setExecutorParam(CollUtil.join(list, ","));
+                if (xxlJobChangeTaskDTO.getOperateType() == 2 && ObjectUtil.isNotNull(
+                        xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
+                        xxlJobTaskManagerInfo.getData())) {
+                    // 增加edit标志时为了防止在执行更新用户下次联系时间时，定时任务创建不上
+                    boolean edit = false;
+                    List<XxlJobInfo> data = xxlJobTaskManagerInfo.getData();
+                    for (XxlJobInfo datum : data) {
+                        String executorParam = datum.getExecutorParam();
+                        List<String> split = StrUtil.split(executorParam, CharUtil.COMMA);
+                        String s = split.get(2);
+                        if (StrUtil.equals(xxlJobChangeTaskDTO.getBizId(), s)) {
+                            datum.setScheduleConf(xxlJobInfo.getScheduleConf());
+                            datum.setJobDesc(xxlJobInfo.getJobDesc());
+                            datum.setExecutorParam(xxlJobInfo.getExecutorParam());
+                            editTask(datum);
+                            startTask(datum.getId());
+                            edit = true;
+                            break;
+                        }
                     }
-                }
-                if (!edit) {
+                    if (!edit) {
+                        XxlJobResponseInfo task = createTask(xxlJobInfo);
+                        if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
+                            startTask(Long.parseLong(task.getContent()));
+                        }
+                    }
+                } else if (xxlJobChangeTaskDTO.getOperateType() == 2 && (
+                        ObjectUtil.isNull(xxlJobTaskManagerInfo) || CollUtil.isEmpty(
+                                xxlJobTaskManagerInfo.getData()))) {
                     XxlJobResponseInfo task = createTask(xxlJobInfo);
                     if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
                         startTask(Long.parseLong(task.getContent()));
                     }
                 }
-            } else if (xxlJobChangeTaskDTO.getOperateType() == 2 && (
-                    ObjectUtil.isNull(xxlJobTaskManagerInfo) || CollUtil.isEmpty(
-                            xxlJobTaskManagerInfo.getData()))) {
-                XxlJobResponseInfo task = createTask(xxlJobInfo);
-                if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
-                    startTask(Long.parseLong(task.getContent()));
+
+                if (xxlJobChangeTaskDTO.getOperateType() == 1) {
+                    XxlJobResponseInfo task = createTask(xxlJobInfo);
+                    if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
+                        startTask(Long.parseLong(task.getContent()));
+                    }
                 }
             }
 
-            if (xxlJobChangeTaskDTO.getOperateType() == 1) {
-                XxlJobResponseInfo task = createTask(xxlJobInfo);
-                if (ObjectUtil.isNotNull(task) && StrUtil.isNotBlank(task.getContent())) {
-                    startTask(Long.parseLong(task.getContent()));
-                }
-            }
         }
         if (xxlJobChangeTaskDTO.getOperateType() == 3) {
             if (ObjectUtil.isNotNull(xxlJobTaskManagerInfo) && CollUtil.isNotEmpty(
@@ -504,24 +536,6 @@ public class XxlJobApiUtils {
         System.out.println();
     }
 
-    private void sendMessage(String name, String ownerUserId, String messageType, String nextTime) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("name", name);
-        map.put("contractType", messageType);
-        map.put("nextTime", nextTime);
-        String bizId = sysNotifySendService.sendSingleNotifyToAdmin(ownerUserId,
-                "contactsRemind", map);
-        SysNotifyMessageDO sysNotifyMessageDO = sysNotifyMessageService.getByBizId(
-                bizId);
-        webSocketServer.sendOneMessage(ownerUserId,
-                JSONUtil.toJsonStr(JSONUtil.parse(sysNotifyMessageDO)));
-        SysUserDO sysUserDO = sysUserService.getByBizId(ownerUserId);
-        String fsUserId = sysUserDO.getFsUserId();
-        sysFeishuManager.sendMsg(fsUserId, sysNotifyMessageDO.getTemplateContent());
-
-    }
-
-
     public XxlJobTaskManagerInfo getTaskManagerInfo(XxlJobChangeTaskDTO xxlJobChangeTaskDTO) {
         XxlJobGroup xxlJobGroup = new XxlJobGroup();
         xxlJobGroup.setAppname(xxlJobChangeTaskDTO.getAppName());
@@ -534,6 +548,91 @@ public class XxlJobApiUtils {
         XxlJobTaskManagerInfo xxlJobTaskManagerInfo = selectTask(xxlJobInfo);
         return xxlJobTaskManagerInfo;
 
+    }
+
+    //动态获取触发时间
+    public String getTime(LocalDateTime nextTime) {
+        String nextTimeStr = null;
+        //判断是不是今天,如果是同一天的话就提前一小时提醒
+        if (LocalDateTimeUtil.isSameDay(nextTime, LocalDateTime.now())) {
+            LocalDateTime offset = LocalDateTimeUtil.offset(nextTime,
+                    -1L,
+                    ChronoUnit.HOURS);
+            nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+                    .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)) : null;
+
+        } else {
+            SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
+                    SysConfigKeyEnum.CONTACTS_REMINDER.getType());
+            if (ObjectUtil.isNotNull(sysConfigDO)) {
+                String value = sysConfigDO.getValue();
+                if (StrUtil.isNotBlank(value)) {
+                    List<String> split = StrUtil.split(value, CharUtil.COMMA);
+                    Integer timeType = Integer.parseInt(split.get(0));
+                    String timeValue = split.get(1);
+                    String minuteValue = split.get(2);
+                    nextTimeStr = getNextTimeStr(timeType, timeValue, minuteValue, nextTime);
+                }
+            }
+        }
+        return nextTimeStr;
+
+    }
+
+    private String getNextTimeStr(Integer type, String timeValue, String minuteValue,
+            LocalDateTime nextTime) {
+        String nextTimeStr;
+        LocalDateTime offset;
+        int minute = nextTime.getMinute();
+        double sub = NumberUtil.sub(minute, Integer.parseInt(minuteValue));
+        nextTime = nextTime.minusMinutes((long) sub);
+        switch (type) {
+            case 1: {
+                //按天计算
+                offset = LocalDateTimeUtil.offset(nextTime,
+                        -(Long.parseLong(timeValue)),
+                        ChronoUnit.DAYS);
+                nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+                        .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN))
+                        : null;
+                return nextTimeStr;
+            }
+            case 2: {
+                //按小时计算
+                offset = LocalDateTimeUtil.offset(nextTime,
+                        -(Long.parseLong(timeValue)),
+                        ChronoUnit.HOURS);
+                nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+                        .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN))
+                        : null;
+                return nextTimeStr;
+            }
+
+            case 3: {
+                //按分钟计算
+                offset = LocalDateTimeUtil.offset(nextTime,
+                        -(Long.parseLong(timeValue)),
+                        ChronoUnit.MINUTES);
+                nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+                        .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN))
+                        : null;
+                return nextTimeStr;
+            }
+
+            case 4: {
+                //按月计算
+                offset = LocalDateTimeUtil.offset(nextTime,
+                        -(Long.parseLong(timeValue)),
+                        ChronoUnit.MONTHS);
+                nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+                        .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN))
+                        : null;
+                return nextTimeStr;
+            }
+            default: {
+                return null;
+            }
+        }
     }
 }
 

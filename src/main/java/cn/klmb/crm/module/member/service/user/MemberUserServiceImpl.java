@@ -34,12 +34,10 @@ import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.userpool.MemberUserPoolService;
 import cn.klmb.crm.module.member.service.userpoolrelation.MemberUserPoolRelationService;
 import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
-import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
-import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -359,10 +357,6 @@ public class MemberUserServiceImpl extends
         memberTeamService.saveDO(
                 MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.CUSTOMER.getType())
                         .typeId(bizId).build());
-
-        SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
-                SysConfigKeyEnum.CONTACTS_REMINDER.getType());
-
         changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                 .executorHandler("customerContactReminderHandler").author("liuyuepan")
                 .ownerUserId(saveDO.getOwnerUserId())
@@ -370,7 +364,7 @@ public class MemberUserServiceImpl extends
                 .operateType(1)
                 .messageType(CrmEnum.CUSTOMER.getRemarks())
                 .contactsType(CrmEnum.CUSTOMER.getType())
-                .offsetValue(sysConfigDO.getValue()).build());
+                .build());
         return bizId;
     }
 
@@ -423,8 +417,6 @@ public class MemberUserServiceImpl extends
         MemberUserDO memberUserDOCopy = super.getByBizId(entity.getBizId());
         if (!nextTime.isEqual(entity.getNextTime())
                 && LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) != 0) {
-            SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
-                    SysConfigKeyEnum.CONTACTS_REMINDER.getType());
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                     .executorHandler("customerContactReminderHandler").author("liuyuepan")
                     .ownerUserId(memberUserDOCopy.getOwnerUserId())
@@ -432,7 +424,6 @@ public class MemberUserServiceImpl extends
                     .name(memberUserDOCopy.getName()).operateType(2)
                     .messageType(CrmEnum.CUSTOMER.getRemarks())
                     .contactsType(CrmEnum.CUSTOMER.getType())
-                    .offsetValue(sysConfigDO.getValue())
                     .build());
         }
         if (LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) == 0) {
