@@ -24,6 +24,7 @@ import cn.klmb.crm.module.business.convert.detail.BusinessDetailConvert;
 import cn.klmb.crm.module.business.convert.product.BusinessProductConvert;
 import cn.klmb.crm.module.business.dao.detail.BusinessDetailMapper;
 import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
+import cn.klmb.crm.module.business.dto.product.BusinessProductQueryDTO;
 import cn.klmb.crm.module.business.entity.contacts.BusinessContactsDO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.entity.product.BusinessProductDO;
@@ -46,12 +47,10 @@ import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.contactsstar.MemberContactsStarService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
-import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
-import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -145,9 +144,6 @@ public class BusinessDetailServiceImpl extends
         memberTeamService.saveDO(
                 MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.BUSINESS.getType())
                         .typeId(bizId).build());
-
-        SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
-                SysConfigKeyEnum.CONTACTS_REMINDER.getType());
         xxlJobApiUtils.changeTask(
                 XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                         .executorHandler("customerContactReminderHandler").author("liuyuepan")
@@ -156,7 +152,7 @@ public class BusinessDetailServiceImpl extends
                         .operateType(1)
                         .messageType(CrmEnum.BUSINESS.getRemarks())
                         .contactsType(CrmEnum.BUSINESS.getType()
-                        ).offsetValue(sysConfigDO.getValue()).build());
+                        ).build());
 
         return bizId;
     }
@@ -204,8 +200,6 @@ public class BusinessDetailServiceImpl extends
             }
 
             if (!nextTime.isEqual(updateDO.getNextTime())) {
-                SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
-                        SysConfigKeyEnum.CONTACTS_REMINDER.getType());
                 xxlJobApiUtils.changeTask(
                         XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
                                 .title("crm执行器")
@@ -216,7 +210,7 @@ public class BusinessDetailServiceImpl extends
                                 .name(updateDO.getBusinessName()).operateType(2)
                                 .messageType(CrmEnum.BUSINESS.getRemarks())
                                 .contactsType(CrmEnum.BUSINESS.getType())
-                                .offsetValue(sysConfigDO.getValue()).build());
+                                .build());
             }
         }
 
