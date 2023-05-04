@@ -3,6 +3,7 @@ package cn.klmb.crm.module.business.service.detail;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
@@ -24,7 +25,6 @@ import cn.klmb.crm.module.business.convert.detail.BusinessDetailConvert;
 import cn.klmb.crm.module.business.convert.product.BusinessProductConvert;
 import cn.klmb.crm.module.business.dao.detail.BusinessDetailMapper;
 import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
-import cn.klmb.crm.module.business.dto.product.BusinessProductQueryDTO;
 import cn.klmb.crm.module.business.entity.contacts.BusinessContactsDO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.entity.product.BusinessProductDO;
@@ -199,7 +199,10 @@ public class BusinessDetailServiceImpl extends
                 });
             }
 
-            if (!nextTime.isEqual(updateDO.getNextTime())) {
+            if (ObjectUtil.isNotNull(updateDO.getNextTime())
+                    && LocalDateTimeUtil.toEpochMilli(updateDO.getNextTime()) != 0
+                    && !nextTime.isEqual(
+                    updateDO.getNextTime())) {
                 xxlJobApiUtils.changeTask(
                         XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
                                 .title("crm执行器")
@@ -212,6 +215,18 @@ public class BusinessDetailServiceImpl extends
                                 .contactsType(CrmEnum.BUSINESS.getType())
                                 .build());
             }
+
+            if (ObjectUtil.isNull(updateDO.getNextTime())
+                    || LocalDateTimeUtil.toEpochMilli(updateDO.getNextTime()) == 0) {
+                xxlJobApiUtils.changeTask(
+                        XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                .title("crm执行器")
+                                .executorHandler("customerContactReminderHandler")
+                                .author("liuyuepan")
+                                .bizId(updateDO.getBizId()).operateType(3)
+                                .messageType(CrmEnum.BUSINESS.getRemarks())
+                                .contactsType(CrmEnum.BUSINESS.getType()).build());
+            }
         }
 
         return success;
@@ -219,6 +234,7 @@ public class BusinessDetailServiceImpl extends
 
     @Override
     public BusinessDetailRespVO getBusinessByBizId(String bizId) {
+        BusinessDetailRespVO respVO = null;
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -244,14 +260,13 @@ public class BusinessDetailServiceImpl extends
                             .eq(BusinessUserStarDO::getUserId, userId)
                             .eq(BusinessUserStarDO::getDeleted, false));
             businessDetailDO.setStar(CollUtil.isNotEmpty(businessUserStarDOS));
-
+            respVO = BusinessDetailConvert.INSTANCE.convert(businessDetailDO);
+            List<BusinessProductRespVO> productRespList = Collections.emptyList();
+            if (ObjectUtil.isNotNull(respVO)) {
+                productRespList = businessProductService.getBusinessProductByBusinessId(bizId);
+            }
+            respVO.setBusinessProductRespList(productRespList);
         }
-        BusinessDetailRespVO respVO = BusinessDetailConvert.INSTANCE.convert(businessDetailDO);
-        List<BusinessProductRespVO> productRespList = Collections.emptyList();
-        if (ObjectUtil.isNotNull(respVO)) {
-            productRespList = businessProductService.getBusinessProductByBusinessId(bizId);
-        }
-        respVO.setBusinessProductRespList(productRespList);
         return respVO;
     }
 
@@ -571,6 +586,8 @@ public class BusinessDetailServiceImpl extends
         if (StrUtil.isBlank(userId)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
+        BusinessDetailRespVO businessDetailRespVO = this.getBusinessByBizId(
+                reqVO.getBusinessId());
         MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
         KlmbPage<MemberContactsDO> klmbPage = KlmbPage.<MemberContactsDO>builder()
                 .pageNo(reqVO.getPageNo()).pageSize(reqVO.getPageSize())
@@ -588,11 +605,10 @@ public class BusinessDetailServiceImpl extends
             List<MemberContactsDO> content = klmbPage.getContent();
             if (CollUtil.isNotEmpty(content)) {
                 content.forEach(e -> {
-                    MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
-                    if (ObjectUtil.isNotNull(memberUserDO)) {
-                        e.setCustomerName(memberUserDO.getName());
+                    if (ObjectUtil.isNotNull(businessDetailRespVO)) {
+                        e.setCustomerName(businessDetailRespVO.getCustomerName());
                         e.setIsFirstContacts(
-                                StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                                StrUtil.equals(businessDetailRespVO.getContactsId(), e.getBizId()));
                     }
                     if (StrUtil.isNotBlank(e.getParentContactsId())) {
                         MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
@@ -625,6 +641,8 @@ public class BusinessDetailServiceImpl extends
         if (StrUtil.isBlank(userId)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
+        BusinessDetailRespVO businessDetailRespVO = this.getBusinessByBizId(
+                reqVO.getBusinessId());
         if (StrUtil.isBlank(reqVO.getBusinessId())) {
             return Collections.emptyList();
         }
@@ -642,11 +660,10 @@ public class BusinessDetailServiceImpl extends
 
         if (CollUtil.isNotEmpty(entities)) {
             entities.forEach(e -> {
-                MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
-                if (ObjectUtil.isNotNull(memberUserDO)) {
-                    e.setCustomerName(memberUserDO.getName());
+                if (ObjectUtil.isNotNull(businessDetailRespVO)) {
+                    e.setCustomerName(businessDetailRespVO.getCustomerName());
                     e.setIsFirstContacts(
-                            StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                            StrUtil.equals(businessDetailRespVO.getContactsId(), e.getBizId()));
                 }
                 if (StrUtil.isNotBlank(e.getParentContactsId())) {
                     MemberContactsDO memberContactsDO = memberContactsService.getByBizId(

@@ -421,7 +421,7 @@ public class MemberUserServiceImpl extends
         LocalDateTime nextTime = memberUserDO.getNextTime();
         boolean success = super.updateDO(entity);
         MemberUserDO memberUserDOCopy = super.getByBizId(entity.getBizId());
-        if (!nextTime.isEqual(entity.getNextTime())
+        if (ObjectUtil.isNotNull(entity.getNextTime()) && !nextTime.isEqual(entity.getNextTime())
                 && LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) != 0) {
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                     .executorHandler("customerContactReminderHandler").author("liuyuepan")
@@ -432,7 +432,8 @@ public class MemberUserServiceImpl extends
                     .contactsType(CrmEnum.CUSTOMER.getType())
                     .build());
         }
-        if (LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) == 0) {
+        if (ObjectUtil.isNull(entity.getNextTime())
+                || LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) == 0) {
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                     .executorHandler("customerContactReminderHandler").author("liuyuepan")
                     .bizId(entity.getBizId()).operateType(3)
