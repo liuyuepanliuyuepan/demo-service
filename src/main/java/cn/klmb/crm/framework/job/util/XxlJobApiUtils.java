@@ -390,14 +390,18 @@ public class XxlJobApiUtils {
 
 
     public static void main(String[] args) {
-        LocalDateTime localDateTime = LocalDateTimeUtil.beginOfDay(LocalDateTime.now());
-        LocalDateTime now = LocalDateTime.now();
-        int currentMinute = now.getMinute();
-        int minuteValue = 1;
-        double sub = NumberUtil.sub(currentMinute, minuteValue);
-        //减
-        LocalDateTime localDateTime1 = now.minusMinutes((long) sub);
-        System.out.println(localDateTime1);
+//        LocalDateTime localDateTime = LocalDateTimeUtil.beginOfDay(LocalDateTime.now());
+//        LocalDateTime now = LocalDateTime.now();
+//        int currentMinute = now.getHour();
+//        int minuteValue = 0;
+//        double sub = NumberUtil.sub(currentMinute, minuteValue);
+//        //减
+//        LocalDateTime localDateTime1 = now.minusHours((long) sub);
+//        localDateTime1 = localDateTime1.minusMinutes((long) NumberUtil.sub(now.getMinute(), 0));
+//        System.out.println(localDateTime1);
+
+        LocalDateTime time = LocalDateTime.of(2022, 11, 30, 6, 6, 6);
+        System.out.println(time);
 
     }
 
@@ -557,7 +561,7 @@ public class XxlJobApiUtils {
             LocalDateTime offset = LocalDateTimeUtil.offset(nextTime,
                     -1L,
                     ChronoUnit.HOURS);
-            nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+            nextTimeStr = LocalDateTime.now().isBefore(offset) ? offset
                     .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN)) : null;
 
         } else {
@@ -569,8 +573,8 @@ public class XxlJobApiUtils {
                     List<String> split = StrUtil.split(value, CharUtil.COMMA);
                     Integer timeType = Integer.parseInt(split.get(0));
                     String timeValue = split.get(1);
-                    String minuteValue = split.get(2);
-                    nextTimeStr = getNextTimeStr(timeType, timeValue, minuteValue, nextTime);
+                    String hourValue = split.get(2);
+                    nextTimeStr = getNextTimeStr(timeType, timeValue, hourValue, nextTime);
                 }
             }
         }
@@ -578,20 +582,23 @@ public class XxlJobApiUtils {
 
     }
 
-    private String getNextTimeStr(Integer type, String timeValue, String minuteValue,
+    private String getNextTimeStr(Integer type, String timeValue, String hourValue,
             LocalDateTime nextTime) {
         String nextTimeStr;
         LocalDateTime offset;
-        int minute = nextTime.getMinute();
-        double sub = NumberUtil.sub(minute, Integer.parseInt(minuteValue));
-        nextTime = nextTime.minusMinutes((long) sub);
         switch (type) {
             case 1: {
                 //按天计算
+                int minute = nextTime.getMinute();
+                double subMinute = NumberUtil.sub(minute, 0);
+                int hour = nextTime.getHour();
+                double subHour = NumberUtil.sub(hour, Integer.parseInt(hourValue));
+                nextTime = nextTime.minusHours((long) subHour);
+                nextTime = nextTime.minusMinutes((long) subMinute);
                 offset = LocalDateTimeUtil.offset(nextTime,
                         -(Long.parseLong(timeValue)),
                         ChronoUnit.DAYS);
-                nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+                nextTimeStr = LocalDateTime.now().isBefore(offset) ? offset
                         .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN))
                         : null;
                 return nextTimeStr;
@@ -601,7 +608,7 @@ public class XxlJobApiUtils {
                 offset = LocalDateTimeUtil.offset(nextTime,
                         -(Long.parseLong(timeValue)),
                         ChronoUnit.HOURS);
-                nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+                nextTimeStr = LocalDateTime.now().isBefore(offset) ? offset
                         .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN))
                         : null;
                 return nextTimeStr;
@@ -612,7 +619,7 @@ public class XxlJobApiUtils {
                 offset = LocalDateTimeUtil.offset(nextTime,
                         -(Long.parseLong(timeValue)),
                         ChronoUnit.MINUTES);
-                nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+                nextTimeStr = LocalDateTime.now().isBefore(offset) ? offset
                         .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN))
                         : null;
                 return nextTimeStr;
@@ -620,10 +627,16 @@ public class XxlJobApiUtils {
 
             case 4: {
                 //按月计算
+                int minute = nextTime.getMinute();
+                double subMinute = NumberUtil.sub(minute, 0);
+                int hour = nextTime.getHour();
+                double subHour = NumberUtil.sub(hour, Integer.parseInt(hourValue));
+                nextTime = nextTime.minusHours((long) subHour);
+                nextTime = nextTime.minusMinutes((long) subMinute);
                 offset = LocalDateTimeUtil.offset(nextTime,
                         -(Long.parseLong(timeValue)),
                         ChronoUnit.MONTHS);
-                nextTimeStr = LocalDateTime.now().isAfter(offset) ? offset
+                nextTimeStr = LocalDateTime.now().isBefore(offset) ? offset
                         .format(DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN))
                         : null;
                 return nextTimeStr;
