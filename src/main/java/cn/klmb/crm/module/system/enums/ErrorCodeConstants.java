@@ -102,6 +102,8 @@ public interface ErrorCodeConstants {
             "不能操作类型为系统内置的角色");
     ErrorCode ROLE_IS_DISABLE = new ErrorCode(1002002004, "名字为【{}】的角色已被禁用");
     ErrorCode ROLE_ADMIN_CODE_ERROR = new ErrorCode(1002002005, "编码【{}】不能使用");
+    ErrorCode USER_ROLE_NOT_EXISTS = new ErrorCode(1002002006, "该用户未分配角色");
+
 
     // ========== 用户模块 1002003000 ==========
     ErrorCode USER_USERNAME_EXISTS = new ErrorCode(1002003000, "用户账号【{}】已经存在");

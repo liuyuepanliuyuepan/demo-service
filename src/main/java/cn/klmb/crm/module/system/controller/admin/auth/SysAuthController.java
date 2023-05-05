@@ -1,10 +1,12 @@
 package cn.klmb.crm.module.system.controller.admin.auth;
 
+import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 import static cn.klmb.crm.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 import static cn.klmb.crm.framework.security.core.util.SecurityFrameworkUtils.obtainAuthorization;
 import static java.util.Collections.singleton;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.common.enums.CommonStatusEnum;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
@@ -20,6 +22,7 @@ import cn.klmb.crm.module.system.convert.auth.SysAuthConvert;
 import cn.klmb.crm.module.system.entity.permission.SysMenuDO;
 import cn.klmb.crm.module.system.entity.permission.SysRoleDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.enums.permission.SysMenuTypeEnum;
 import cn.klmb.crm.module.system.service.auth.SysAuthService;
 import cn.klmb.crm.module.system.service.permission.SysPermissionService;
@@ -125,6 +128,9 @@ public class SysAuthController {
         // 获得角色列表
         Set<String> roleIds = sysPermissionService.getUserRoleIds(getLoginUserId(),
                 singleton(CommonStatusEnum.ENABLE.getStatus()));
+        if (CollUtil.isEmpty(roleIds)) {
+            throw exception(ErrorCodeConstants.USER_ROLE_NOT_EXISTS);
+        }
         // 获得用户拥有的菜单列表
         List<SysMenuDO> menuList = sysPermissionService.getRoleMenuList(roleIds,
                 SetUtils.asSet(SysMenuTypeEnum.DIR.getType(), SysMenuTypeEnum.MENU.getType()),
