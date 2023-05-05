@@ -286,27 +286,30 @@ public class MemberContactsServiceImpl extends
         bizIds.forEach(bizId -> {
             MemberContactsDO memberContactsDO = super.getByBizId(bizId);
             String oldOwnerUserId = memberContactsDO.getOwnerUserId();
-            if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
-                    oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
-                memberTeamService.addSingleMember(CrmEnum.CONTACTS.getType(), bizId,
-                        changOwnerUserBO.getOwnerUserId(), changOwnerUserBO.getPower(),
-                        changOwnerUserBO.getExpiresTime());
-            }
-            memberContactsDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
-            super.updateDO(memberContactsDO);
-
-            if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
-                MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
-                memberTeamSaveBO.setUserIds(
-                        Collections.singletonList(oldOwnerUserId));
-                memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
-                memberTeamSaveBO.setType(CrmEnum.CONTACTS.getType());
-                memberTeamService.deleteMember(memberTeamSaveBO);
-            }
-
-            //更新定时任务
             if (!StrUtil.equals(
                     oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                //添加新负责人
+                memberTeamService.addSingleMember(CrmEnum.CONTACTS.getType(), bizId,
+                        changOwnerUserBO.getOwnerUserId(), 3, null);
+                if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
+                        oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                    memberTeamService.addSingleMember(CrmEnum.CONTACTS.getType(), bizId,
+                            oldOwnerUserId, changOwnerUserBO.getPower(),
+                            changOwnerUserBO.getExpiresTime());
+                }
+                memberContactsDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+                super.updateDO(memberContactsDO);
+
+                if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
+                    MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+                    memberTeamSaveBO.setUserIds(
+                            Collections.singletonList(oldOwnerUserId));
+                    memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+                    memberTeamSaveBO.setType(CrmEnum.CONTACTS.getType());
+                    memberTeamService.deleteMember(memberTeamSaveBO);
+                }
+
+                //更新定时任务
                 xxlJobApiUtils.changeTaskOwnerUser(
                         XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
                                 .title("crm执行器")
@@ -316,6 +319,7 @@ public class MemberContactsServiceImpl extends
                                 .bizId(bizId)
                                 .contactsType(CrmEnum.CONTACTS.getType()).build());
             }
+
         });
     }
 

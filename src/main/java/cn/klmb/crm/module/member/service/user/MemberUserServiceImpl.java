@@ -634,31 +634,36 @@ public class MemberUserServiceImpl extends
         bizIds.forEach(bizId -> {
             MemberUserDO memberUserDO = super.getByBizId(bizId);
             String oldOwnerUserId = memberUserDO.getOwnerUserId();
-            if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
-                    oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
-                memberTeamService.addSingleMember(CrmEnum.CUSTOMER.getType(), bizId,
-                        changOwnerUserBO.getOwnerUserId(), changOwnerUserBO.getPower(),
-                        changOwnerUserBO.getExpiresTime());
-            }
-            memberUserDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
-            memberUserDO.setFollowup(0);
-            memberUserDO.setIsReceive(1);
-            memberUserDO.setReceiveTime(LocalDateTime.now());
-            super.updateDO(memberUserDO);
-            if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
-                MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
-                memberTeamSaveBO.setUserIds(Collections.singletonList(oldOwnerUserId));
-                memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
-                memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
-                memberTeamService.deleteMember(memberTeamSaveBO);
-            }
-            //更新定时任务
             if (!StrUtil.equals(oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                //添加新负责人
+                memberTeamService.addSingleMember(CrmEnum.CUSTOMER.getType(), bizId,
+                        changOwnerUserBO.getOwnerUserId(), 3, null);
+                if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
+                        oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                    memberTeamService.addSingleMember(CrmEnum.CUSTOMER.getType(), bizId,
+                            oldOwnerUserId, changOwnerUserBO.getPower(),
+                            changOwnerUserBO.getExpiresTime());
+                }
+                memberUserDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+                memberUserDO.setFollowup(0);
+                memberUserDO.setIsReceive(1);
+                memberUserDO.setReceiveTime(LocalDateTime.now());
+                super.updateDO(memberUserDO);
+                if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
+                    MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+                    memberTeamSaveBO.setUserIds(Collections.singletonList(oldOwnerUserId));
+                    memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+                    memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+                    memberTeamService.deleteMember(memberTeamSaveBO);
+                }
+                //更新定时任务
                 xxlJobApiUtils.changeTaskOwnerUser(
                         XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
                                 .title("crm执行器").executorHandler("customerContactReminderHandler")
                                 .author("liuyuepan").ownerUserId(changOwnerUserBO.getOwnerUserId())
                                 .bizId(bizId).contactsType(CrmEnum.CUSTOMER.getType()).build());
+
+
             }
             changOwnerUserBO.getChangeType().forEach(type -> {
                 switch (type) {
