@@ -52,6 +52,8 @@ public class MemberTeamActivityServiceImpl extends
         if (super.saveDO(saveDO)) {
             bizId = saveDO.getBizId();
         }
+        saveDO.setNextTime(ObjectUtil.isNull(saveDO.getNextTime()) ? LocalDateTimeUtil.of(0L)
+                : saveDO.getNextTime());
         updateLastContent(saveDO);
         return bizId;
     }
@@ -60,6 +62,8 @@ public class MemberTeamActivityServiceImpl extends
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateDO(MemberTeamActivityDO entity) {
+        entity.setNextTime(ObjectUtil.isNull(entity.getNextTime()) ? LocalDateTimeUtil.of(0L)
+                : entity.getNextTime());
         boolean b = super.updateDO(entity);
         updateLastContent(entity);
         return b;
@@ -71,13 +75,11 @@ public class MemberTeamActivityServiceImpl extends
             case 2: {
                 if (StrUtil.isNotBlank(saveDO.getActivityTypeId())) {
                     MemberUserDO memberUserDO = MemberUserDO.builder()
-                            .bizId(saveDO.getActivityTypeId())
-                            .lastContent(saveDO.getContent()).lastTime(LocalDateTime.now())
-                            .followup(1)
+                            .bizId(saveDO.getActivityTypeId()).lastContent(saveDO.getContent())
+                            .lastTime(LocalDateTime.now()).followup(1).nextTime(
+                                    ObjectUtil.isNull(saveDO.getNextTime()) ? LocalDateTimeUtil.of(
+                                            0L) : saveDO.getNextTime())
                             .build();
-                    if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
-                        memberUserDO.setNextTime(saveDO.getNextTime());
-                    }
                     memberUserService.updateDO(memberUserDO);
                 }
                 break;
@@ -85,8 +87,10 @@ public class MemberTeamActivityServiceImpl extends
             case 5: {
                 if (StrUtil.isNotBlank(saveDO.getActivityTypeId())) {
                     BusinessDetailDO businessDetailDO = BusinessDetailDO.builder()
-                            .bizId(saveDO.getActivityTypeId())
-                            .lastTime(LocalDateTime.now()).followup(1)
+                            .bizId(saveDO.getActivityTypeId()).lastTime(LocalDateTime.now())
+                            .followup(1).nextTime(
+                                    ObjectUtil.isNull(saveDO.getNextTime()) ? LocalDateTimeUtil.of(
+                                            0L) : saveDO.getNextTime())
                             .build();
                     if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
                         businessDetailDO.setNextTime(saveDO.getNextTime());
