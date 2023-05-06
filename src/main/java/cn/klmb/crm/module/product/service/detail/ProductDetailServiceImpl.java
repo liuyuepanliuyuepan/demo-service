@@ -170,7 +170,7 @@ public class ProductDetailServiceImpl extends
     public ProductDetailRespVO getProductDetailByBizId(String bizId) {
         ProductDetailDO saveDO = super.getByBizId(bizId);
         if (ObjectUtil.isNull(saveDO)) {
-            throw exception(cn.klmb.crm.module.product.enums.ErrorCodeConstants.PRODUCT_NOT_EXISTS);
+           return null;
         }
         ProductDetailRespVO convert = ProductDetailConvert.INSTANCE.convert(saveDO);
         if (ObjectUtil.isNotNull(convert)) {
