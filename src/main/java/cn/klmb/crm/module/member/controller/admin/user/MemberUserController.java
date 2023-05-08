@@ -17,6 +17,7 @@ import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserBatchUpdateReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserDeleteReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserImportReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserRespVO;
@@ -45,11 +46,20 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.security.PermitAll;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -71,6 +81,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/member/user")
 @Validated
+@Slf4j
 public class MemberUserController {
 
     private final MemberUserService memberUserService;
@@ -499,5 +510,35 @@ public class MemberUserController {
         memberUserService.changeOwnerUser(crmChangeOwnerUserBO);
         return success(true);
     }
+
+    @GetMapping("/download-excel")
+    @ApiOperation("下载客户导入模板")
+    @PermitAll
+    public void downloadExcel(HttpServletResponse response) {
+        response.setCharacterEncoding("utf-8");
+        response.setContentType("multipart/form-data;application/octet-stream");
+        String downloadUrl = "/template/客户导入模板.xls";
+        InputStream inputStream;
+        Resource resource = new DefaultResourceLoader().getResource("classpath:" + downloadUrl);
+        try {
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder
+                    .encode("客户导入模板.xlsx", "UTF-8"));
+            log.info("开始下载客户导入模板");
+            inputStream = resource.getInputStream();
+            FileCopyUtils.copy(inputStream, response.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @ApiOperation(value = "导入客户")
+    @PostMapping("/upload-excel")
+    @PermitAll
+    public CommonResult<Boolean> uploadExcel(@Valid MemberUserImportReqVO reqVO)
+            throws IOException {
+        memberUserService.uploadExcel(reqVO);
+        return success(true);
+    }
+
 
 }

@@ -309,6 +309,23 @@ public class SysUserServiceImpl extends
     }
 
     @Override
+    public List<SysUserDO> findByRealname(String realname) {
+        List<SysUserDO> list = super.list(
+                new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getRealname, realname)
+                        .eq(SysUserDO::getDeleted, false).eq(SysUserDO::getStatus, 0));
+        return list;
+    }
+
+    @Override
+    public List<SysUserDO> findByRealnameAndMobile(String realname, String mobile) {
+        List<SysUserDO> list = super.list(
+                new LambdaQueryWrapper<SysUserDO>().eq(SysUserDO::getRealname, realname)
+                        .eq(SysUserDO::getDeleted, false).eq(SysUserDO::getStatus, 0)
+                        .eq(SysUserDO::getMobile, mobile));
+        return list;
+    }
+
+    @Override
     public void removeByBizIds(List<String> bizIds) {
         if (CollUtil.isEmpty(bizIds)) {
             return;
