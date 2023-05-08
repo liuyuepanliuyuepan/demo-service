@@ -224,8 +224,8 @@ public class BiTimeUtil {
                 Long diffDay = DateUtil.between(start, end, DateUnit.DAY);
                 cycleNum = diffDay.intValue() + 1;
             } else {
-                sqlDateFormat = "%Y%m";
-                dateFormat = "yyyyMM";
+                sqlDateFormat = "%Y%m%d";
+                dateFormat = "yyyyMMdd";
                 int diffYear =
                         Integer.valueOf(endMonth.toString().substring(0, 4)) - Integer.valueOf(
                                 startMonth.toString().substring(0, 4));
