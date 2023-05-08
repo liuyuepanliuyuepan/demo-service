@@ -517,7 +517,7 @@ public class MemberUserController {
     public void downloadExcel(HttpServletResponse response) {
         response.setCharacterEncoding("utf-8");
         response.setContentType("multipart/form-data;application/octet-stream");
-        String downloadUrl = "/template/客户导入模板.xls";
+        String downloadUrl = "/template/客户导入模板.xlsx";
         InputStream inputStream;
         Resource resource = new DefaultResourceLoader().getResource("classpath:" + downloadUrl);
         try {
