@@ -5,11 +5,13 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserImportReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserScrollPageReqVO;
 import cn.klmb.crm.module.member.dto.user.MemberUserQueryDTO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
+import java.io.IOException;
 import java.util.List;
 
 
@@ -122,5 +124,12 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      * @param changOwnerUserBO data
      */
     void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO);
+
+    /**
+     * 导入客户
+     *
+     * @param reqVO
+     */
+    void uploadExcel(MemberUserImportReqVO reqVO) throws IOException;
 
 }
