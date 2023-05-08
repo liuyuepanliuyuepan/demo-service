@@ -17,6 +17,13 @@ public interface ErrorCodeConstants {
     ErrorCode USER_STAR_NOT_EXISTS = new ErrorCode(1003000003, "用户客户标星关系不存在");
     ErrorCode USER_NEXT_TIME_ERROR = new ErrorCode(1003000004, "下次联系时间要取当前时间以后的！");
 
+    ErrorCode OWNER_USER_NOT_NULL = new ErrorCode(1003000005, "负责人不能为空！");
+
+    ErrorCode MEMBER_USER_NOT_NULL = new ErrorCode(1003000006, "客户名称不能为空！");
+
+    ErrorCode DUPLICATE_NAME = new ErrorCode(1003000007, "存在重复的负责人名称，请在负责人后面拼上手机号并且两者之间用&字符隔开！");
+
+
     // ========== 客户信息 1003001000 ==========
     ErrorCode MEMBER_DELIVERY_NOT_EXISTS = new ErrorCode(1003001001, "客户收货地址不存在");
 

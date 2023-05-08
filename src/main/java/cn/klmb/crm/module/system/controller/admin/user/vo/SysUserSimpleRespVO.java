@@ -24,4 +24,8 @@ public class SysUserSimpleRespVO {
     @ApiModelProperty(value = "用户昵称", required = true)
     private String nickname;
 
+    @ApiModelProperty(value = "真实姓名", required = true)
+    private String realname;
+
+
 }

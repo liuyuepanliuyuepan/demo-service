@@ -1,8 +1,12 @@
 package cn.klmb.crm.module.product.entity.detail;
 
 import cn.klmb.crm.framework.base.core.entity.KlmbBaseDO;
+import cn.klmb.crm.module.system.entity.file.SysFileDO;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import java.math.BigDecimal;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -49,13 +53,50 @@ public class ProductDetailDO extends KlmbBaseDO {
      * 负责人ID
      */
     private String ownerUserId;
+
     /**
      * 主图
      */
-    private String mainFileIds;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> mainFileIds;
+
     /**
      * 详情图
      */
-    private String detailFileIds;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private List<String> detailFileIds;
+
+    /**
+     * 负责人
+     */
+    @TableField(exist = false)
+    private String ownerUserName;
+
+
+    /**
+     * 是否标星
+     */
+    @TableField(exist = false)
+    private Boolean star;
+
+
+    /**
+     * 产品类型
+     */
+    @TableField(exist = false)
+    private String categoryName;
+
+
+    /**
+     * 主图详细信息
+     */
+    @TableField(exist = false)
+    private List<SysFileDO> mainFileInfo;
+
+    /**
+     * 详情图详细信息
+     */
+    @TableField(exist = false)
+    private List<SysFileDO> detailFileInfo;
 
 }

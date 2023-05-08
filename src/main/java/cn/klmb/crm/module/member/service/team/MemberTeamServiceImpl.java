@@ -3,12 +3,16 @@ package cn.klmb.crm.module.member.service.team;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 
 import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.common.Const;
 import cn.klmb.crm.framework.common.util.servlet.ApplicationContextHolder;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamReqVO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
 import cn.klmb.crm.module.member.dao.team.MemberTeamMapper;
@@ -21,7 +25,6 @@ import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.system.controller.admin.user.vo.SysUserRespVO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
-import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.alibaba.fastjson.util.TypeUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -50,13 +53,14 @@ public class MemberTeamServiceImpl extends
 
     private final MemberUserService memberUserService;
 
-    private final SysDeptService sysDeptService;
+    private final BusinessDetailService businessDetailService;
 
     public MemberTeamServiceImpl(MemberTeamMapper mapper, SysUserService sysUserService,
-            @Lazy MemberUserService memberUserService, SysDeptService sysDeptService) {
+            @Lazy MemberUserService memberUserService,
+            @Lazy BusinessDetailService businessDetailService) {
         this.sysUserService = sysUserService;
         this.memberUserService = memberUserService;
-        this.sysDeptService = sysDeptService;
+        this.businessDetailService = businessDetailService;
         this.mapper = mapper;
     }
 
@@ -64,17 +68,16 @@ public class MemberTeamServiceImpl extends
     /**
      * 添加团队成员
      *
-     * @param crmEnum          对应类型
      * @param memberTeamSaveBO data
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addMember(CrmEnum crmEnum, MemberTeamSaveBO memberTeamSaveBO) {
-        addMember(crmEnum, memberTeamSaveBO, false, new ArrayList<>());
+    public void addMember(MemberTeamSaveBO memberTeamSaveBO) {
+        addMember(memberTeamSaveBO, false, new ArrayList<>());
     }
 
 
-    private void addMember(CrmEnum crmEnum, MemberTeamSaveBO memberTeamSaveBO, boolean append,
+    private void addMember(MemberTeamSaveBO memberTeamSaveBO, boolean append,
             List<MemberTeamDO> teamMembers) {
         if (StrUtil.isNotBlank(memberTeamSaveBO.getTime())) {
             LocalDateTime parse = LocalDateTime.parse(memberTeamSaveBO.getTime(),
@@ -93,7 +96,8 @@ public class MemberTeamServiceImpl extends
 
             List<String> memberIds = new ArrayList<>(memberTeamSaveBO.getUserIds());
             LambdaQueryWrapper<MemberTeamDO> wrapper = new LambdaQueryWrapper<>();
-            wrapper.select(MemberTeamDO::getUserId).eq(MemberTeamDO::getType, crmEnum.getType())
+            wrapper.select(MemberTeamDO::getUserId)
+                    .eq(MemberTeamDO::getType, memberTeamSaveBO.getType())
                     .eq(MemberTeamDO::getTypeId, bizId).in(MemberTeamDO::getUserId, memberIds);
             List<String> userIds = listObjs(wrapper, TypeUtils::castToString);
             if (userIds.size() > 0) {
@@ -103,7 +107,7 @@ public class MemberTeamServiceImpl extends
                         .in(MemberTeamDO::getUserId, userIds).update();
                 memberIds.removeAll(userIds);
             }
-            Object[] objects = getTypeName(crmEnum, bizId);
+            Object[] objects = getTypeName(memberTeamSaveBO.getType(), bizId);
             if (objects.length == 0) {
                 continue;
             }
@@ -114,14 +118,14 @@ public class MemberTeamServiceImpl extends
             for (String memberId : memberIds) {
                 MemberTeamDO memberTeamDO = new MemberTeamDO();
                 memberTeamDO.setPower(memberTeamSaveBO.getPower());
-                memberTeamDO.setType(crmEnum.getType());
+                memberTeamDO.setType(memberTeamSaveBO.getType());
                 memberTeamDO.setTypeId(bizId);
                 memberTeamDO.setCreateTime(LocalDateTime.now());
                 memberTeamDO.setExpiresTime(memberTeamSaveBO.getExpiresTime());
                 memberTeamDO.setUserId(memberId);
                 teamMembers.add(memberTeamDO);
             }
-            if (memberTeamSaveBO.getChangeType() != null && crmEnum == CrmEnum.CUSTOMER) {
+            if (memberTeamSaveBO.getChangeType() != null && memberTeamSaveBO.getType() == 2) {
                 if (memberTeamSaveBO.getChangeType().contains(1)) {
                     LambdaQueryWrapper<MemberContactsDO> queryWrapper = new LambdaQueryWrapper<>();
                     queryWrapper.eq(MemberContactsDO::getCustomerId, bizId);
@@ -129,7 +133,7 @@ public class MemberTeamServiceImpl extends
                     List<String> bizIds = ApplicationContextHolder.getBean(
                                     MemberContactsService.class)
                             .listObjs(queryWrapper, TypeUtils::castToString);
-                    addMember(CrmEnum.CONTACTS, new MemberTeamSaveBO(bizIds, memberTeamSaveBO),
+                    addMember(new MemberTeamSaveBO(bizIds, memberTeamSaveBO),
                             true, teamMembers);
                 }
             }
@@ -139,9 +143,9 @@ public class MemberTeamServiceImpl extends
         }
     }
 
-    private Object[] getTypeName(CrmEnum crmEnum, String typeId) {
-        switch (crmEnum) {
-            case CUSTOMER: {
+    private Object[] getTypeName(Integer type, String typeId) {
+        switch (type) {
+            case 2: {
                 MemberUserDO memberUserDO = ApplicationContextHolder.getBean(
                                 MemberUserService.class)
                         .lambdaQuery()
@@ -150,7 +154,7 @@ public class MemberTeamServiceImpl extends
                         .one();
                 return new Object[]{memberUserDO.getOwnerUserId(), memberUserDO.getName()};
             }
-            case CONTACTS: {
+            case 3: {
                 MemberContactsDO contacts = ApplicationContextHolder.getBean(
                                 MemberContactsService.class)
                         .lambdaQuery()
@@ -158,6 +162,17 @@ public class MemberTeamServiceImpl extends
                         .eq(MemberContactsDO::getBizId, typeId)
                         .one();
                 return new Object[]{contacts.getOwnerUserId(), contacts.getName()};
+            }
+
+            case 5: {
+                BusinessDetailDO businessDetailDO = ApplicationContextHolder.getBean(
+                                BusinessDetailService.class)
+                        .lambdaQuery()
+                        .select(BusinessDetailDO::getOwnerUserId, BusinessDetailDO::getBusinessName)
+                        .eq(BusinessDetailDO::getBizId, typeId)
+                        .one();
+                return new Object[]{businessDetailDO.getOwnerUserId(),
+                        businessDetailDO.getBusinessName()};
             }
             default: {
                 return new Object[0];
@@ -169,15 +184,39 @@ public class MemberTeamServiceImpl extends
     /**
      * 获取团队成员
      *
-     * @param crmEnum 对应类型
-     * @param typeId  对应类型ID
+     * @param reqVO
      * @return data
      */
     @Override
-    public List<MembersTeamSelectVO> getMembers(CrmEnum crmEnum, String typeId,
-            String ownerUserId) {
+    public List<MembersTeamSelectVO> getMembers(MemberTeamReqVO reqVO) {
+        Integer type = reqVO.getType();
+        String typeId = reqVO.getTypeId();
+        String ownerUserId = null;
+        switch (type) {
+            case 2: {
+                MemberUserDO memberUserDO = memberUserService.getByBizId(typeId);
+                if (memberUserDO == null) {
+                    throw exception(
+                            cn.klmb.crm.module.member.enums.ErrorCodeConstants.MEMBER_USER_NOT_EXISTS);
+                }
+                ownerUserId = memberUserDO.getOwnerUserId();
+                break;
+            }
+
+            case 5: {
+                BusinessDetailDO businessDetailDO = businessDetailService.getByBizId(typeId);
+                if (businessDetailDO == null) {
+                    throw exception(
+                            cn.klmb.crm.module.business.enums.ErrorCodeConstants.BUSINESS_NOT_EXISTS);
+                }
+                ownerUserId = businessDetailDO.getOwnerUserId();
+                break;
+            }
+            default:
+        }
+
         List<MembersTeamSelectVO> selectVOS = new ArrayList<>();
-        List<MemberTeamDO> teamMembers = lambdaQuery().eq(MemberTeamDO::getType, crmEnum.getType())
+        List<MemberTeamDO> teamMembers = lambdaQuery().eq(MemberTeamDO::getType, type)
                 .eq(MemberTeamDO::getTypeId, typeId).list();
         for (MemberTeamDO teamMember : teamMembers) {
             if (Objects.equals(teamMember.getUserId(), ownerUserId)) {
@@ -216,9 +255,11 @@ public class MemberTeamServiceImpl extends
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void deleteMember(CrmEnum crmEnum, MemberTeamSaveBO memberTeamSaveBO) {
+    public void deleteMember(MemberTeamSaveBO memberTeamSaveBO) {
+        Integer type = memberTeamSaveBO.getType();
         for (String bizId : memberTeamSaveBO.getBizIds()) {
-            if (memberTeamSaveBO.getChangeType() != null && crmEnum == CrmEnum.CUSTOMER) {
+            if (memberTeamSaveBO.getChangeType() != null
+                    && Objects.equals(type, CrmEnum.CUSTOMER.getType())) {
                 if (memberTeamSaveBO.getChangeType().contains(1)) {
                     LambdaQueryWrapper<MemberContactsDO> queryWrapper = new LambdaQueryWrapper<>();
                     queryWrapper.eq(MemberContactsDO::getCustomerId, bizId);
@@ -226,16 +267,34 @@ public class MemberTeamServiceImpl extends
                     List<String> customerIds = ApplicationContextHolder.getBean(
                                     MemberContactsService.class)
                             .listObjs(queryWrapper, TypeUtils::castToString);
-                    deleteMember(CrmEnum.CONTACTS,
-                            new MemberTeamSaveBO(customerIds, memberTeamSaveBO));
+                    memberTeamSaveBO.setType(CrmEnum.CONTACTS.getType());
+                    deleteMember(new MemberTeamSaveBO(customerIds, memberTeamSaveBO));
                 }
+
+                if (memberTeamSaveBO.getChangeType().contains(2)) {
+                    LambdaQueryWrapper<BusinessDetailDO> queryWrapper = new LambdaQueryWrapper<>();
+                    queryWrapper.eq(BusinessDetailDO::getCustomerId, bizId);
+                    queryWrapper.select(BusinessDetailDO::getBizId);
+                    List<String> businessIds = ApplicationContextHolder.getBean(
+                                    BusinessDetailService.class)
+                            .listObjs(queryWrapper, TypeUtils::castToString);
+                    memberTeamSaveBO.setType(CrmEnum.BUSINESS.getType());
+                    deleteMember(new MemberTeamSaveBO(businessIds, memberTeamSaveBO));
+                }
+//                if (crmMemberSaveBO.getChangeType().contains(3)) {
+//                    LambdaQueryWrapper<CrmContract> queryWrapper = new LambdaQueryWrapper<>();
+//                    queryWrapper.eq(CrmContract::getCustomerId, typeId);
+//                    queryWrapper.select(CrmContract::getContractId);
+//                    List<Integer> ids = ApplicationContextHolder.getBean(ICrmContractService.class).listObjs(queryWrapper, TypeUtils::castToInt);
+//                    deleteMember(CrmEnum.CONTRACT, new CrmMemberSaveBO(ids, crmMemberSaveBO));
+//                }
             }
-            deleteMembers(crmEnum, bizId, memberTeamSaveBO.getUserIds());
+            deleteMembers(type, bizId, memberTeamSaveBO.getUserIds());
         }
     }
 
-    private void deleteMembers(CrmEnum crmEnum, String typeId, List<String> memberIds) {
-        Object[] objects = getTypeName(crmEnum, typeId);
+    private void deleteMembers(Integer type, String typeId, List<String> memberIds) {
+        Object[] objects = getTypeName(type, typeId);
         if (objects.length == 0) {
             return;
         }
@@ -244,19 +303,40 @@ public class MemberTeamServiceImpl extends
                     cn.klmb.crm.module.member.enums.ErrorCodeConstants.MEMBER_TEAM_DELETE_ERROR);
         }
         lambdaUpdate()
-                .eq(MemberTeamDO::getType, crmEnum.getType())
+                .eq(MemberTeamDO::getType, type)
                 .eq(MemberTeamDO::getTypeId, typeId)
                 .in(MemberTeamDO::getUserId, memberIds).remove();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void exitTeam(CrmEnum crmEnum, String typeId) {
+    public void exitTeam(MemberTeamReqVO reqVO) {
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
-        deleteMembers(crmEnum, typeId, Collections.singletonList(userId));
+        deleteMembers(reqVO.getType(), reqVO.getTypeId(), Collections.singletonList(userId));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addSingleMember(Integer type, String typeId, String userId, Integer power,
+            LocalDateTime expiresTime) {
+ /*
+          添加单条数据前先尝试删除，防止出现多余的数据
+         */
+        lambdaUpdate()
+                .eq(MemberTeamDO::getUserId, userId)
+                .eq(MemberTeamDO::getTypeId, typeId)
+                .eq(MemberTeamDO::getType, type)
+                .remove();
+        if (ObjectUtil.isNotNull(expiresTime) && LocalDateTimeUtil.toEpochMilli(expiresTime) == 0) {
+            expiresTime = null;
+        }
+
+        super.saveDO(MemberTeamDO.builder().userId(userId).typeId(typeId).type(type).power(power)
+                .expiresTime(expiresTime)
+                .build());
     }
 
 

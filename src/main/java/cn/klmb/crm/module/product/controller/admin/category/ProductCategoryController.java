@@ -2,6 +2,7 @@ package cn.klmb.crm.module.product.controller.admin.category;
 
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
@@ -18,7 +19,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import java.util.Collections;
 import java.util.List;
 import javax.validation.Valid;
@@ -116,10 +116,13 @@ public class ProductCategoryController {
     }
 
 
-    @GetMapping("/queryList")
+    @GetMapping("/product_tree/{type}")
     @ApiOperation("查询产品分类列表")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "type", value = "类型(默认传tree)", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('product:category:query')")
-    public CommonResult<List<CrmProductCategoryBO>> queryList(@ApiParam("type") String type) {
+    public CommonResult<List<CrmProductCategoryBO>> queryList(@PathVariable String type) {
+        type = StrUtil.isBlank(type) ? "tree" : type;
         List<CrmProductCategoryBO> list = productCategoryService.queryList(type);
         return CommonResult.success(list);
     }

@@ -16,6 +16,8 @@ import cn.klmb.crm.module.business.service.contacts.BusinessContactsService;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
 import cn.klmb.crm.module.member.dao.contacts.MemberContactsMapper;
 import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
@@ -23,6 +25,7 @@ import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.contactsstar.MemberContactsStarDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contactsstar.MemberContactsStarService;
+import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
@@ -34,6 +37,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -64,11 +68,14 @@ public class MemberContactsServiceImpl extends
 
     private final SysConfigService sysConfigService;
 
+    private final MemberTeamService memberTeamService;
+
     public MemberContactsServiceImpl(MemberContactsMapper mapper, SysUserService sysUserService,
             MemberUserService memberUserService,
             MemberContactsStarService memberContactsStarService, XxlJobApiUtils xxlJobApiUtils,
             @Lazy BusinessDetailService businessDetailService,
-            BusinessContactsService businessContactsService, SysConfigService sysConfigService) {
+            BusinessContactsService businessContactsService, SysConfigService sysConfigService,
+            MemberTeamService memberTeamService) {
         this.sysUserService = sysUserService;
         this.memberUserService = memberUserService;
         this.memberContactsStarService = memberContactsStarService;
@@ -76,6 +83,7 @@ public class MemberContactsServiceImpl extends
         this.businessDetailService = businessDetailService;
         this.businessContactsService = businessContactsService;
         this.sysConfigService = sysConfigService;
+        this.memberTeamService = memberTeamService;
         this.mapper = mapper;
     }
 
@@ -266,6 +274,53 @@ public class MemberContactsServiceImpl extends
                             .build());
         }
         return success;
+    }
+
+    @Override
+    public void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO) {
+        //逻辑分为两步 1. 变更负责人  2. 将原负责人移出 或者转为团队成员 3.同时变更定时任务
+        List<String> bizIds = changOwnerUserBO.getBizIds();
+        if (CollUtil.isEmpty(bizIds)) {
+            return;
+        }
+        bizIds.forEach(bizId -> {
+            MemberContactsDO memberContactsDO = super.getByBizId(bizId);
+            String oldOwnerUserId = memberContactsDO.getOwnerUserId();
+            if (!StrUtil.equals(
+                    oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                //添加新负责人
+                memberTeamService.addSingleMember(CrmEnum.CONTACTS.getType(), bizId,
+                        changOwnerUserBO.getOwnerUserId(), 3, null);
+                if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
+                        oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                    memberTeamService.addSingleMember(CrmEnum.CONTACTS.getType(), bizId,
+                            oldOwnerUserId, changOwnerUserBO.getPower(),
+                            changOwnerUserBO.getExpiresTime());
+                }
+                memberContactsDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+                super.updateDO(memberContactsDO);
+
+                if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
+                    MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+                    memberTeamSaveBO.setUserIds(
+                            Collections.singletonList(oldOwnerUserId));
+                    memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+                    memberTeamSaveBO.setType(CrmEnum.CONTACTS.getType());
+                    memberTeamService.deleteMember(memberTeamSaveBO);
+                }
+
+                //更新定时任务
+                xxlJobApiUtils.changeTaskOwnerUser(
+                        XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                .title("crm执行器")
+                                .executorHandler("customerContactReminderHandler")
+                                .author("liuyuepan")
+                                .ownerUserId(changOwnerUserBO.getOwnerUserId())
+                                .bizId(bizId)
+                                .contactsType(CrmEnum.CONTACTS.getType()).build());
+            }
+
+        });
     }
 
 

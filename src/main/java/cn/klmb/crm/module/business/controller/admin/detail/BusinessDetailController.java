@@ -1,39 +1,33 @@
 package cn.klmb.crm.module.business.controller.admin.detail;
 
-import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
-import cn.hutool.core.util.ObjectUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDeleteReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailFullRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailScrollPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpdateReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.CrmRelevanceBusinessBO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.UpdateBusinessStatusReqVO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
-import cn.klmb.crm.module.business.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
-import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
-import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
-import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
-import cn.klmb.crm.module.member.service.team.MemberTeamService;
-import cn.klmb.crm.module.system.enums.CrmEnum;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import java.util.List;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,50 +50,36 @@ public class BusinessDetailController {
 
     private final BusinessDetailService businessDetailService;
 
-    private final MemberTeamService memberTeamService;
-
-    private final MemberContactsService memberContactsService;
-
-    public BusinessDetailController(BusinessDetailService businessDetailService,
-            MemberTeamService memberTeamService, MemberContactsService memberContactsService) {
+    public BusinessDetailController(BusinessDetailService businessDetailService) {
         this.businessDetailService = businessDetailService;
-        this.memberTeamService = memberTeamService;
-        this.memberContactsService = memberContactsService;
     }
 
     @PostMapping(value = "/save")
-    @ApiOperation(value = "新增")
+    @ApiOperation(value = "新增商机")
     @PreAuthorize("@ss.hasPermission('business:detail:save')")
     public CommonResult<String> save(@Valid @RequestBody BusinessDetailSaveReqVO saveReqVO) {
         return success(businessDetailService.saveBusiness(saveReqVO));
     }
 
-    @DeleteMapping(value = "/batch-delete")
+    @PostMapping(value = "/batch-delete")
     @ApiOperation(value = "批量删除")
-    @PreAuthorize("@ss.hasPermission('business:detail:delete')")
-    public CommonResult<Boolean> deleteByBizId(@RequestBody BusinessDeleteReqVO reqVO) {
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> deleteByBizId(@Valid @RequestBody BusinessDeleteReqVO reqVO) {
         businessDetailService.removeByBizIds(reqVO.getBizIds());
         return success(true);
     }
 
     @PutMapping(value = "/update")
-    @ApiOperation(value = "更新")
+    @ApiOperation(value = "更新商机")
     @PreAuthorize("@ss.hasPermission('business:detail:update')")
     public CommonResult<Boolean> update(@Valid @RequestBody BusinessDetailUpdateReqVO updateReqVO) {
         businessDetailService.updateBusiness(updateReqVO);
         return success(true);
     }
 
-//    @PutMapping("/update-status")
-//    @ApiOperation("修改状态")
-//    @PreAuthorize("@ss.hasPermission('business:detail:update')")
-//    public CommonResult<Boolean> updateStatus(@Valid @RequestBody UpdateStatusReqVO reqVO) {
-//        businessDetailService.updateStatus(reqVO.getBizId(), reqVO.getStatus());
-//        return success(true);
-//    }
 
     @GetMapping(value = "/detail/{bizId}")
-    @ApiOperation(value = "详情")
+    @ApiOperation(value = "商机详情")
     @ApiImplicitParams({
             @ApiImplicitParam(name = "bizId", value = "业务id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('business:detail:query')")
@@ -109,9 +89,9 @@ public class BusinessDetailController {
     }
 
     @GetMapping({"/page"})
-    @ApiOperation(value = "分页查询")
+    @ApiOperation(value = "商机分页查询")
     @PreAuthorize("@ss.hasPermission('business:detail:query')")
-    public CommonResult<KlmbPage<BusinessDetailRespVO>> page(@Valid BusinessDetailPageReqVO reqVO) {
+    public CommonResult<BusinessDetailFullRespVO> page(@Valid BusinessDetailPageReqVO reqVO) {
         return success(businessDetailService.page(reqVO));
     }
 
@@ -124,55 +104,6 @@ public class BusinessDetailController {
                 new UpdateWrapper<BusinessDetailDO>().in("biz_id", reqVO.getBizIds())
                         .set("status", reqVO.getBusinessStatus()));
         return success(true);
-    }
-
-    @GetMapping("/getMembers/{businessId}")
-    @ApiOperation("获取团队成员")
-    @PreAuthorize("@ss.hasPermission('business:detail:query')")
-    public CommonResult<List<MembersTeamSelectVO>> getMembers(
-            @PathVariable("businessId") @ApiParam("商机ID") String businessId) {
-        BusinessDetailDO businessDetailDO = businessDetailService.getByBizId(businessId);
-        if (ObjectUtil.isNull(businessDetailDO)) {
-            throw exception(ErrorCodeConstants.BUSINESS_NOT_EXISTS);
-        }
-        CrmEnum crmEnum = CrmEnum.BUSINESS;
-        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, businessId,
-                businessDetailDO.getOwnerUserId());
-        return CommonResult.success(members);
-    }
-
-    @PostMapping("/addMembers")
-    @ApiOperation("新增团队成员")
-    @PreAuthorize("@ss.hasPermission('business:detail:post')")
-    public CommonResult<Boolean> addMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.addMember(CrmEnum.BUSINESS, memberTeamSaveBO);
-        return CommonResult.success(true);
-    }
-
-    @PostMapping("/updateMembers")
-    @ApiOperation("编辑团队成员")
-    @PreAuthorize("@ss.hasPermission('business:detail:post')")
-    public CommonResult<Boolean> updateMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.addMember(CrmEnum.BUSINESS, memberTeamSaveBO);
-        return CommonResult.success(true);
-    }
-
-    @PostMapping("/deleteMembers")
-    @ApiOperation("删除团队成员")
-    @PreAuthorize("@ss.hasPermission('business:detail:post')")
-    public CommonResult<Boolean> deleteMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.deleteMember(CrmEnum.BUSINESS, memberTeamSaveBO);
-        return CommonResult.success(true);
-    }
-
-    @PostMapping("/exitTeam/{businessId}")
-    @ApiOperation("退出团队")
-    @ApiImplicitParams({
-            @ApiImplicitParam(name = "businessId", value = "商机id", dataTypeClass = String.class, paramType = "path")})
-    @PreAuthorize("@ss.hasPermission('business:detail:post')")
-    public CommonResult<Boolean> exitTeam(@PathVariable("businessId") String businessId) {
-        memberTeamService.exitTeam(CrmEnum.BUSINESS, businessId);
-        return CommonResult.success(true);
     }
 
     @PostMapping("/star/{bizId}")
@@ -208,6 +139,38 @@ public class BusinessDetailController {
     public CommonResult<KlmbPage<MemberContactsRespVO>> pageContacts(
             @Valid MemberContactsPageReqVO reqVO) {
         return success(businessDetailService.pageContacts(reqVO));
+    }
+
+
+    @GetMapping({"/list_contacts"})
+    @ApiOperation(value = "根据商机信息查询联系人列表")
+    @PreAuthorize("@ss.hasPermission('business:detail:query')")
+    public CommonResult<List<MemberContactsRespVO>> listContacts(
+            @Valid MemberContactsPageReqVO reqVO) {
+        return success(businessDetailService.listContacts(reqVO));
+    }
+
+
+    @GetMapping({"/page-scroll"})
+    @ApiOperation(value = "商机滚动分页", notes = "只支持根据bizId顺序进行正、倒序查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
+            @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
+    @PreAuthorize("@ss.hasPermission('business:detail:query')")
+    public CommonResult<KlmbScrollPage<BusinessDetailRespVO>> pageScroll(
+            @Valid BusinessDetailScrollPageReqVO reqVO) {
+        return success(businessDetailService.pageScroll(reqVO));
+    }
+
+
+    @PostMapping("/change-owner-user")
+    @ApiOperation("修改商机负责人")
+    @PreAuthorize("@ss.hasPermission('business:detail:post')")
+    public CommonResult<Boolean> changeOwnerUser(
+            @RequestBody CrmChangeOwnerUserBO crmChangeOwnerUserBO) {
+        businessDetailService.changeOwnerUser(crmChangeOwnerUserBO);
+        return success(true);
     }
 
 

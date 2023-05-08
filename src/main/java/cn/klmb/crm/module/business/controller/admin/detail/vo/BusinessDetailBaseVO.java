@@ -5,6 +5,7 @@ import static cn.klmb.crm.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH
 import io.swagger.annotations.ApiModelProperty;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import javax.validation.constraints.NotBlank;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -15,6 +16,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 public class BusinessDetailBaseVO {
 
     @ApiModelProperty(value = "商机状态(1进行中2赢单3输单4无效)")
+    @NotBlank(message = "商机状态不能为空")
     private String businessStatus;
 
     @ApiModelProperty(value = "下次联系时间")
@@ -22,6 +24,7 @@ public class BusinessDetailBaseVO {
     private LocalDateTime nextTime;
 
     @ApiModelProperty(value = "客户ID")
+    @NotBlank(message = "客户ID不能为空")
     private String customerId;
 
     @ApiModelProperty(value = "首要联系人ID")
@@ -35,6 +38,7 @@ public class BusinessDetailBaseVO {
     private Integer followup;
 
     @ApiModelProperty(value = "商机名称")
+    @NotBlank(message = "商机名称不能为空")
     private String businessName;
 
     @ApiModelProperty(value = "商机金额(保留两位小数)")

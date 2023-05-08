@@ -95,5 +95,22 @@ public interface SysUserService extends KlmbBaseService<SysUserDO, SysUserQueryD
      */
     SysUserRespVO getUserDetailByUserId(String userId);
 
+    /**
+     * 通过用户名查询用户
+     *
+     * @param realname 用户名
+     * @return 用户对象信息
+     */
+    List<SysUserDO> findByRealname(String realname);
+
+    /**
+     * 通过用户名加手机号查询用户
+     *
+     * @param realname 用户名
+     * @param mobile   手机号
+     * @return 用户对象信息
+     */
+    List<SysUserDO> findByRealnameAndMobile(String realname, String mobile);
+
 }
 

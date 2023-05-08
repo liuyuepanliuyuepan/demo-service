@@ -4,6 +4,7 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberFirstContactsReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import java.util.List;
@@ -67,6 +68,14 @@ public interface MemberContactsService extends
      * @return 实体
      */
     boolean updateDO(MemberContactsDO saveDO);
+
+
+    /**
+     * 修改联系人负责人
+     *
+     * @param crmChangeOwnerUserBO 负责人变更BO
+     */
+    void changeOwnerUser(CrmChangeOwnerUserBO crmChangeOwnerUserBO);
 
 
 }

@@ -98,6 +98,7 @@ public class SysUserController {
     public CommonResult<String> save(@Valid @RequestBody SysUserSaveReqVO saveReqVO) {
         SysUserDO saveDO = SysUserConvert.INSTANCE.convert(saveReqVO);
         String bizId = "";
+        saveDO.setRealname(saveDO.getNickname());
         if (sysUserService.saveDO(saveDO)) {
             bizId = saveDO.getBizId();
         }
@@ -114,6 +115,9 @@ public class SysUserController {
         }
         List<SysUserDO> saveDOList = SysUserConvert.INSTANCE.convertList(saveReqVO);
         List<String> bizIds = new ArrayList<>();
+        saveDOList.forEach(e -> {
+            e.setRealname(e.getNickname());
+        });
         if (sysUserService.saveBatchDO(saveDOList)) {
             bizIds = saveDOList.stream().map(SysUserDO::getBizId).collect(Collectors.toList());
         }
@@ -135,6 +139,9 @@ public class SysUserController {
     @PreAuthorize("@ss.hasPermission('system:user:update')")
     public CommonResult<Boolean> update(@Valid @RequestBody SysUserUpdateReqVO updateReqVO) {
         SysUserDO updateDO = SysUserConvert.INSTANCE.convert01(updateReqVO);
+        if (StrUtil.isNotBlank(updateReqVO.getNickname())) {
+            updateDO.setRealname(updateDO.getNickname());
+        }
         sysUserService.updateDO(updateDO);
         return success(true);
     }
@@ -230,7 +237,7 @@ public class SysUserController {
             List<SysUserDO> sysUserDOS = sysUserService.listByBizIds(allUserIds);
             return success(SysUserConvert.INSTANCE.convert01(sysUserDOS));
         }
-        return null;
+        return success(Collections.emptyList());
     }
 
 

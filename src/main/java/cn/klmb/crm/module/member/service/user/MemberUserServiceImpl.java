@@ -2,7 +2,9 @@ package cn.klmb.crm.module.member.service.user;
 
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DatePattern;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.CharUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -10,12 +12,18 @@ import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
+import cn.klmb.crm.framework.excel.core.util.ExcelUtils;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.entity.XxlJobInfo;
 import cn.klmb.crm.framework.job.entity.XxlJobTaskManagerInfo;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserImportExcelVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserImportReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserScrollPageReqVO;
@@ -31,7 +39,6 @@ import cn.klmb.crm.module.member.entity.userstar.MemberUserStarDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.record.MemberOwnerRecordService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
-import cn.klmb.crm.module.member.service.userpool.MemberUserPoolService;
 import cn.klmb.crm.module.member.service.userpoolrelation.MemberUserPoolRelationService;
 import cn.klmb.crm.module.member.service.userstar.MemberUserStarService;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
@@ -42,17 +49,22 @@ import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 
 /**
@@ -79,17 +91,17 @@ public class MemberUserServiceImpl extends
 
     private final MemberContactsService memberContactsService;
 
-    private final MemberUserPoolService memberUserPoolService;
-
     private final SysConfigService sysConfigService;
+
+    private final BusinessDetailService businessDetailService;
 
 
     public MemberUserServiceImpl(SysUserService sysUserService, MemberUserMapper mapper,
             MemberUserStarService memberUserStarService, @Lazy MemberTeamService memberTeamService,
             XxlJobApiUtils xxlJobApiUtils, MemberOwnerRecordService memberOwnerRecordService,
             MemberUserPoolRelationService relationService,
-            @Lazy MemberContactsService memberContactsService,
-            MemberUserPoolService memberUserPoolService, SysConfigService sysConfigService) {
+            @Lazy MemberContactsService memberContactsService, SysConfigService sysConfigService,
+            @Lazy BusinessDetailService businessDetailService) {
         this.sysUserService = sysUserService;
         this.memberUserStarService = memberUserStarService;
         this.memberTeamService = memberTeamService;
@@ -97,8 +109,8 @@ public class MemberUserServiceImpl extends
         this.memberOwnerRecordService = memberOwnerRecordService;
         this.relationService = relationService;
         this.memberContactsService = memberContactsService;
-        this.memberUserPoolService = memberUserPoolService;
         this.sysConfigService = sysConfigService;
+        this.businessDetailService = businessDetailService;
         this.mapper = mapper;
     }
 
@@ -313,7 +325,10 @@ public class MemberUserServiceImpl extends
             e.setDealStatus(dealStatus);
             if (ObjectUtil.equals(dealStatus, 1)) {
                 e.setDealTime(LocalDateTime.now());
+            } else {
+                e.setDealTime(null);
             }
+
         });
         super.updateBatchByBizId(memberUserDOS);
     }
@@ -346,16 +361,18 @@ public class MemberUserServiceImpl extends
         String bizId = "";
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
-        if (StrUtil.isBlank(userId)) {
+        if (StrUtil.isBlank(saveDO.getOwnerUserId()) && StrUtil.isBlank(userId)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
-        saveDO.setOwnerUserId(userId);
+        saveDO.setOwnerUserId(
+                StrUtil.isBlank(saveDO.getOwnerUserId()) ? userId : saveDO.getOwnerUserId());
         saveDO.setDealStatus(0);
         if (super.saveDO(saveDO)) {
             bizId = saveDO.getBizId();
         }
         memberTeamService.saveDO(
-                MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.CUSTOMER.getType())
+                MemberTeamDO.builder().power(3).userId(saveDO.getOwnerUserId())
+                        .type(CrmEnum.CUSTOMER.getType())
                         .typeId(bizId).build());
         changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                 .executorHandler("customerContactReminderHandler").author("liuyuepan")
@@ -415,7 +432,7 @@ public class MemberUserServiceImpl extends
         LocalDateTime nextTime = memberUserDO.getNextTime();
         boolean success = super.updateDO(entity);
         MemberUserDO memberUserDOCopy = super.getByBizId(entity.getBizId());
-        if (!nextTime.isEqual(entity.getNextTime())
+        if (ObjectUtil.isNotNull(entity.getNextTime()) && !nextTime.isEqual(entity.getNextTime())
                 && LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) != 0) {
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                     .executorHandler("customerContactReminderHandler").author("liuyuepan")
@@ -426,7 +443,8 @@ public class MemberUserServiceImpl extends
                     .contactsType(CrmEnum.CUSTOMER.getType())
                     .build());
         }
-        if (LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) == 0) {
+        if (ObjectUtil.isNull(entity.getNextTime())
+                || LocalDateTimeUtil.toEpochMilli(entity.getNextTime()) == 0) {
             changeTask(XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                     .executorHandler("customerContactReminderHandler").author("liuyuepan")
                     .bizId(entity.getBizId()).operateType(3)
@@ -511,7 +529,8 @@ public class MemberUserServiceImpl extends
             memberTeamSaveBO.setUserIds(
                     Collections.singletonList(memberUserDO.getOwnerUserId()));
             memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
-            memberTeamService.deleteMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+            memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+            memberTeamService.deleteMember(memberTeamSaveBO);
 
         }
         if (ownerRecordList.size() > 0) {
@@ -577,7 +596,8 @@ public class MemberUserServiceImpl extends
             memberTeamSaveBO.setPower(3);
             memberTeamSaveBO.setBizIds(Collections.singletonList(id));
             memberTeamSaveBO.setUserIds(Collections.singletonList(poolBO.getUserId()));
-            memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+            memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+            memberTeamService.addMember(memberTeamSaveBO);
         }
         if (records.size() > 0) {
             memberOwnerRecordService.saveBatchDO(records);
@@ -602,8 +622,175 @@ public class MemberUserServiceImpl extends
 
     @Override
     public void changeTask(XxlJobChangeTaskDTO xxlJobChangeTaskDTO) {
-        xxlJobApiUtils.changeTask(
-                xxlJobChangeTaskDTO
-        );
+        xxlJobApiUtils.changeTask(xxlJobChangeTaskDTO);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO) {
+        //1. 变更负责人  2. 将原负责人移除或者转为团队成员 3. 同步变更负责人至联系人、商机、合同  4. 同时变更定时任务
+        //获取当前用户id及其下属用户，用于更新负责人至联系人、商机、合同
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        List<String> userList = new ArrayList<>();
+        userList.add(userId);
+        userList.addAll(sysUserService.queryChildUserId(userId));
+
+        List<String> bizIds = changOwnerUserBO.getBizIds();
+        if (CollUtil.isEmpty(bizIds)) {
+            return;
+        }
+        bizIds.forEach(bizId -> {
+            MemberUserDO memberUserDO = super.getByBizId(bizId);
+            String oldOwnerUserId = memberUserDO.getOwnerUserId();
+            if (!StrUtil.equals(oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                //添加新负责人
+                memberTeamService.addSingleMember(CrmEnum.CUSTOMER.getType(), bizId,
+                        changOwnerUserBO.getOwnerUserId(), 3, null);
+                if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
+                        oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                    memberTeamService.addSingleMember(CrmEnum.CUSTOMER.getType(), bizId,
+                            oldOwnerUserId, changOwnerUserBO.getPower(),
+                            changOwnerUserBO.getExpiresTime());
+                }
+                memberUserDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+                memberUserDO.setFollowup(0);
+                memberUserDO.setIsReceive(1);
+                memberUserDO.setReceiveTime(LocalDateTime.now());
+                super.updateDO(memberUserDO);
+                if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
+                    MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+                    memberTeamSaveBO.setUserIds(Collections.singletonList(oldOwnerUserId));
+                    memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+                    memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+                    memberTeamService.deleteMember(memberTeamSaveBO);
+                }
+                //更新定时任务
+                xxlJobApiUtils.changeTaskOwnerUser(
+                        XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                .title("crm执行器").executorHandler("customerContactReminderHandler")
+                                .author("liuyuepan").ownerUserId(changOwnerUserBO.getOwnerUserId())
+                                .bizId(bizId).contactsType(CrmEnum.CUSTOMER.getType()).build());
+
+
+            }
+            changOwnerUserBO.getChangeType().forEach(type -> {
+                switch (type) {
+                    case 1: {
+                        List<String> contactsBizIds = memberContactsService.lambdaQuery()
+                                .select(MemberContactsDO::getBizId)
+                                .eq(MemberContactsDO::getCustomerId, bizId)
+                                .in(MemberContactsDO::getOwnerUserId, userList).list().stream()
+                                .map(MemberContactsDO::getBizId).collect(Collectors.toList());
+                        changOwnerUserBO.setBizIds(contactsBizIds);
+                        changOwnerUserBO.setType(CrmEnum.CONTACTS.getType());
+                        memberContactsService.changeOwnerUser(changOwnerUserBO);
+                        break;
+                    }
+                    case 2: {
+                        List<String> businessBizIds = businessDetailService.lambdaQuery()
+                                .select(BusinessDetailDO::getBizId)
+                                .eq(BusinessDetailDO::getCustomerId, bizId)
+                                .in(BusinessDetailDO::getOwnerUserId, userList).list().stream()
+                                .map(BusinessDetailDO::getBizId).collect(Collectors.toList());
+                        CrmChangeOwnerUserBO changOwnerUser = new CrmChangeOwnerUserBO();
+                        changOwnerUser.setPower(changOwnerUserBO.getPower());
+                        changOwnerUser.setTransferType(changOwnerUserBO.getTransferType());
+                        changOwnerUser.setBizIds(businessBizIds);
+                        changOwnerUser.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+                        businessDetailService.changeOwnerUser(changOwnerUser);
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            });
+        });
+    }
+
+    @Override
+    public void uploadExcel(MemberUserImportReqVO reqVO) throws IOException {
+        MultipartFile file = reqVO.getFile();
+        Boolean isPool = reqVO.getIsPool();
+        List<MemberUserImportExcelVO> list = ExcelUtils.read(file, MemberUserImportExcelVO.class);
+        list = list.stream().filter(e -> StrUtil.isNotBlank(e.getName()))
+                .collect(Collectors.toList());
+
+        List<MemberUserImportExcelVO> emptyNameList = list.stream()
+                .filter(e -> StrUtil.isBlank(e.getName())).collect(Collectors.toList());
+
+        List<MemberUserImportExcelVO> emptyOwnerUserNameList = list.stream()
+                .filter(e -> StrUtil.isBlank(e.getOwnerUserName())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(emptyNameList)) {
+            throw exception(cn.klmb.crm.module.member.enums.ErrorCodeConstants.OWNER_USER_NOT_NULL);
+        }
+        if (!isPool) {
+            if (CollUtil.isNotEmpty(emptyOwnerUserNameList)) {
+                throw exception(
+                        cn.klmb.crm.module.member.enums.ErrorCodeConstants.MEMBER_USER_NOT_NULL);
+            }
+        }
+
+        for (MemberUserImportExcelVO excelVO : list) {
+            MemberUserDO memberUserDO = new MemberUserDO();
+            BeanUtil.copyProperties(excelVO, memberUserDO);
+            //根据ownerUserName查询负责人id
+            if (StrUtil.isNotBlank(excelVO.getOwnerUserName())) {
+                if (StrUtil.contains(excelVO.getOwnerUserName(), CharUtil.AMP)) {
+                    List<String> split = StrUtil.split(excelVO.getOwnerUserName(), CharUtil.AMP);
+                    List<SysUserDO> userList = sysUserService.findByRealnameAndMobile(
+                            split.get(0), split.get(1));
+                    if (CollUtil.isNotEmpty(userList) && userList.size() > 1) {
+                        throw exception(
+                                cn.klmb.crm.module.member.enums.ErrorCodeConstants.DUPLICATE_NAME);
+                    } else if (CollUtil.isNotEmpty(userList)) {
+                        memberUserDO.setOwnerUserId(userList.get(0).getBizId());
+                    }
+                    SysUserDO sysUserDO = userList.get(0);
+                    memberUserDO.setOwnerUserId(sysUserDO.getBizId());
+                } else {
+                    List<SysUserDO> userList = sysUserService.findByRealname(
+                            excelVO.getOwnerUserName());
+                    if (CollUtil.isNotEmpty(userList) && userList.size() > 1) {
+                        throw exception(
+                                cn.klmb.crm.module.member.enums.ErrorCodeConstants.DUPLICATE_NAME);
+                    } else if (CollUtil.isNotEmpty(userList)) {
+                        memberUserDO.setOwnerUserId(userList.get(0).getBizId());
+                    }
+                }
+            }
+            if (StrUtil.isNotBlank(excelVO.getNextTime())) {
+                String nextTime = excelVO.getNextTime();
+                LocalDateTime parse = LocalDateTime.parse(nextTime,
+                        DateTimeFormatter.ofPattern(DatePattern.NORM_DATETIME_PATTERN));
+                memberUserDO.setNextTime(parse);
+            }
+            // TODO: 2023/5/8  标签等标签功能上了在维护
+            String province = excelVO.getProvince();
+            String city = excelVO.getCity();
+            String district = excelVO.getDistrict();
+            String detailAddress = excelVO.getDetailAddress();
+            if (StrUtil.isNotBlank(province) && StrUtil.isNotBlank(city) && StrUtil.isNotBlank(
+                    district)) {
+                memberUserDO.setAddress(StrUtil.join(",", province, city, district));
+            }
+            if (StrUtil.isNotBlank(detailAddress)) {
+                memberUserDO.setLocation(detailAddress);
+            }
+            memberUserDO.setCreator(memberUserDO.getOwnerUserId());
+            memberUserDO.setUpdater(memberUserDO.getOwnerUserId());
+            String bizId = this.saveCustomer(memberUserDO);
+
+            if (isPool) {
+                MemberUserPoolBO memberUserPoolBO = new MemberUserPoolBO();
+                memberUserPoolBO.setCustomerIds(Arrays.asList(bizId));
+                memberUserPoolBO.setUserId(memberUserDO.getOwnerUserId());
+                this.addPool(memberUserPoolBO);
+            }
+        }
+
+
     }
 }
