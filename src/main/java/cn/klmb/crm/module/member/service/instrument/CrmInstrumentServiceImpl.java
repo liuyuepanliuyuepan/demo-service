@@ -1,11 +1,13 @@
 package cn.klmb.crm.module.member.service.instrument;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.common.pojo.BiAuthority;
 import cn.klmb.crm.framework.common.pojo.BiParams;
 import cn.klmb.crm.framework.common.util.data.BiTimeUtil;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO;
 import cn.klmb.crm.module.member.dao.instrument.CrmInstrumentMapper;
 import cn.klmb.crm.module.member.enums.DataTypeEnum;
@@ -13,6 +15,7 @@ import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +44,37 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
         List<String> userIds = biAuthority.getUserIds();
         CrmInstrumentVO crmInstrumentVO = crmInstrumentMapper.queryBulletin(biTimeEntity, userIds);
         return crmInstrumentVO;
+    }
+
+    @Override
+    public List<CrmCountRankVO> countRank(BiParams biParams) {
+        BiAuthority biAuthority = handleDataType(biParams.setDataType(biParams.getDataType()));
+        BiTimeUtil.BiTimeEntity biTimeEntity = BiTimeUtil.analyzeTime(biParams);
+        List<String> userIds = biAuthority.getUserIds();
+        Integer rankType = biParams.getRankType();
+        if (ObjectUtil.isNull(rankType)) {
+            return Collections.emptyList();
+        }
+        switch (rankType) {
+            case 1: {
+                //新增客户数
+                return crmInstrumentMapper.customerCountRank(biTimeEntity,
+                        userIds);
+            }
+            case 2: {
+                //新增联系人排行
+                return crmInstrumentMapper.contactsCountRank(biTimeEntity,
+                        userIds);
+            }
+            case 3: {
+                //新增跟进记录排行
+                return crmInstrumentMapper.recordCountRank(biTimeEntity,
+                        userIds);
+            }
+            default: {
+                return Collections.emptyList();
+            }
+        }
     }
 
 

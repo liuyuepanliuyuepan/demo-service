@@ -33,18 +33,18 @@ public class BiParams {
     @ApiModelProperty("0 部门 1员工")
     private Integer isUser = 1;
 
-
-    @ApiModelProperty("类型ID")
-    private Integer typeId;
+//
+//    @ApiModelProperty("类型ID")
+//    private Integer typeId;
 
     @ApiModelProperty("年份")
     private Integer year;
-
-    @ApiModelProperty("菜单ID")
-    private Integer menuId;
-
-    @ApiModelProperty("月份")
-    private Integer moneyType;
+//
+//    @ApiModelProperty("菜单ID")
+//    private Integer menuId;
+//
+//    @ApiModelProperty("月份")
+//    private Integer moneyType;
 
     /**
      * dataType 1仅本人, 2 本人及下属,3进本部门,4本部门及下属部门
@@ -52,24 +52,32 @@ public class BiParams {
     @ApiModelProperty("数据类型(1仅本人, 2 本人及下属,3进本部门,4本部门及下属部门)")
     private Integer dataType;
 
-    @ApiModelProperty("查询类型，跟进记录需要")
-    private Integer queryType;
+    /**
+     * 排行榜类型
+     */
+    @ApiModelProperty("排行榜类型(1新增客户数,2新增联系人,3新增跟进记录数)")
+    private Integer rankType;
 
-    @ApiModelProperty("crm类型")
-    private Integer label;
+//    @ApiModelProperty("查询类型，跟进记录需要")
+//    private Integer queryType;
+//
+//    @ApiModelProperty("crm类型")
+//    private Integer label;
+//
+//
+//    @ApiModelProperty("排序方式")
+//    private Integer order;
+//
+//    @ApiModelProperty("排序字段")
+//    private String sortField;
+//
+//    private Integer checkStatus;
+//
+//    private Integer subUser;
+//
+//    private String search;
+//
+//    private Integer day;
 
 
-    @ApiModelProperty("排序方式")
-    private Integer order;
-
-    @ApiModelProperty("排序字段")
-    private String sortField;
-
-    private Integer checkStatus;
-
-    private Integer subUser;
-
-    private String search;
-
-    private Integer day;
 }

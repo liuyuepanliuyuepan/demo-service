@@ -1,7 +1,9 @@
 package cn.klmb.crm.module.member.service.instrument;
 
 import cn.klmb.crm.framework.common.pojo.BiParams;
+import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO;
+import java.util.List;
 
 public interface CrmInstrumentService {
 
@@ -13,5 +15,13 @@ public interface CrmInstrumentService {
      * @return CrmInstrumentVO
      */
     CrmInstrumentVO queryBulletin(BiParams biParams);
+
+
+    /**
+     * 新增排行榜(客户,联系人，跟进记录)
+     * @param biParams
+     * @return
+     */
+    List<CrmCountRankVO> countRank(BiParams biParams);
 
 }
