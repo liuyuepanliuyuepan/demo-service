@@ -57,6 +57,11 @@ public enum CrmEnum {
     INVOICE(18, "发票"),
 
     /**
+     * 跟进记录
+     */
+    RECORDING(19,"跟进记录"),
+
+    /**
      * NULL
      */
     NULL(0, "");

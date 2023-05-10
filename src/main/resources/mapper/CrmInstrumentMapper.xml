@@ -97,4 +97,178 @@
     </foreach>
     AND deleted = false) d
   </select>
+
+  <select id="customerCountRank"
+    resultType="cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO">
+    SELECT
+    count( 1 ) AS `count`,
+    su.realname,
+    mu.owner_user_id AS ownerUserId,
+    sd.NAME AS deptName
+    FROM
+    member_user AS mu
+    LEFT JOIN sys_user AS su ON su.biz_id = mu.owner_user_id
+    LEFT JOIN sys_dept AS sd ON sd.biz_id = su.dept_id
+    WHERE
+    mu.deleted =FALSE AND su.deleted =FALSE AND sd.deleted =FALSE
+    AND mu.owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND DATE_FORMAT(mu.create_time,#{time.sqlDateFormat}) between #{time.beginTime} and
+    #{time.finalTime}
+    GROUP BY
+    mu.owner_user_id ,su.realname,sd.`name`
+    ORDER BY
+    count DESC
+  </select>
+
+  <select id="contactsCountRank"
+    resultType="cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO">
+    SELECT
+    count( 1 ) AS `count`,
+    su.realname,
+    mc.owner_user_id AS ownerUserId,
+    sd.NAME AS deptName
+    FROM
+    member_contacts AS mc
+    LEFT JOIN sys_user AS su ON su.biz_id = mc.owner_user_id
+    LEFT JOIN sys_dept AS sd ON sd.biz_id = su.dept_id
+    WHERE
+    mc.deleted =FALSE AND su.deleted =FALSE AND sd.deleted =FALSE
+    AND mc.owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND DATE_FORMAT(mc.create_time,#{time.sqlDateFormat}) between #{time.beginTime} and
+    #{time.finalTime}
+    GROUP BY
+    mc.owner_user_id ,su.realname,sd.`name`
+    ORDER BY
+    count DESC
+  </select>
+
+
+  <select id="recordCountRank"
+    resultType="cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO">
+    SELECT
+    count( 1 ) AS `count`,
+    su.realname,
+    mta.creator AS ownerUserId,
+    sd.NAME AS deptName
+    FROM
+    member_team_activity AS mta
+    LEFT JOIN sys_user AS su ON su.biz_id = mta.creator
+    LEFT JOIN sys_dept AS sd ON sd.biz_id = su.dept_id
+    WHERE
+    mta.deleted =FALSE AND su.deleted =FALSE AND sd.deleted =FALSE
+    AND mta.creator in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND DATE_FORMAT(mta.create_time,#{time.sqlDateFormat}) between #{time.beginTime} and
+    #{time.finalTime}
+    GROUP BY
+    mta.creator ,su.realname,sd.`name`
+    ORDER BY
+    count DESC
+  </select>
+
+
+  <select id="newCustomer"
+    resultType="java.lang.String">
+    SELECT
+    c.biz_id
+    FROM
+    member_user AS c
+    WHERE
+    DATE_FORMAT(c.create_time,#{time.sqlDateFormat})
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false
+  </select>
+
+  <select id="newContacts"
+    resultType="java.lang.String">
+    SELECT
+    mc.biz_id
+    FROM
+    member_contacts AS mc
+    WHERE
+    DATE_FORMAT(mc.create_time,#{time.sqlDateFormat})
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false
+  </select>
+
+
+  <select id="newBusiness"
+    resultType="java.lang.String">
+    SELECT
+    d.biz_id
+    FROM
+    business_detail AS d
+    WHERE
+    DATE_FORMAT(d.create_time,#{time.sqlDateFormat})
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false
+  </select>
+
+
+  <select id="newActivity"
+    resultType="java.lang.String">
+    SELECT
+    mtc.biz_id
+    FROM
+    member_team_activity AS mtc
+    WHERE
+    DATE_FORMAT(mtc.create_time,#{time.sqlDateFormat})
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
+    AND creator in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false
+    AND type IN ( 1, 4 )
+    AND activity_type IN (2,5)
+  </select>
+
 </mapper>
