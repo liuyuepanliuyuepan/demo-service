@@ -271,4 +271,192 @@
     AND activity_type IN (2,5)
   </select>
 
+
+  <select id="queryDataInfo"
+    resultType="cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmDataSummaryVO">
+    SELECT
+    a.allCustomer,
+    b.dealCustomer,
+    c.putInPoolNum,
+    d.receiveNum,
+    e.allBusiness,
+    f.endBusiness,
+    g.loseBusiness,
+    e.businessMoney,
+    h.activityNum,
+    i.activityRealNum
+    FROM
+    (
+    SELECT
+    COUNT(*) AS allCustomer
+    FROM
+    member_user AS mu
+    WHERE
+    DATE_FORMAT(mu.create_time,#{time.sqlDateFormat})
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND owner_user_id in
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND deleted = false) a,
+    (
+    SELECT
+    COUNT(*) AS dealCustomer
+    FROM
+    member_user AS mu
+    WHERE
+    DATE_FORMAT(mu.deal_time,#{time.sqlDateFormat})
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND owner_user_id in
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND deleted = false AND deal_status = 1) b,
+    ( SELECT
+    COUNT(*) AS putInPoolNum
+    FROM
+    member_user_pool_relation AS mupr
+    WHERE
+    DATE_FORMAT(mupr.create_time,#{time.sqlDateFormat})
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND deleted = false)c,
+    (SELECT
+    COUNT(*) AS receiveNum
+    FROM
+    member_user AS mu
+    WHERE
+    DATE_FORMAT(mu.receive_time,#{time.sqlDateFormat})
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND owner_user_id in
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND deleted = false AND is_receive IN(1,2))d,
+    ( SELECT
+    COUNT(*) AS allBusiness,
+    SUM(money) AS businessMoney
+    FROM
+    business_detail AS bd
+    WHERE
+    DATE_FORMAT(bd.create_time,#{time.sqlDateFormat})
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND owner_user_id in
+    <choose>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+    </choose>
+    AND deleted = false) e,
+    ( SELECT
+    COUNT(*) AS endBusiness
+    FROM
+    business_detail AS bd
+    WHERE
+    DATE_FORMAT(bd.create_time,#{time.sqlDateFormat})
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false AND business_status = 2) f,
+    ( SELECT
+    COUNT(*) AS loseBusiness
+    FROM
+    business_detail AS bd
+    WHERE
+    DATE_FORMAT(bd.create_time,#{time.sqlDateFormat})
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false AND business_status = 3 ) g,
+    ( SELECT
+    COUNT(*) AS activityNum
+    FROM
+    member_user AS mu
+    WHERE
+    DATE_FORMAT(mu.create_time,#{time.sqlDateFormat})
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false AND followup = 1)h ,
+    ( SELECT
+    COUNT(*) AS activityRealNum
+    FROM
+    member_user AS mu
+    WHERE
+    DATE_FORMAT(mu.create_time,#{time.sqlDateFormat})
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false AND followup = 0)i
+
+  </select>
+
 </mapper>
