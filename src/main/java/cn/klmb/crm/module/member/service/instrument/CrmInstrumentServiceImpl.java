@@ -37,6 +37,8 @@ import cn.klmb.crm.module.system.service.user.SysUserService;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -77,18 +79,16 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
 
     @Override
     public CrmInstrumentVO queryBulletin(BiParams biParams) {
-        BiAuthority biAuthority = handleDataType(biParams.setDataType(biParams.getDataType()));
         BiTimeUtil.BiTimeEntity biTimeEntity = BiTimeUtil.analyzeTime(biParams);
-        List<String> userIds = biAuthority.getUserIds();
+        List<String> userIds = getUserIds(biParams);
         CrmInstrumentVO crmInstrumentVO = crmInstrumentMapper.queryBulletin(biTimeEntity, userIds);
         return crmInstrumentVO;
     }
 
     @Override
     public List<CrmCountRankVO> countRank(BiParams biParams) {
-        BiAuthority biAuthority = handleDataType(biParams.setDataType(biParams.getDataType()));
         BiTimeUtil.BiTimeEntity biTimeEntity = BiTimeUtil.analyzeTime(biParams);
-        List<String> userIds = biAuthority.getUserIds();
+        List<String> userIds = getUserIds(biParams);
         Integer rankType = biParams.getRankType();
         if (ObjectUtil.isNull(rankType)) {
             return Collections.emptyList();
@@ -119,9 +119,8 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
     public KlmbPage<?> queryBulletinInfo(BiParams biParams) {
         KlmbPage<Object> klmbPage = new KlmbPage<>();
         klmbPage.setContent(Collections.emptyList());
-        BiAuthority biAuthority = handleDataType(biParams.setDataType(biParams.getDataType()));
         BiTimeUtil.BiTimeEntity biTimeEntity = BiTimeUtil.analyzeTime(biParams);
-        List<String> userIds = biAuthority.getUserIds();
+        List<String> userIds = getUserIds(biParams);
         Integer label = biParams.getLabel();
         switch (label) {
             case 2: {
@@ -337,6 +336,33 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
         authority.setUserIds(userIdList);
         authority.setDeptIds(deptIdList);
         return authority;
+    }
+
+
+    private List<String> getUserIds(BiParams biParams) {
+        List<String> userIds = new ArrayList<>();
+        if (CollUtil.isNotEmpty(biParams.getUserIds()) || CollUtil.isNotEmpty(
+                biParams.getDeptIds())) {
+            if (CollUtil.isNotEmpty(biParams.getUserIds())) {
+                userIds = CollUtil.unionAll(userIds, biParams.getUserIds());
+            }
+            if (CollUtil.isNotEmpty(biParams.getDeptIds())) {
+                List<String> list = sysUserService.queryUserByDeptIds(biParams.getDeptIds());
+                if (CollUtil.isNotEmpty(list)) {
+                    userIds = CollUtil.unionAll(userIds, list);
+                }
+            }
+            if (CollUtil.isNotEmpty(userIds)) {
+                userIds = userIds.stream().filter(Objects::nonNull).distinct()
+                        .collect(Collectors.toList());
+
+            }
+        } else {
+            BiAuthority biAuthority = handleDataType(biParams.setDataType(biParams.getDataType()));
+            userIds = biAuthority.getUserIds();
+        }
+
+        return userIds;
     }
 
 

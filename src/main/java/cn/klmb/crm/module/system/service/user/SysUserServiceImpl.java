@@ -290,8 +290,10 @@ public class SysUserServiceImpl extends
         queryWrapper.select(SysUserDO::getBizId);
         if (ids.size() > 1) {
             queryWrapper.in(SysUserDO::getDeptId, ids);
+            queryWrapper.eq(SysUserDO::getDeleted, false);
         } else {
             queryWrapper.eq(SysUserDO::getDeptId, ids.get(0));
+            queryWrapper.eq(SysUserDO::getDeleted, false);
         }
         return listObjs(queryWrapper, Object::toString);
     }

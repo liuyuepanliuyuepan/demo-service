@@ -63,5 +63,13 @@ public class CrmInstrumentController {
         return success(page);
     }
 
+//    @GetMapping("/query-data-info")
+//    @ApiOperation("数据汇总")
+//    @PreAuthorize("@ss.hasPermission('member:crm-instrument:query')")
+//    public  CommonResult<CrmDataSummaryVO> queryDataInfo(BiParams biParams) {
+//        JSONObject jsonObject = instrumentService.queryDataInfo(biParams);
+//        return success();
+//    }
+
 
 }
