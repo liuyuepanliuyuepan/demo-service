@@ -1,5 +1,6 @@
 package cn.klmb.crm.module.member.service.instrument;
 
+import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.BiParams;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO;
@@ -19,9 +20,19 @@ public interface CrmInstrumentService {
 
     /**
      * 新增排行榜(客户,联系人，跟进记录)
+     *
      * @param biParams
      * @return
      */
     List<CrmCountRankVO> countRank(BiParams biParams);
+
+
+    /**
+     * 销售简报的详情
+     *
+     * @param biParams 参数
+     * @return data
+     */
+    KlmbPage<?> queryBulletinInfo(BiParams biParams);
 
 }

@@ -2,6 +2,7 @@ package cn.klmb.crm.module.member.controller.admin.instrument;
 
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.BiParams;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
@@ -45,12 +46,21 @@ public class CrmInstrumentController {
 
     //跟进汇总(跟进客户数、)
 
-    @ApiOperation("新增排行榜(客户,联系人，跟进记录)")
+    @ApiOperation(value = "新增排行榜(客户,联系人，跟进记录)", notes = "必传字段dataType、endTime、rankType、startTime")
     @GetMapping("/count-rank")
     @PreAuthorize("@ss.hasPermission('member:crm-instrument:query')")
     public CommonResult<List<CrmCountRankVO>> countRank(BiParams biParams) {
         List<CrmCountRankVO> list = crmInstrumentService.countRank(biParams);
         return success(list);
+    }
+
+
+    @GetMapping("/query-bulletin-info")
+    @ApiOperation(value = "查询销售简报详情", notes = "必传字段dataType、endTime、label、queryType、startTime、pageNo、pageSize、search")
+    @PreAuthorize("@ss.hasPermission('member:crm-instrument:query')")
+    public CommonResult<KlmbPage<?>> queryBulletinInfo(BiParams biParams) {
+        KlmbPage<?> page = crmInstrumentService.queryBulletinInfo(biParams);
+        return success(page);
     }
 
 
