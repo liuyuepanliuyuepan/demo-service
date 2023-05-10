@@ -294,22 +294,17 @@
     WHERE
     DATE_FORMAT(mu.create_time,#{time.sqlDateFormat})
     <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
       <when test="time.cycleNum==1">
         = #{time.beginTime}
       </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
     </choose>
     AND owner_user_id in
-    <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
-      <when test="time.cycleNum==1">
-        = #{time.beginTime}
-      </when>
-    </choose>
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
     AND deleted = false) a,
     (
     SELECT
@@ -319,22 +314,17 @@
     WHERE
     DATE_FORMAT(mu.deal_time,#{time.sqlDateFormat})
     <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
       <when test="time.cycleNum==1">
         = #{time.beginTime}
       </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
     </choose>
     AND owner_user_id in
-    <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
-      <when test="time.cycleNum==1">
-        = #{time.beginTime}
-      </when>
-    </choose>
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
     AND deleted = false AND deal_status = 1) b,
     ( SELECT
     COUNT(*) AS putInPoolNum
@@ -343,12 +333,12 @@
     WHERE
     DATE_FORMAT(mupr.create_time,#{time.sqlDateFormat})
     <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
       <when test="time.cycleNum==1">
         = #{time.beginTime}
       </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
     </choose>
     AND deleted = false)c,
     (SELECT
@@ -358,22 +348,17 @@
     WHERE
     DATE_FORMAT(mu.receive_time,#{time.sqlDateFormat})
     <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
       <when test="time.cycleNum==1">
         = #{time.beginTime}
       </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
     </choose>
     AND owner_user_id in
-    <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
-      <when test="time.cycleNum==1">
-        = #{time.beginTime}
-      </when>
-    </choose>
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
     AND deleted = false AND is_receive IN(1,2))d,
     ( SELECT
     COUNT(*) AS allBusiness,
@@ -383,22 +368,17 @@
     WHERE
     DATE_FORMAT(bd.create_time,#{time.sqlDateFormat})
     <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
       <when test="time.cycleNum==1">
         = #{time.beginTime}
       </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
     </choose>
     AND owner_user_id in
-    <choose>
-      <otherwise>
-        BETWEEN #{time.beginTime} and #{time.finalTime}
-      </otherwise>
-      <when test="time.cycleNum==1">
-        = #{time.beginTime}
-      </when>
-    </choose>
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
     AND deleted = false) e,
     ( SELECT
     COUNT(*) AS endBusiness
@@ -406,9 +386,14 @@
     business_detail AS bd
     WHERE
     DATE_FORMAT(bd.create_time,#{time.sqlDateFormat})
-    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
-      #{id}
-    </foreach>
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
     AND owner_user_id in
     <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
       #{id}
@@ -420,9 +405,14 @@
     business_detail AS bd
     WHERE
     DATE_FORMAT(bd.create_time,#{time.sqlDateFormat})
-    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
-      #{id}
-    </foreach>
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
     AND owner_user_id in
     <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
       #{id}
@@ -434,9 +424,14 @@
     member_user AS mu
     WHERE
     DATE_FORMAT(mu.create_time,#{time.sqlDateFormat})
-    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
-      #{id}
-    </foreach>
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
     AND owner_user_id in
     <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
       #{id}
@@ -448,9 +443,14 @@
     member_user AS mu
     WHERE
     DATE_FORMAT(mu.create_time,#{time.sqlDateFormat})
-    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
-      #{id}
-    </foreach>
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
     AND owner_user_id in
     <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
       #{id}
