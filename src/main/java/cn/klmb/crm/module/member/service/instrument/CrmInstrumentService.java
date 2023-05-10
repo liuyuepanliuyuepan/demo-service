@@ -3,6 +3,7 @@ package cn.klmb.crm.module.member.service.instrument;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.BiParams;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
+import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmDataSummaryVO;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO;
 import java.util.List;
 
@@ -34,5 +35,14 @@ public interface CrmInstrumentService {
      * @return data
      */
     KlmbPage<?> queryBulletinInfo(BiParams biParams);
+
+
+    /**
+     * 数据汇总
+     *
+     * @param biParams
+     * @return CrmInstrumentVO
+     */
+    CrmDataSummaryVO queryDataInfo(BiParams biParams);
 
 }

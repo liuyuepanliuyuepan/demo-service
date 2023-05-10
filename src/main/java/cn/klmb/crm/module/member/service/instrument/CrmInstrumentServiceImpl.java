@@ -13,6 +13,7 @@ import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
+import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmDataSummaryVO;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO;
 import cn.klmb.crm.module.member.controller.admin.teamactivity.vo.MemberTeamActivityRespVO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
@@ -275,6 +276,15 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                 return klmbPage;
             }
         }
+    }
+
+    @Override
+    public CrmDataSummaryVO queryDataInfo(BiParams biParams) {
+        BiTimeUtil.BiTimeEntity biTimeEntity = BiTimeUtil.analyzeTime(biParams);
+        List<String> userIds = getUserIds(biParams);
+        CrmDataSummaryVO crmDataSummaryVO = crmInstrumentMapper.queryDataInfo(biTimeEntity,
+                userIds);
+        return crmDataSummaryVO;
     }
 
 

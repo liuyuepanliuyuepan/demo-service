@@ -2,6 +2,7 @@ package cn.klmb.crm.module.member.dao.instrument;
 
 import cn.klmb.crm.framework.common.util.data.BiTimeUtil;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
+import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmDataSummaryVO;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO;
 import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
@@ -84,11 +85,16 @@ public interface CrmInstrumentMapper {
             @Param("userIds")
             List<String> userIds);
 
-    //新增联系人详情
-
-    //新增跟进记录详情
-
-    //新增
+    /**
+     * 按条件查询数据汇总详情
+     *
+     * @param biTimeEntity
+     * @param userIds
+     * @return
+     */
+    CrmDataSummaryVO queryDataInfo(@Param("time") BiTimeUtil.BiTimeEntity biTimeEntity,
+            @Param("userIds")
+            List<String> userIds);
 
 
 }

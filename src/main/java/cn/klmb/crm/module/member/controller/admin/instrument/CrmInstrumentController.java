@@ -6,6 +6,7 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.common.pojo.BiParams;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
+import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmDataSummaryVO;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmInstrumentVO;
 import cn.klmb.crm.module.member.service.instrument.CrmInstrumentService;
 import io.swagger.annotations.Api;
@@ -63,13 +64,12 @@ public class CrmInstrumentController {
         return success(page);
     }
 
-//    @GetMapping("/query-data-info")
-//    @ApiOperation("数据汇总")
-//    @PreAuthorize("@ss.hasPermission('member:crm-instrument:query')")
-//    public  CommonResult<CrmDataSummaryVO> queryDataInfo(BiParams biParams) {
-//        JSONObject jsonObject = instrumentService.queryDataInfo(biParams);
-//        return success();
-//    }
+    @GetMapping("/query-data-info")
+    @ApiOperation("数据汇总")
+    @PreAuthorize("@ss.hasPermission('member:crm-instrument:query')")
+    public CommonResult<CrmDataSummaryVO> queryDataInfo(BiParams biParams) {
+        return success(crmInstrumentService.queryDataInfo(biParams));
+    }
 
 
 }
