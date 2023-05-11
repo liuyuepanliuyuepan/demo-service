@@ -1,9 +1,11 @@
 package cn.klmb.crm.module.business.convert.detail;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailScrollPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpdateReqVO;
 import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
@@ -32,5 +34,11 @@ public interface BusinessDetailConvert {
     BusinessDetailRespVO convert(BusinessDetailDO saveDO);
 
     BusinessDetailQueryDTO convert(BusinessDetailPageReqVO reqVO);
+
+    BusinessDetailQueryDTO convert(BusinessDetailScrollPageReqVO bean);
+
+
+    KlmbScrollPage<BusinessDetailRespVO> convert(KlmbScrollPage<BusinessDetailDO> page);
+
 
 }

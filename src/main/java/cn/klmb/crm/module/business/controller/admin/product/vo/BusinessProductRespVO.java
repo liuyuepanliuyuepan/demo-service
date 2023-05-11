@@ -19,4 +19,10 @@ public class BusinessProductRespVO extends BusinessProductBaseVO {
     @ApiModelProperty(value = "创建时间", required = true)
     private LocalDateTime createTime;
 
+    @ApiModelProperty(value = "产品名称")
+    private String productName;
+
+    @ApiModelProperty(value = "产品类别")
+    private String categoryName;
+
 }

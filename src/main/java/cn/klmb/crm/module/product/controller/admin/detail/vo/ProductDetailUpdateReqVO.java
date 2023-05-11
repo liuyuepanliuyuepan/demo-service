@@ -17,4 +17,12 @@ public class ProductDetailUpdateReqVO extends ProductDetailBaseVO {
     @NotNull(message = "业务id不能为空")
     private String bizId;
 
+    /**
+     * 上下架状态  1上架  0下架
+     */
+    @ApiModelProperty(value = "上下架状态  1上架  0下架")
+    @NotNull(message = "上下架状态不能为空")
+    private Integer status;
+
+
 }

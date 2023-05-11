@@ -14,6 +14,7 @@ import lombok.Data;
 public class MemberTeamActivityBaseVO {
 
     @ApiModelProperty(value = "活动类型 1 跟进记录 2 创建记录 3 商机阶段变更 4 外勤签到")
+    @NotNull(message = "type不能为空")
     private Integer type;
 
     @ApiModelProperty(value = "跟进类型(例如打电话)")

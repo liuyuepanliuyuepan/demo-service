@@ -3,16 +3,20 @@ package cn.klmb.crm.module.business.service.detail;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailFullRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailSaveReqVO;
+import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailScrollPageReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailUpdateReqVO;
 import cn.klmb.crm.module.business.controller.admin.detail.vo.CrmRelevanceBusinessBO;
 import cn.klmb.crm.module.business.controller.admin.product.vo.BusinessProductRespVO;
@@ -21,7 +25,6 @@ import cn.klmb.crm.module.business.convert.detail.BusinessDetailConvert;
 import cn.klmb.crm.module.business.convert.product.BusinessProductConvert;
 import cn.klmb.crm.module.business.dao.detail.BusinessDetailMapper;
 import cn.klmb.crm.module.business.dto.detail.BusinessDetailQueryDTO;
-import cn.klmb.crm.module.business.dto.product.BusinessProductQueryDTO;
 import cn.klmb.crm.module.business.entity.contacts.BusinessContactsDO;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.entity.product.BusinessProductDO;
@@ -32,6 +35,8 @@ import cn.klmb.crm.module.business.service.product.BusinessProductService;
 import cn.klmb.crm.module.business.service.userstar.BusinessUserStarService;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.convert.contacts.MemberContactsConvert;
 import cn.klmb.crm.module.member.dto.contacts.MemberContactsQueryDTO;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
@@ -42,15 +47,14 @@ import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.contactsstar.MemberContactsStarService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
-import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
-import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -93,7 +97,8 @@ public class BusinessDetailServiceImpl extends
 
     public BusinessDetailServiceImpl(BusinessProductService businessProductService,
             BusinessDetailMapper mapper, SysUserService sysUserService,
-            MemberTeamService memberTeamService, BusinessUserStarService businessUserStarService,
+            @Lazy MemberTeamService memberTeamService,
+            BusinessUserStarService businessUserStarService,
             MemberUserService memberUserService, XxlJobApiUtils xxlJobApiUtils,
             BusinessContactsService businessContactsService,
             MemberContactsService memberContactsService,
@@ -136,8 +141,9 @@ public class BusinessDetailServiceImpl extends
             });
         }
 
-        SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
-                SysConfigKeyEnum.CONTACTS_REMINDER.getType());
+        memberTeamService.saveDO(
+                MemberTeamDO.builder().power(3).userId(userId).type(CrmEnum.BUSINESS.getType())
+                        .typeId(bizId).build());
         xxlJobApiUtils.changeTask(
                 XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
                         .executorHandler("customerContactReminderHandler").author("liuyuepan")
@@ -146,7 +152,7 @@ public class BusinessDetailServiceImpl extends
                         .operateType(1)
                         .messageType(CrmEnum.BUSINESS.getRemarks())
                         .contactsType(CrmEnum.BUSINESS.getType()
-                        ).offsetValue(sysConfigDO.getValue()).build());
+                        ).build());
 
         return bizId;
     }
@@ -193,9 +199,10 @@ public class BusinessDetailServiceImpl extends
                 });
             }
 
-            if (!nextTime.isEqual(updateDO.getNextTime())) {
-                SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
-                        SysConfigKeyEnum.CONTACTS_REMINDER.getType());
+            if (ObjectUtil.isNotNull(updateDO.getNextTime())
+                    && LocalDateTimeUtil.toEpochMilli(updateDO.getNextTime()) != 0
+                    && !nextTime.isEqual(
+                    updateDO.getNextTime())) {
                 xxlJobApiUtils.changeTask(
                         XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
                                 .title("crm执行器")
@@ -206,7 +213,19 @@ public class BusinessDetailServiceImpl extends
                                 .name(updateDO.getBusinessName()).operateType(2)
                                 .messageType(CrmEnum.BUSINESS.getRemarks())
                                 .contactsType(CrmEnum.BUSINESS.getType())
-                                .offsetValue(sysConfigDO.getValue()).build());
+                                .build());
+            }
+
+            if (ObjectUtil.isNull(updateDO.getNextTime())
+                    || LocalDateTimeUtil.toEpochMilli(updateDO.getNextTime()) == 0) {
+                xxlJobApiUtils.changeTask(
+                        XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                .title("crm执行器")
+                                .executorHandler("customerContactReminderHandler")
+                                .author("liuyuepan")
+                                .bizId(updateDO.getBizId()).operateType(3)
+                                .messageType(CrmEnum.BUSINESS.getRemarks())
+                                .contactsType(CrmEnum.BUSINESS.getType()).build());
             }
         }
 
@@ -215,6 +234,7 @@ public class BusinessDetailServiceImpl extends
 
     @Override
     public BusinessDetailRespVO getBusinessByBizId(String bizId) {
+        BusinessDetailRespVO respVO = null;
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -240,24 +260,23 @@ public class BusinessDetailServiceImpl extends
                             .eq(BusinessUserStarDO::getUserId, userId)
                             .eq(BusinessUserStarDO::getDeleted, false));
             businessDetailDO.setStar(CollUtil.isNotEmpty(businessUserStarDOS));
-
-        }
-        BusinessDetailRespVO respVO = BusinessDetailConvert.INSTANCE.convert(businessDetailDO);
-        List<BusinessProductRespVO> productRespList = Collections.emptyList();
-        if (ObjectUtil.isNotNull(respVO)) {
-            List<BusinessProductDO> businessProductList = businessProductService.list(
-                    BusinessProductQueryDTO.builder().businessId(bizId).build());
-            if (CollUtil.isNotEmpty(businessProductList)) {
-                productRespList = BusinessProductConvert.INSTANCE.convert(
-                        businessProductList);
+            respVO = BusinessDetailConvert.INSTANCE.convert(businessDetailDO);
+            List<BusinessProductRespVO> productRespList = Collections.emptyList();
+            if (ObjectUtil.isNotNull(respVO)) {
+                productRespList = businessProductService.getBusinessProductByBusinessId(bizId);
             }
+            respVO.setBusinessProductRespList(productRespList);
         }
-        respVO.setBusinessProductRespList(productRespList);
         return respVO;
     }
 
     @Override
-    public KlmbPage<BusinessDetailRespVO> page(BusinessDetailPageReqVO reqVO) {
+    public BusinessDetailFullRespVO page(BusinessDetailPageReqVO reqVO) {
+        //定义BusinessDetailFullRespVO
+        BusinessDetailFullRespVO fullRespVO = new BusinessDetailFullRespVO();
+        //定义商机总金额 businessSumMoney
+        BigDecimal businessSumMoney = new BigDecimal(0.00);
+        List<BusinessDetailDO> businessDetailDOS = null;
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -277,18 +296,24 @@ public class BusinessDetailServiceImpl extends
             if (CollUtil.isNotEmpty(bizIds)) {
                 queryDTO.setBizIds(bizIds);
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
             queryDTO.setOwnerUserId(userId);
             klmbPage = super.page(queryDTO, klmbPage);
+            //查询符合条件的商机总金额
+            businessDetailDOS = super.list(queryDTO);
         }
 
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
             if (CollUtil.isNotEmpty(childUserIds)) {
                 queryDTO.setOwnerUserIds(childUserIds);
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -302,6 +327,8 @@ public class BusinessDetailServiceImpl extends
                                 Collectors.toList());
                 queryDTO.setBizIds(collect);
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -312,6 +339,8 @@ public class BusinessDetailServiceImpl extends
                 queryDTO.setBizIds(bizIds);
                 queryDTO.setBusinessStatus(BusinessStatusEnum.WIN.getType().toString());
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -322,6 +351,8 @@ public class BusinessDetailServiceImpl extends
                 queryDTO.setBizIds(bizIds);
                 queryDTO.setBusinessStatus(BusinessStatusEnum.LOSE.getType().toString());
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -332,6 +363,8 @@ public class BusinessDetailServiceImpl extends
                 queryDTO.setBizIds(bizIds);
                 queryDTO.setBusinessStatus(BusinessStatusEnum.INVALID.getType().toString());
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
 
@@ -342,6 +375,8 @@ public class BusinessDetailServiceImpl extends
                 queryDTO.setBizIds(bizIds);
                 queryDTO.setBusinessStatus(BusinessStatusEnum.ING.getType().toString());
                 klmbPage = super.page(queryDTO, klmbPage);
+                //查询符合条件的商机总金额
+                businessDetailDOS = super.list(queryDTO);
             }
         }
         List<BusinessDetailDO> content = klmbPage.getContent();
@@ -367,7 +402,136 @@ public class BusinessDetailServiceImpl extends
                 }
             });
         }
-        return BusinessDetailConvert.INSTANCE.convert(klmbPage);
+        KlmbPage<BusinessDetailRespVO> convert = BusinessDetailConvert.INSTANCE.convert(klmbPage);
+        if (CollUtil.isNotEmpty(businessDetailDOS)) {
+            businessSumMoney = businessDetailDOS.stream()
+                    .map(BusinessDetailDO::getMoney)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        }
+        fullRespVO.setKlmbPage(convert);
+        fullRespVO.setBusinessSumMoney(businessSumMoney);
+        return fullRespVO;
+    }
+
+    @Override
+    public KlmbScrollPage<BusinessDetailRespVO> pageScroll(BusinessDetailScrollPageReqVO reqVO) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        List<String> childUserIds = sysUserService.queryChildUserId(
+                userId);
+        KlmbScrollPage<BusinessDetailDO> klmbPage = KlmbScrollPage.<BusinessDetailDO>builder()
+                .lastBizId(reqVO.getLastBizId())
+                .pageSize(reqVO.getPageSize())
+                .asc(reqVO.getAsc())
+                .build();
+
+        BusinessDetailQueryDTO queryDTO = BusinessDetailConvert.INSTANCE.convert(reqVO);
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
+            queryDTO.setOwnerUserId(userId);
+            klmbPage = super.pageScroll(queryDTO, klmbPage);
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
+            if (CollUtil.isNotEmpty(childUserIds)) {
+                queryDTO.setOwnerUserIds(childUserIds);
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
+            List<BusinessUserStarDO> businessUserStarDOS = businessUserStarService.list(
+                    new LambdaQueryWrapper<BusinessUserStarDO>().eq(BusinessUserStarDO::getUserId,
+                            userId).eq(BusinessUserStarDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(businessUserStarDOS)) {
+                List<String> collect = businessUserStarDOS.stream()
+                        .map(BusinessUserStarDO::getBusinessId).collect(
+                                Collectors.toList());
+                queryDTO.setBizIds(collect);
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.WIN.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                queryDTO.setBusinessStatus(BusinessStatusEnum.WIN.getType().toString());
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.LOSE.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                queryDTO.setBusinessStatus(BusinessStatusEnum.LOSE.getType().toString());
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.INVALID.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                queryDTO.setBusinessStatus(BusinessStatusEnum.INVALID.getType().toString());
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ING.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLBusiness(childUserIds, userId);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                queryDTO.setBusinessStatus(BusinessStatusEnum.ING.getType().toString());
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+        List<BusinessDetailDO> content = klmbPage.getContent();
+        if (CollUtil.isNotEmpty(content)) {
+            content.forEach(e -> {
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+
+                List<BusinessUserStarDO> businessUserStarDOS = businessUserStarService.list(
+                        new LambdaQueryWrapper<BusinessUserStarDO>().eq(
+                                        BusinessUserStarDO::getBusinessId, e.getBizId())
+                                .eq(BusinessUserStarDO::getUserId, userId)
+                                .eq(BusinessUserStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(businessUserStarDOS));
+
+                if (StrUtil.isNotBlank(e.getCustomerId())) {
+                    MemberUserDO memberUserDO = memberUserService.getByBizId(
+                            e.getCustomerId());
+                    e.setCustomerName(
+                            ObjectUtil.isNotNull(memberUserDO) ? memberUserDO.getName() : null);
+                }
+            });
+        }
+        KlmbScrollPage<BusinessDetailRespVO> respPage = new KlmbScrollPage<>();
+        respPage = BusinessDetailConvert.INSTANCE.convert(klmbPage);
+        if (CollUtil.isEmpty(respPage.getContent())) {
+            respPage.setContent(Collections.EMPTY_LIST);
+        }
+        return respPage;
     }
 
     @Override
@@ -422,6 +586,8 @@ public class BusinessDetailServiceImpl extends
         if (StrUtil.isBlank(userId)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
+        BusinessDetailRespVO businessDetailRespVO = this.getBusinessByBizId(
+                reqVO.getBusinessId());
         MemberContactsQueryDTO queryDTO = MemberContactsConvert.INSTANCE.convert(reqVO);
         KlmbPage<MemberContactsDO> klmbPage = KlmbPage.<MemberContactsDO>builder()
                 .pageNo(reqVO.getPageNo()).pageSize(reqVO.getPageSize())
@@ -439,11 +605,10 @@ public class BusinessDetailServiceImpl extends
             List<MemberContactsDO> content = klmbPage.getContent();
             if (CollUtil.isNotEmpty(content)) {
                 content.forEach(e -> {
-                    MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
-                    if (ObjectUtil.isNotNull(memberUserDO)) {
-                        e.setCustomerName(memberUserDO.getName());
+                    if (ObjectUtil.isNotNull(businessDetailRespVO)) {
+                        e.setCustomerName(businessDetailRespVO.getCustomerName());
                         e.setIsFirstContacts(
-                                StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                                StrUtil.equals(businessDetailRespVO.getContactsId(), e.getBizId()));
                     }
                     if (StrUtil.isNotBlank(e.getParentContactsId())) {
                         MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
@@ -466,6 +631,109 @@ public class BusinessDetailServiceImpl extends
         }
 
         return MemberContactsConvert.INSTANCE.convert(klmbPage);
+    }
+
+    @Override
+    public List<MemberContactsRespVO> listContacts(MemberContactsPageReqVO reqVO) {
+        List<MemberContactsDO> entities = null;
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        BusinessDetailRespVO businessDetailRespVO = this.getBusinessByBizId(
+                reqVO.getBusinessId());
+        if (StrUtil.isBlank(reqVO.getBusinessId())) {
+            return Collections.emptyList();
+        }
+        List<BusinessContactsDO> businessContactsDOS = businessContactsService.list(
+                new LambdaQueryWrapper<BusinessContactsDO>().eq(BusinessContactsDO::getBusinessId,
+                        reqVO.getBusinessId()).eq(BusinessContactsDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(businessContactsDOS)) {
+            List<String> collect = businessContactsDOS.stream()
+                    .map(BusinessContactsDO::getContactsId).collect(Collectors.toList());
+            entities = memberContactsService.list(
+                    new LambdaQueryWrapper<MemberContactsDO>().in(MemberContactsDO::getBizId,
+                                    collect).eq(MemberContactsDO::getDeleted, false)
+                            .orderByDesc(MemberContactsDO::getCreateTime));
+        }
+
+        if (CollUtil.isNotEmpty(entities)) {
+            entities.forEach(e -> {
+                if (ObjectUtil.isNotNull(businessDetailRespVO)) {
+                    e.setCustomerName(businessDetailRespVO.getCustomerName());
+                    e.setIsFirstContacts(
+                            StrUtil.equals(businessDetailRespVO.getContactsId(), e.getBizId()));
+                }
+                if (StrUtil.isNotBlank(e.getParentContactsId())) {
+                    MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                            e.getParentContactsId());
+                    e.setParentContactsName(memberContactsDO.getName());
+                }
+                SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                if (ObjectUtil.isNotNull(sysUserDO)) {
+                    e.setOwnerUserName(sysUserDO.getNickname());
+                }
+                List<MemberContactsStarDO> starDOList = memberContactsStarService.list(
+                        new LambdaQueryWrapper<MemberContactsStarDO>().eq(
+                                        MemberContactsStarDO::getContactsId, e.getBizId())
+                                .eq(MemberContactsStarDO::getUserId, userId)
+                                .eq(MemberContactsStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(starDOList));
+
+            });
+        }
+        return MemberContactsConvert.INSTANCE.convert(entities);
+    }
+
+    @Override
+    public void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO) {
+        //逻辑分为两步 1. 变更负责人  2. 将原负责人移出 或者转为团队成员 3.同时变更定时任务
+        List<String> bizIds = changOwnerUserBO.getBizIds();
+        if (CollUtil.isEmpty(bizIds)) {
+            return;
+        }
+        bizIds.forEach(bizId -> {
+            BusinessDetailDO businessDetailDO = super.getByBizId(bizId);
+            String oldOwnerUserId = businessDetailDO.getOwnerUserId();
+            if (!StrUtil.equals(oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                //添加新负责人
+                memberTeamService.addSingleMember(CrmEnum.BUSINESS.getType(), bizId,
+                        changOwnerUserBO.getOwnerUserId(), 3,
+                        null);
+                if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
+                        oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                    memberTeamService.addSingleMember(CrmEnum.BUSINESS.getType(), bizId,
+                            oldOwnerUserId, changOwnerUserBO.getPower(),
+                            changOwnerUserBO.getExpiresTime());
+                }
+                businessDetailDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+                super.updateDO(businessDetailDO);
+
+                if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
+                    MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+                    memberTeamSaveBO.setUserIds(
+                            Collections.singletonList(oldOwnerUserId));
+                    memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+                    memberTeamSaveBO.setType(CrmEnum.BUSINESS.getType());
+                    memberTeamService.deleteMember(memberTeamSaveBO);
+                }
+
+                //更新定时任务
+                xxlJobApiUtils.changeTaskOwnerUser(
+                        XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                .title("crm执行器")
+                                .executorHandler("customerContactReminderHandler")
+                                .author("liuyuepan")
+                                .ownerUserId(changOwnerUserBO.getOwnerUserId())
+                                .bizId(bizId)
+                                .contactsType(CrmEnum.BUSINESS.getType()).build());
+
+            }
+
+        });
+
+
     }
 
 

@@ -21,6 +21,9 @@ public class BusinessDetailRespVO extends BusinessDetailBaseVO {
     @ApiModelProperty(value = "创建时间", required = true)
     private LocalDateTime createTime;
 
+    @ApiModelProperty(value = "更新时间", required = true)
+    private LocalDateTime updateTime;
+
     /**
      * 商机产品关系集合
      */
@@ -43,8 +46,8 @@ public class BusinessDetailRespVO extends BusinessDetailBaseVO {
 
 
     /**
-     * 商机名称
+     * 客户名称
      */
-    @ApiModelProperty(value = "商机名称")
+    @ApiModelProperty(value = "客户名称")
     private String customerName;
 }

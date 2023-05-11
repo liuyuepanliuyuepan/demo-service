@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.product.controller.admin.category.vo;
 
 import io.swagger.annotations.ApiModelProperty;
+import javax.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -10,9 +11,11 @@ import lombok.Data;
 public class ProductCategoryBaseVO {
 
     @ApiModelProperty(value = "产品分类名称")
+    @NotBlank(message = "产品分类名称不能为空！")
     private String name;
 
     @ApiModelProperty(value = "产品分类的父id(如果要建一级分类 pid传0)")
+    @NotBlank(message = "产品分类的父id不能为空！")
     private String pid;
 
 }

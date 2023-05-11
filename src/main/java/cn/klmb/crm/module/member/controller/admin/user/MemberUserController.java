@@ -11,10 +11,13 @@ import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamReqVO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserBatchUpdateReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserDeleteReqVO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserImportReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserPoolBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.MemberUserRespVO;
@@ -43,11 +46,20 @@ import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import javax.annotation.security.PermitAll;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.FileCopyUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -69,6 +81,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/member/user")
 @Validated
+@Slf4j
 public class MemberUserController {
 
     private final MemberUserService memberUserService;
@@ -117,7 +130,7 @@ public class MemberUserController {
 
     @PostMapping(value = "/batch-delete")
     @ApiOperation(value = "批量删除客户")
-    @PreAuthorize("@ss.hasPermission('member:user:delete')")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> deleteByBizIds(@RequestBody MemberUserDeleteReqVO reqVO) {
         memberUserService.removeByBizIds(reqVO.getBizIds());
         return success(true);
@@ -127,7 +140,7 @@ public class MemberUserController {
     @ApiOperation("修改客户成交状态")
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> setDealStatus(
-            @RequestBody MemberUserBatchUpdateReqVO updateReqVO) {
+            @Valid @RequestBody MemberUserBatchUpdateReqVO updateReqVO) {
         memberUserService.setDealStatus(updateReqVO.getDealStatus(), updateReqVO.getBizIds());
         return success(true);
     }
@@ -171,6 +184,11 @@ public class MemberUserController {
         SysUserDO sysUserDO = sysUserService.getByBizId(saveDO.getOwnerUserId());
         if (ObjectUtil.isNotNull(sysUserDO)) {
             saveDO.setOwnerUserName(sysUserDO.getNickname());
+        }
+        if (StrUtil.isNotBlank(saveDO.getPreOwnerUserId())) {
+            SysUserDO userDO = sysUserService.getByBizId(saveDO.getPreOwnerUserId());
+            saveDO.setPreOwnerUserName(
+                    ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
         }
         List<MemberUserStarDO> starDOList = memberUserStarService.list(
                 new LambdaQueryWrapper<MemberUserStarDO>().eq(
@@ -219,6 +237,11 @@ public class MemberUserController {
                                 .eq(MemberUserStarDO::getUserId, userId)
                                 .eq(MemberUserStarDO::getDeleted, false));
                 e.setStar(CollUtil.isNotEmpty(starDOList));
+                if (StrUtil.isNotBlank(e.getPreOwnerUserId())) {
+                    SysUserDO userDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                    e.setPreOwnerUserName(
+                            ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
+                }
             });
         }
         return success(MemberUserConvert.INSTANCE.convert(page));
@@ -261,6 +284,11 @@ public class MemberUserController {
                                 .eq(MemberUserStarDO::getUserId, userId)
                                 .eq(MemberUserStarDO::getDeleted, false));
                 e.setStar(CollUtil.isNotEmpty(starDOList));
+                if (StrUtil.isNotBlank(e.getPreOwnerUserId())) {
+                    SysUserDO userDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                    e.setPreOwnerUserName(
+                            ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
+                }
             });
         }
         return success(respPage);
@@ -302,8 +330,10 @@ public class MemberUserController {
             throw exception(
                     cn.klmb.crm.module.member.enums.ErrorCodeConstants.MEMBER_USER_NOT_EXISTS);
         }
-        List<MembersTeamSelectVO> members = memberTeamService.getMembers(crmEnum, customerId,
-                memberUserDO.getOwnerUserId());
+        MemberTeamReqVO reqVO = new MemberTeamReqVO();
+        reqVO.setType(CrmEnum.CUSTOMER.getType());
+        reqVO.setTypeId(customerId);
+        List<MembersTeamSelectVO> members = memberTeamService.getMembers(reqVO);
         return CommonResult.success(members);
     }
 
@@ -311,7 +341,8 @@ public class MemberUserController {
     @ApiOperation("新增团队成员")
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> addMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+        memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+        memberTeamService.addMember(memberTeamSaveBO);
         return CommonResult.success(true);
     }
 
@@ -319,7 +350,7 @@ public class MemberUserController {
     @ApiOperation("编辑团队成员")
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> updateMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.addMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+        memberTeamService.addMember(memberTeamSaveBO);
         return CommonResult.success(true);
     }
 
@@ -327,7 +358,8 @@ public class MemberUserController {
     @ApiOperation("删除团队成员")
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> deleteMembers(@RequestBody MemberTeamSaveBO memberTeamSaveBO) {
-        memberTeamService.deleteMember(CrmEnum.CUSTOMER, memberTeamSaveBO);
+        memberTeamSaveBO.setType(CrmEnum.CUSTOMER.getType());
+        memberTeamService.deleteMember(memberTeamSaveBO);
         return CommonResult.success(true);
     }
 
@@ -337,7 +369,10 @@ public class MemberUserController {
             @ApiImplicitParam(name = "customerId", value = "客户id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('member:user:post')")
     public CommonResult<Boolean> exitTeam(@PathVariable("customerId") String customerId) {
-        memberTeamService.exitTeam(CrmEnum.CUSTOMER, customerId);
+        MemberTeamReqVO reqVO = new MemberTeamReqVO();
+        reqVO.setType(CrmEnum.CUSTOMER.getType());
+        reqVO.setTypeId(customerId);
+        memberTeamService.exitTeam(reqVO);
         return CommonResult.success(true);
     }
 
@@ -464,6 +499,45 @@ public class MemberUserController {
     public CommonResult<Boolean> distributeOrReceive(@RequestBody MemberUserPoolBO poolBO) {
         memberUserService.getCustomersByIds(poolBO);
         return CommonResult.success(true);
+    }
+
+
+    @PostMapping("/change-owner-user")
+    @ApiOperation("修改客户负责人")
+    @PreAuthorize("@ss.hasPermission('member:user:post')")
+    public CommonResult<Boolean> changeOwnerUser(
+            @RequestBody CrmChangeOwnerUserBO crmChangeOwnerUserBO) {
+        memberUserService.changeOwnerUser(crmChangeOwnerUserBO);
+        return success(true);
+    }
+
+    @GetMapping("/download-excel")
+    @ApiOperation("下载客户导入模板")
+    @PermitAll
+    public void downloadExcel(HttpServletResponse response) {
+        response.setCharacterEncoding("utf-8");
+        response.setContentType("multipart/form-data;application/octet-stream");
+        String downloadUrl = "/template/客户导入模板.xlsx";
+        InputStream inputStream;
+        Resource resource = new DefaultResourceLoader().getResource("classpath:" + downloadUrl);
+        try {
+            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder
+                    .encode("客户导入模板.xlsx", "UTF-8"));
+            log.info("开始下载客户导入模板");
+            inputStream = resource.getInputStream();
+            FileCopyUtils.copy(inputStream, response.getOutputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @ApiOperation(value = "导入客户")
+    @PostMapping("/upload-excel")
+    @PermitAll
+    public CommonResult<Boolean> uploadExcel(@Valid MemberUserImportReqVO reqVO)
+            throws IOException {
+        memberUserService.uploadExcel(reqVO);
+        return success(true);
     }
 
 

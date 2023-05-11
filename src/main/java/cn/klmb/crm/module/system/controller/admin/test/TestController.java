@@ -2,7 +2,9 @@ package cn.klmb.crm.module.system.controller.admin.test;
 
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
+import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import com.lark.oapi.service.contact.v3.model.User;
 import io.swagger.annotations.Api;
@@ -30,8 +32,11 @@ public class TestController {
 
     private final SysFeishuManager sysFeishuManager;
 
-    public TestController(SysFeishuManager sysFeishuManager) {
+    private final XxlJobApiUtils xxlJobApiUtils;
+
+    public TestController(SysFeishuManager sysFeishuManager, XxlJobApiUtils xxlJobApiUtils) {
         this.sysFeishuManager = sysFeishuManager;
+        this.xxlJobApiUtils = xxlJobApiUtils;
     }
 
     @GetMapping("/fs_user_info")
@@ -48,6 +53,14 @@ public class TestController {
     public CommonResult<Boolean> sendMsg(String userId, String content) {
         sysFeishuManager.sendMsg(userId, content);
         return success(true);
+    }
+
+
+    @GetMapping("/get_time")
+    @ApiOperation("动态获取触发时间")
+    @PermitAll
+    public CommonResult<String> getTime(Long localDateTime) {
+        return success(xxlJobApiUtils.getTime(LocalDateTimeUtil.of(localDateTime)));
     }
 
 

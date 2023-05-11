@@ -12,13 +12,13 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum BusinessStatusEnum implements IntArrayValuable {
 
-    WIN(1, "赢单商机"),
+    WIN(2, "赢单商机"),
 
-    LOSE(2, "输单商机"),
+    LOSE(3, "输单商机"),
 
-    INVALID(3, "无效商机"),
+    INVALID(4, "无效商机"),
 
-    ING(4, "进行中的商机"),
+    ING(1, "进行中的商机"),
     ;
 
 

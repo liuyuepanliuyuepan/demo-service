@@ -18,6 +18,7 @@ public class MemberUserBatchUpdateReqVO {
     private List<String> bizIds;
 
     @ApiModelProperty(value = "成交状态 0 未成交 1 已成交")
+    @NotNull(message = "成交状态不能为空")
     private Integer dealStatus;
 
 }

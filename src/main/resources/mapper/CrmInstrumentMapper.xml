@@ -8,7 +8,9 @@
     SELECT
     a.customerCount,
     b.contactsCount,
-    c.activityCount
+    c.activityCount,
+    d.businessCount,
+    d.businessMoney
     FROM
     (
     SELECT
@@ -72,6 +74,27 @@
     </foreach>
     AND deleted = false
     AND type IN ( 1, 4 )
-    )c
+    AND activity_type IN (2,5)
+    )c,
+    ( SELECT
+    COUNT(*) AS businessCount,
+    SUM(money) AS businessMoney
+    FROM
+    business_detail AS d
+    WHERE
+    DATE_FORMAT(d.create_time,#{time.sqlDateFormat})
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false) d
   </select>
 </mapper>

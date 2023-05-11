@@ -1,15 +1,19 @@
 package cn.klmb.crm.module.member.service.teamactivity;
 
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
-import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
-import cn.klmb.crm.module.contract.service.detail.ContractDetailService;
+import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
+import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
+import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.member.dao.teamactivity.MemberTeamActivityMapper;
 import cn.klmb.crm.module.member.dto.teamactivity.MemberTeamActivityQueryDTO;
 import cn.klmb.crm.module.member.entity.teamactivity.MemberTeamActivityDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
+import cn.klmb.crm.module.system.enums.CrmEnum;
 import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,11 +30,17 @@ public class MemberTeamActivityServiceImpl extends
         MemberTeamActivityService {
 
     private final MemberUserService memberUserService;
-    private final ContractDetailService contractDetailService;
+
+    private final BusinessDetailService businessDetailService;
+
+    private final XxlJobApiUtils xxlJobApiUtils;
+
     public MemberTeamActivityServiceImpl(MemberUserService memberUserService,
-            ContractDetailService contractDetailService, MemberTeamActivityMapper mapper) {
+            BusinessDetailService businessDetailService, MemberTeamActivityMapper mapper,
+            XxlJobApiUtils xxlJobApiUtils) {
         this.memberUserService = memberUserService;
-        this.contractDetailService = contractDetailService;
+        this.businessDetailService = businessDetailService;
+        this.xxlJobApiUtils = xxlJobApiUtils;
         this.mapper = mapper;
     }
 
@@ -42,6 +52,8 @@ public class MemberTeamActivityServiceImpl extends
         if (super.saveDO(saveDO)) {
             bizId = saveDO.getBizId();
         }
+        saveDO.setNextTime(ObjectUtil.isNull(saveDO.getNextTime()) ? LocalDateTimeUtil.of(0L)
+                : saveDO.getNextTime());
         updateLastContent(saveDO);
         return bizId;
     }
@@ -50,6 +62,8 @@ public class MemberTeamActivityServiceImpl extends
     @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateDO(MemberTeamActivityDO entity) {
+        entity.setNextTime(ObjectUtil.isNull(entity.getNextTime()) ? LocalDateTimeUtil.of(0L)
+                : entity.getNextTime());
         boolean b = super.updateDO(entity);
         updateLastContent(entity);
         return b;
@@ -57,39 +71,63 @@ public class MemberTeamActivityServiceImpl extends
     }
 
     private void updateLastContent(MemberTeamActivityDO saveDO) {
-        if (StrUtil.isNotBlank(saveDO.getActivityTypeId())) {
-            // activityTypeId todo 合同跟进日志修改
-            int typeId = saveDO.getActivityType();
-            switch (typeId) {
-                case 2 :
-                    // 客户
-                    MemberUserDO memberUserDO = memberUserService.getByBizId(saveDO.getActivityTypeId());
-                    if (ObjectUtil.isNotNull(memberUserDO)) {
-                        memberUserDO.setLastContent(saveDO.getContent());
-                        memberUserDO.setLastTime(LocalDateTime.now());
-                        memberUserDO.setFollowup(1);
-                        if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
-                            memberUserDO.setNextTime(saveDO.getNextTime());
-                        }
-                        memberUserService.updateDO(memberUserDO);
-                    }
-                    break;
-                case 6 :
-                    // 合同
-                    if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
-                        ContractDetailDO contractDetailDO = contractDetailService.getByBizId(
-                                saveDO.getActivityTypeId());
-                        if (ObjectUtil.isNotNull(contractDetailDO)) {
-                            contractDetailDO.setEndTime(saveDO.getNextTime());
-                            contractDetailService.updateDO(contractDetailDO);
-                        }
-                    }
-                    break;
-                default:
-
-                    break;
+        switch (saveDO.getActivityType()) {
+            case 2: {
+                if (StrUtil.isNotBlank(saveDO.getActivityTypeId())) {
+                    MemberUserDO memberUserDO = MemberUserDO.builder()
+                            .bizId(saveDO.getActivityTypeId()).lastContent(saveDO.getContent())
+                            .lastTime(LocalDateTime.now()).followup(1).nextTime(
+                                    ObjectUtil.isNull(saveDO.getNextTime()) ? LocalDateTimeUtil.of(
+                                            0L) : saveDO.getNextTime())
+                            .build();
+                    memberUserService.updateDO(memberUserDO);
+                }
+                break;
             }
-
+            case 5: {
+                if (StrUtil.isNotBlank(saveDO.getActivityTypeId())) {
+                    BusinessDetailDO businessDetailDO = BusinessDetailDO.builder()
+                            .bizId(saveDO.getActivityTypeId()).lastTime(LocalDateTime.now())
+                            .followup(1).nextTime(
+                                    ObjectUtil.isNull(saveDO.getNextTime()) ? LocalDateTimeUtil.of(
+                                            0L) : saveDO.getNextTime())
+                            .build();
+                    if (ObjectUtil.isNotNull(saveDO.getNextTime())) {
+                        businessDetailDO.setNextTime(saveDO.getNextTime());
+                        BusinessDetailDO detailDO = businessDetailService.getByBizId(
+                                saveDO.getActivityTypeId());
+                        if (LocalDateTimeUtil.toEpochMilli(saveDO.getNextTime()) != 0
+                                && !detailDO.getNextTime().isEqual(saveDO.getNextTime())) {
+                            xxlJobApiUtils.changeTask(
+                                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                            .title("crm执行器")
+                                            .executorHandler("customerContactReminderHandler")
+                                            .author("liuyuepan")
+                                            .ownerUserId(detailDO.getOwnerUserId())
+                                            .bizId(detailDO.getBizId())
+                                            .nextTime(saveDO.getNextTime())
+                                            .name(detailDO.getBusinessName()).operateType(2)
+                                            .messageType(CrmEnum.BUSINESS.getRemarks())
+                                            .contactsType(CrmEnum.BUSINESS.getType())
+                                            .build());
+                        }
+                    }
+                    if (ObjectUtil.isNull(saveDO.getNextTime())
+                            || LocalDateTimeUtil.toEpochMilli(saveDO.getNextTime()) == 0) {
+                        xxlJobApiUtils.changeTask(
+                                XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                        .title("crm执行器")
+                                        .executorHandler("customerContactReminderHandler")
+                                        .author("liuyuepan")
+                                        .bizId(saveDO.getActivityTypeId()).operateType(3)
+                                        .messageType(CrmEnum.BUSINESS.getRemarks())
+                                        .contactsType(CrmEnum.BUSINESS.getType()).build());
+                    }
+                    businessDetailService.updateDO(businessDetailDO);
+                }
+                break;
+            }
+            default:
         }
     }
 }

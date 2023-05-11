@@ -50,6 +50,8 @@ public interface ErrorCodeConstants {
     ErrorCode FILE_PATH_EXISTS = new ErrorCode(1001003000, "文件路径已存在");
     ErrorCode FILE_NOT_EXISTS = new ErrorCode(1001003001, "文件不存在");
     ErrorCode FILE_IS_EMPTY = new ErrorCode(1001003002, "文件为空");
+    ErrorCode SYSTEM_UPLOAD_FILE_ERROR = new ErrorCode(1001003003, "文件导入失败");
+
 
     // ========== 代码生成器 1001004000 ==========
     ErrorCode CODEGEN_TABLE_EXISTS = new ErrorCode(1003001000, "表定义已经存在");
@@ -102,6 +104,8 @@ public interface ErrorCodeConstants {
             "不能操作类型为系统内置的角色");
     ErrorCode ROLE_IS_DISABLE = new ErrorCode(1002002004, "名字为【{}】的角色已被禁用");
     ErrorCode ROLE_ADMIN_CODE_ERROR = new ErrorCode(1002002005, "编码【{}】不能使用");
+    ErrorCode USER_ROLE_NOT_EXISTS = new ErrorCode(1002002006, "该用户未分配角色");
+
 
     // ========== 用户模块 1002003000 ==========
     ErrorCode USER_USERNAME_EXISTS = new ErrorCode(1002003000, "用户账号【{}】已经存在");
@@ -113,6 +117,11 @@ public interface ErrorCodeConstants {
     ErrorCode USER_IS_DISABLE = new ErrorCode(1002003006, "名字为【{}】的用户已被禁用");
     ErrorCode USER_COUNT_MAX = new ErrorCode(1002003008,
             "创建用户失败，原因：超过租户最大租户配额({})！");
+    ErrorCode USER_IS_PARENT = new ErrorCode(1002003009,
+            "该用户与其他用户存在直属关系,无法删除");
+
+    ErrorCode USER_PARENT_IS_NOT_SELF = new ErrorCode(1002003010,
+            "直属上级不能为自己");
 
     // ========== 部门模块 1002004000 ==========
     ErrorCode DEPT_NAME_DUPLICATE = new ErrorCode(1002004000, "已经存在该名字的部门");

@@ -18,6 +18,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 
 /**
@@ -42,7 +43,7 @@ public class ProductCategoryServiceImpl extends
     @Override
     public List<CrmProductCategoryBO> queryList(String type) {
         List<ProductCategoryDO> categoryList = super.list(
-                ProductCategoryQueryDTO.builder().bizId("dd5e47369bbe4b85b78992f0e466e275")
+                ProductCategoryQueryDTO.builder()
                         .build());
         if (StrUtil.isEmpty(type)) {
             return categoryList.stream()
@@ -55,6 +56,7 @@ public class ProductCategoryServiceImpl extends
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void removeByBizIds(List<String> bizIds) {
         if (CollUtil.isEmpty(bizIds)) {
             return;

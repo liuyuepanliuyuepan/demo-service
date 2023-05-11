@@ -98,6 +98,7 @@ public class SysUserController {
     public CommonResult<String> save(@Valid @RequestBody SysUserSaveReqVO saveReqVO) {
         SysUserDO saveDO = SysUserConvert.INSTANCE.convert(saveReqVO);
         String bizId = "";
+        saveDO.setRealname(saveDO.getNickname());
         if (sysUserService.saveDO(saveDO)) {
             bizId = saveDO.getBizId();
         }
@@ -114,6 +115,9 @@ public class SysUserController {
         }
         List<SysUserDO> saveDOList = SysUserConvert.INSTANCE.convertList(saveReqVO);
         List<String> bizIds = new ArrayList<>();
+        saveDOList.forEach(e -> {
+            e.setRealname(e.getNickname());
+        });
         if (sysUserService.saveBatchDO(saveDOList)) {
             bizIds = saveDOList.stream().map(SysUserDO::getBizId).collect(Collectors.toList());
         }
@@ -135,6 +139,9 @@ public class SysUserController {
     @PreAuthorize("@ss.hasPermission('system:user:update')")
     public CommonResult<Boolean> update(@Valid @RequestBody SysUserUpdateReqVO updateReqVO) {
         SysUserDO updateDO = SysUserConvert.INSTANCE.convert01(updateReqVO);
+        if (StrUtil.isNotBlank(updateReqVO.getNickname())) {
+            updateDO.setRealname(updateDO.getNickname());
+        }
         sysUserService.updateDO(updateDO);
         return success(true);
     }
@@ -175,19 +182,21 @@ public class SysUserController {
         return success(SysUserConvert.INSTANCE.convert01(sysUserDO));
     }
 
+//    @GetMapping({"/list-all-simple"})
+//    @ApiOperation(value = "列表精简信息")
+//    @PermitAll
+//    public CommonResult<List<SysUserSimpleRespVO>> listAllSimple(SysUserPageReqVO query) {
+//        SysUserQueryDTO queryDTO = SysUserConvert.INSTANCE.convert(query);
+//        List<SysUserDO> entities = sysUserService.list(queryDTO);
+//        return success(SysUserConvert.INSTANCE.convert01(entities));
+//    }
+
     @GetMapping({"/list-all-simple"})
     @ApiOperation(value = "列表精简信息")
     @PermitAll
     public CommonResult<List<SysUserSimpleRespVO>> listAllSimple(SysUserPageReqVO query) {
-        SysUserQueryDTO queryDTO = SysUserConvert.INSTANCE.convert(query);
-        List<SysUserDO> entities = sysUserService.list(queryDTO);
-        return success(SysUserConvert.INSTANCE.convert01(entities));
-    }
-
-    @GetMapping({"/list-all-simple-v2"})
-    @ApiOperation(value = "列表精简信息")
-    @PermitAll
-    public CommonResult<List<SysUserSimpleRespVO>> listAllSimpleV2(SysUserPageReqVO query) {
+        List<String> allUserIds = new ArrayList<>();
+        List<SysUserDO> allUserList = new ArrayList<>();
         SysUserQueryDTO queryDTO = SysUserConvert.INSTANCE.convert(query);
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
@@ -198,9 +207,13 @@ public class SysUserController {
         if (ObjectUtil.isNotNull(sysUserDO)) {
             String deptId = sysUserDO.getDeptId();
             List<String> queryChildDept = sysDeptService.queryChildDept(deptId);
+            queryChildDept.add(deptId);
             queryDTO.setDeptIds(queryChildDept);
-            List<SysUserDO> entities = sysUserService.list(queryDTO);
-
+            allUserList = sysUserService.list(queryDTO);
+            if (CollUtil.isNotEmpty(allUserList)) {
+                allUserIds = allUserList.stream().map(SysUserDO::getBizId)
+                        .collect(Collectors.toList());
+            }
             //查询系统内置角色
             List<SysRoleDO> sysRoleDOS = sysRoleService.list(
                     new LambdaQueryWrapper<SysRoleDO>().eq(SysRoleDO::getType, 1)
@@ -209,24 +222,22 @@ public class SysUserController {
             if (CollUtil.isNotEmpty(sysRoleDOS)) {
                 collect = sysRoleDOS.stream().map(SysRoleDO::getBizId)
                         .collect(Collectors.toList());
-
             }
             List<SysUserRoleDO> list = sysUserRoleService.list(
-                    new LambdaQueryWrapper<SysUserRoleDO>().in(SysUserRoleDO::getUserId, entities)
+                    new LambdaQueryWrapper<SysUserRoleDO>().in(SysUserRoleDO::getRoleId, collect)
                             .eq(SysUserRoleDO::getDeleted, false));
             if (CollUtil.isNotEmpty(list)) {
-                if (CollUtil.isNotEmpty(collect)) {
-                    List<String> finalCollect = collect;
-                    list = list.stream()
-                            .filter(e -> !CollUtil.contains(finalCollect, e.getRoleId())).collect(
-                                    Collectors.toList());
-                }
+                // 获取到拥有内置角色的用户
+                List<String> userList = list.stream().map(SysUserRoleDO::getUserId)
+                        .collect(Collectors.toList());
+                allUserIds = CollUtil.subtractToList(allUserIds, userList);
             }
-
         }
-
-//        return success(SysUserConvert.INSTANCE.convert01(entities));
-        return null;
+        if (CollUtil.isNotEmpty(allUserIds)) {
+            List<SysUserDO> sysUserDOS = sysUserService.listByBizIds(allUserIds);
+            return success(SysUserConvert.INSTANCE.convert01(sysUserDOS));
+        }
+        return success(Collections.emptyList());
     }
 
 

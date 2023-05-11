@@ -34,4 +34,5 @@ public class BusinessProductBaseVO {
     @ApiModelProperty(value = "单位")
     private String unit;
 
+
 }
