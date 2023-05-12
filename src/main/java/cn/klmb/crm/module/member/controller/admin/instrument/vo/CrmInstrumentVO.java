@@ -2,9 +2,11 @@ package cn.klmb.crm.module.member.controller.admin.instrument.vo;
 
 import io.swagger.annotations.ApiModelProperty;
 import java.math.BigDecimal;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class CrmInstrumentVO {
 
     /**

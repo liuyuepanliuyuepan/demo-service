@@ -35,7 +35,9 @@ import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.file.SysFileService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -84,7 +86,9 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
         List<String> userIds = getUserIds(biParams);
         if (Objects.equals(biParams.getDataType(), DataTypeEnum.CUSTOMIZE.getType())
                 && CollUtil.isEmpty(userIds)) {
-            return null;
+            return CrmInstrumentVO.builder().activityCount(0L).businessCount(0L)
+                    .businessMoney(new BigDecimal(
+                            "0.00")).contactsCount(0L).customerCount(0L).build();
         }
         CrmInstrumentVO crmInstrumentVO = crmInstrumentMapper.queryBulletin(biTimeEntity, userIds);
         return crmInstrumentVO;
@@ -296,7 +300,9 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
         List<String> userIds = getUserIds(biParams);
         if (Objects.equals(biParams.getDataType(), DataTypeEnum.CUSTOMIZE.getType())
                 && CollUtil.isEmpty(userIds)) {
-            return null;
+            return CrmDataSummaryVO.builder().activityNum(0L).activityRealNum(0L).allBusiness(0L)
+                    .allCustomer(0L).businessMoney(new BigDecimal("0.00")).dealCustomer(0L)
+                    .putInPoolNum(0L).receiveNum(0L).endBusiness(0L).loseBusiness(0L).build();
         }
         CrmDataSummaryVO crmDataSummaryVO = crmInstrumentMapper.queryDataInfo(biTimeEntity,
                 userIds);
@@ -333,7 +339,10 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
             }
         } else {
             if (1 == biParams.getIsUser()) {
-                List<String> userIds = biParams.getUserIds();
+                List<String> userIds = Collections.emptyList();
+                if (ObjectUtil.isNotEmpty(biParams.getUserIds())) {
+                    userIds = Arrays.asList(biParams.getUserIds());
+                }
                 if (CollUtil.isEmpty(userIds)) {
                     userIds = new ArrayList<>();
                 }
@@ -370,13 +379,17 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
 
     private List<String> getUserIds(BiParams biParams) {
         List<String> userIds = new ArrayList<>();
-        if (CollUtil.isNotEmpty(biParams.getUserIds()) || CollUtil.isNotEmpty(
+        if (ObjectUtil.isNotEmpty(biParams.getUserIds()) || ObjectUtil.isNotEmpty(
                 biParams.getDeptIds())) {
-            if (CollUtil.isNotEmpty(biParams.getUserIds())) {
-                userIds = CollUtil.unionAll(userIds, biParams.getUserIds());
+            if (ObjectUtil.isNotEmpty(biParams.getUserIds()) && CollUtil.isNotEmpty(
+                    Arrays.asList(biParams.getUserIds()))) {
+                userIds = CollUtil.unionAll(userIds, Arrays.asList(biParams.getUserIds()));
             }
-            if (CollUtil.isNotEmpty(biParams.getDeptIds())) {
-                List<String> list = sysUserService.queryUserByDeptIds(biParams.getDeptIds());
+            if (ObjectUtil.isNotEmpty(
+                    biParams.getDeptIds()) && CollUtil.isNotEmpty(
+                    Arrays.asList(biParams.getDeptIds()))) {
+                List<String> list = sysUserService.queryUserByDeptIds(
+                        Arrays.asList(biParams.getDeptIds()));
                 if (CollUtil.isNotEmpty(list)) {
                     userIds = CollUtil.unionAll(userIds, list);
                 }
@@ -384,7 +397,6 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
             if (CollUtil.isNotEmpty(userIds)) {
                 userIds = userIds.stream().filter(Objects::nonNull).distinct()
                         .collect(Collectors.toList());
-
             }
         } else {
             BiAuthority biAuthority = handleDataType(biParams.setDataType(biParams.getDataType()));
