@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import javax.annotation.security.PermitAll;
 import javax.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
@@ -103,7 +104,7 @@ public class SysDeptController {
 
     @GetMapping({"/list"})
     @ApiOperation(value = "获取部门列表", notes = "用于【部门管理】界面")
-    @PreAuthorize("@ss.hasPermission('system:dept:query')")
+    @PermitAll
     public CommonResult<List<SysDeptRespVO>> list(SysDeptListReqVO reqVO) {
         SysDeptQueryDTO queryDTO = SysDeptConvert.INSTANCE.convert(reqVO);
         List<SysDeptDO> list = sysDeptService.list(queryDTO);
