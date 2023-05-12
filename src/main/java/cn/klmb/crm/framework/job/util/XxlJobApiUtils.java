@@ -22,6 +22,7 @@ import cn.klmb.crm.framework.mq.message.WebSocketServer;
 import cn.klmb.crm.module.system.entity.config.SysConfigDO;
 import cn.klmb.crm.module.system.entity.notify.SysNotifyMessageDO;
 import cn.klmb.crm.module.system.entity.user.SysUserDO;
+import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
 import cn.klmb.crm.module.system.manager.SysFeishuManager;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
@@ -410,8 +411,14 @@ public class XxlJobApiUtils {
         map.put("name", name);
         map.put("contractType", messageType);
         map.put("nextTime", nextTime);
-        String bizId = sysNotifySendService.sendSingleNotifyToAdmin(ownerUserId,
-                "contactsRemind", map);
+        String bizId;
+        if (StrUtil.equals(messageType, CrmEnum.CONTRACT.getType().toString())) {
+            bizId = sysNotifySendService.sendSingleNotifyToAdmin(ownerUserId,
+                    "contractRemind", map);
+        } else {
+            bizId = sysNotifySendService.sendSingleNotifyToAdmin(ownerUserId,
+                    "contactsRemind", map);
+        }
         SysNotifyMessageDO sysNotifyMessageDO = sysNotifyMessageService.getByBizId(
                 bizId);
         webSocketServer.sendOneMessage(ownerUserId,

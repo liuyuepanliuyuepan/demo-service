@@ -121,8 +121,14 @@ public class CustomerContactReminderHandler {
                 }
             }
             if (StrUtil.isNotBlank(map.get("name").toString())) {
-                String bizId = sysNotifySendService.sendSingleNotifyToAdmin(userId,
-                        "contactsRemind", map);
+                String bizId;
+                if (StrUtil.equals(contractType, CrmEnum.CONTRACT.getType().toString())) {
+                    bizId = sysNotifySendService.sendSingleNotifyToAdmin(userId,
+                            "contractRemind", map);
+                } else {
+                    bizId = sysNotifySendService.sendSingleNotifyToAdmin(userId,
+                            "contactsRemind", map);
+                }
                 SysNotifyMessageDO sysNotifyMessageDO = sysNotifyMessageService.getByBizId(
                         bizId);
                 webSocketServer.sendOneMessage(userId,
