@@ -5,6 +5,7 @@ import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailResp
 import cn.klmb.crm.module.contract.dto.detail.ContractDetailQueryDTO;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
+import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,7 +18,6 @@ import org.apache.ibatis.annotations.Param;
 public interface ContractDetailMapper extends KlmbBaseMapper<ContractDetailDO, ContractDetailQueryDTO> {
 
 
-
     /**
      * 分页关联查询
      *
@@ -28,6 +28,16 @@ public interface ContractDetailMapper extends KlmbBaseMapper<ContractDetailDO, C
     PageDTO<ContractDetailRespVO> list(
             @Param("condition") ContractDetailQueryDTO condition,
             PageDTO<ContractDetailRespVO> pageDTO);
+
+
+    /**
+     * 根据条件查询合同列表
+     *
+     * @param condition 查询条件
+     * @return 审核记录表
+     */
+    List<ContractDetailRespVO> listV1(
+            @Param("condition") ContractDetailQueryDTO condition);
 
 
 }

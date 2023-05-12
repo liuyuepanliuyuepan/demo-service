@@ -1,16 +1,9 @@
 package cn.klmb.crm.module.contract.controller.admin.detail;
 
-import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
-import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
-import cn.klmb.crm.module.business.controller.admin.detail.vo.BusinessDetailRespVO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractChangeOwnerUserVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailFullRespVO;
@@ -23,32 +16,19 @@ import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
 import cn.klmb.crm.module.contract.service.detail.ContractDetailService;
 import cn.klmb.crm.module.contract.service.product.ContractProductService;
 import cn.klmb.crm.module.contract.service.star.ContractStarService;
-import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamReqVO;
-import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
-import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
-import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.member.service.user.MemberUserService;
-import cn.klmb.crm.module.system.dto.user.SysUserQueryDTO;
-import cn.klmb.crm.module.system.entity.dept.SysDeptDO;
-import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
-import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
 import cn.klmb.crm.module.system.service.dept.SysDeptService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
 import io.swagger.annotations.ApiOperation;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
 import javax.validation.Valid;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -168,72 +148,7 @@ public class ContractDetailController {
     @ApiOperation(value = "分页查询")
     @PreAuthorize("@ss.hasPermission('contract:detail:query')")
     public CommonResult<ContractDetailFullRespVO> page(@Valid ContractDetailPageReqVO reqVO) {
-        //获取当前用户id
-        String userId = WebFrameworkUtils.getLoginUserId();
-        if (StrUtil.isBlank(userId)) {
-            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
-        }
-
         ContractDetailFullRespVO page = contractDetailService.page(reqVO);
-//        if (StringUtils.isNotBlank(reqVO.getKeyword())) {
-//            List<MemberUserDO> memberUserDOS = memberUserService.list(
-//                    new LambdaQueryWrapper<MemberUserDO>().like(MemberUserDO::getName,
-//                            reqVO.getKeyword()).eq(MemberUserDO::getDeleted, false));
-//            if (CollUtil.isNotEmpty(memberUserDOS)) {
-//                // 客户名称的模糊匹配
-//                List<String> memberUserIds = memberUserDOS.stream().map(MemberUserDO::getBizId)
-//                        .collect(Collectors.toList());
-//                reqVO.setMemberUserIds(memberUserIds);
-//            }
-//        }
-//        KlmbPage<ContractDetailDO> page = contractDetailService.pageDefinition(reqVO);
-//        List<ContractDetailDO> content = page.getContent();
-//        content.forEach(e -> {
-//            // 商机名称
-//            BusinessDetailRespVO business = businessDetailService.getBusinessByBizId(
-//                    e.getBusinessId());
-//            if (ObjectUtil.isNotNull(business)) {
-//                e.setBusinessName(business.getBusinessName());
-//            }
-//            // 客户名称
-//            MemberUserDO memberUserDO = memberUserService.getByBizId(e.getMemberUserId());
-//            if (ObjectUtil.isNotNull(memberUserDO)) {
-//                e.setMemberUserName(memberUserDO.getName());
-//            }
-//            // 客户签约人名称(联系人的意思)
-//            MemberContactsDO memberContactsDO = memberContactsService.getByBizId(e.getContactsId());
-//            if (ObjectUtil.isNotNull(memberContactsDO)) {
-//                e.setContactsName(memberContactsDO.getName());
-//            }
-//            // 公司签约人名称
-//            String companyUserId = e.getCompanyUserId();
-//            List<SysUserDO> sysUserDOList = sysUserService.list(
-//                    SysUserQueryDTO.builder().bizIds(Arrays.asList(companyUserId.split(",")))
-//                            .build());
-//            if (ObjectUtil.isNotNull(sysUserDOList)) {
-//                e.setCompanyUserName(sysUserDOList.stream().map(SysUserDO::getNickname).collect(
-//                        Collectors.toList()).stream().collect(Collectors.joining(",")));
-//            }
-//            //  创始人名称
-//            SysUserDO userDO = sysUserService.getByBizId(e.getCreator());
-//            e.setCreatorName(userDO.getNickname());
-//            // 负责人所在团队
-//            SysUserDO owner = sysUserService.getByBizId(e.getOwnerUserId());
-//            SysDeptDO deptDO = sysDeptService.getByBizId(owner.getDeptId());
-//            if (ObjectUtil.isNotNull(deptDO)) {
-//                e.setOwnerDeptName(deptDO.getName());
-//            }
-//            // teamMemberIds   该合同瞎的请他团队成员
-//            CrmEnum crmEnum = CrmEnum.CONTRACT;
-//            MemberTeamReqVO memberTeamReqVO = new MemberTeamReqVO();
-//            memberTeamReqVO.setType(crmEnum.getType());
-//            memberTeamReqVO.setTypeId(e.getBizId());
-//            List<MembersTeamSelectVO> members = memberTeamService.getMembers(memberTeamReqVO);
-//            if (ObjectUtil.isNotNull(members)) {
-//                e.setTeamMemberIds(members.stream().map(MembersTeamSelectVO::getNickName).collect(
-//                        Collectors.toList()).stream().collect(Collectors.joining(",")));
-//            }
-//        });
         return success(page);
     }
 

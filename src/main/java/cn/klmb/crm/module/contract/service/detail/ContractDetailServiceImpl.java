@@ -34,6 +34,7 @@ import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -276,8 +277,8 @@ public class ContractDetailServiceImpl extends
 
     @Override
     public ContractDetailFullRespVO page(ContractDetailPageReqVO reqVO) {
-        Integer sceneId = reqVO.getSceneId();
-        String keyword = reqVO.getKeyword();
+        ContractDetailFullRespVO fullRespVO = new ContractDetailFullRespVO();
+        BigDecimal contractMoney = new BigDecimal("0.00");
         KlmbPage<ContractDetailRespVO> klmbPage = KlmbPage.<ContractDetailRespVO>builder()
                 .pageNo(reqVO.getPageNo())
                 .pageSize(reqVO.getPageSize())
@@ -304,8 +305,15 @@ public class ContractDetailServiceImpl extends
                     .totalPages((int) pageResult.getPages())
                     .totalElements(pageResult.getTotal())
                     .build();
+            fullRespVO.setKlmbPage(page);
+            List<ContractDetailRespVO> contractDetailRespVOS = mapper.listV1(queryDTO);
+            if (CollUtil.isNotEmpty(contractDetailRespVOS)) {
+                contractMoney = contractDetailRespVOS.stream()
+                        .map(ContractDetailRespVO::getMoney)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-
+            }
+            fullRespVO.setContractMoney(contractMoney);
         }
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
             queryDTO.setOwnerUserId(userId);
@@ -325,7 +333,7 @@ public class ContractDetailServiceImpl extends
                 queryDTO.setBizIds(collect);
             }
         }
-        return null;
+        return fullRespVO;
     }
 
     @Override
