@@ -12,7 +12,8 @@ public enum DataTypeEnum {
     SELF_AND_CHILD(2),
     DEPT(3),
     DEPT_AND_CHILD(4),
-    ALL(5);
+    ALL(5),
+    CUSTOMIZE(6);
 
     private Integer type;
 
