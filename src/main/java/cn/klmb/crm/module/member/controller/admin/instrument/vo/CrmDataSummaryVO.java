@@ -2,12 +2,14 @@ package cn.klmb.crm.module.member.controller.admin.instrument.vo;
 
 import io.swagger.annotations.ApiModelProperty;
 import java.math.BigDecimal;
+import lombok.Builder;
 import lombok.Data;
 
 /**
  * 数据汇总详情
  */
 @Data
+@Builder
 public class CrmDataSummaryVO {
 
     /**
