@@ -12,11 +12,10 @@ import cn.klmb.crm.framework.common.pojo.SortingField;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
-import cn.klmb.crm.module.business.entity.userstar.BusinessUserStarDO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractChangeOwnerUserVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailFullRespVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
-import cn.klmb.crm.module.contract.convert.detail.ContractDetailConvert;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO;
 import cn.klmb.crm.module.contract.dao.detail.ContractDetailMapper;
 import cn.klmb.crm.module.contract.dto.detail.ContractDetailQueryDTO;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
@@ -37,7 +36,6 @@ import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
@@ -280,6 +278,10 @@ public class ContractDetailServiceImpl extends
     public ContractDetailFullRespVO page(ContractDetailPageReqVO reqVO) {
         Integer sceneId = reqVO.getSceneId();
         String keyword = reqVO.getKeyword();
+        KlmbPage<ContractDetailRespVO> klmbPage = KlmbPage.<ContractDetailRespVO>builder()
+                .pageNo(reqVO.getPageNo())
+                .pageSize(reqVO.getPageSize())
+                .build();
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -288,36 +290,41 @@ public class ContractDetailServiceImpl extends
         List<String> childUserIds = sysUserService.queryChildUserId(
                 userId);
         ContractDetailQueryDTO queryDTO = new ContractDetailQueryDTO();
-
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
             childUserIds.add(userId);
             List<String> bizIds = getALLContract(childUserIds, userId);
             queryDTO.setBizIds(bizIds);
-        }
+            PageDTO<ContractDetailRespVO> pageResult = mapper.list(queryDTO,
+                    new PageDTO<>(klmbPage.getPageNo(), klmbPage.getPageSize()));
 
+            KlmbPage<ContractDetailRespVO> page = KlmbPage.<ContractDetailRespVO>builder()
+                    .pageNo((int) pageResult.getCurrent())
+                    .pageSize((int) pageResult.getSize())
+                    .content(pageResult.getRecords())
+                    .totalPages((int) pageResult.getPages())
+                    .totalElements(pageResult.getTotal())
+                    .build();
+
+
+        }
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
             queryDTO.setOwnerUserId(userId);
-
         }
 
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
             queryDTO.setOwnerUserIds(childUserIds);
         }
-
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
-//            List<BusinessUserStarDO> businessUserStarDOS = businessUserStarService.list(
-//                    new LambdaQueryWrapper<BusinessUserStarDO>().eq(BusinessUserStarDO::getUserId,
-//                            userId).eq(BusinessUserStarDO::getDeleted, false));
-//            if (CollUtil.isNotEmpty(businessUserStarDOS)) {
-//                List<String> collect = businessUserStarDOS.stream()
-//                        .map(BusinessUserStarDO::getBusinessId).collect(
-//                                Collectors.toList());
-//                queryDTO.setBizIds(collect);
-//                klmbPage = super.page(queryDTO, klmbPage);
-//                //查询符合条件的商机总金额
-//                businessDetailDOS = super.list(queryDTO);
+            List<ContractStarDO> contractStarDOS = contractStarService.list(
+                    new LambdaQueryWrapper<ContractStarDO>().eq(ContractStarDO::getUserId,
+                            userId).eq(ContractStarDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(contractStarDOS)) {
+                List<String> collect = contractStarDOS.stream()
+                        .map(ContractStarDO::getContractId).collect(
+                                Collectors.toList());
+                queryDTO.setBizIds(collect);
             }
-
+        }
         return null;
     }
 

@@ -4,9 +4,8 @@ import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery;
 import cn.klmb.crm.framework.base.core.annotations.DtoFieldQuery.Operator;
 import cn.klmb.crm.framework.base.core.annotations.DtoKeywordQuery;
 import cn.klmb.crm.framework.base.core.pojo.KlmbBaseQueryDTO;
-import io.swagger.annotations.ApiModelProperty;
-import java.time.LocalDateTime;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -137,5 +136,12 @@ public class ContractDetailQueryDTO extends KlmbBaseQueryDTO {
      */
     @DtoFieldQuery(queryType = Operator.IN, fieldName = "memberUserId")
     private List<String> memberUserIds;
+
+
+    /**
+     * 关键字查询
+     */
+    private String keyword;
+
 
 }

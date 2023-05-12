@@ -18,11 +18,28 @@
              LEFT JOIN sys_user su2 ON su2.biz_id = cd.owner_user_id
     <where>
       cd.deleted = FALSE
-      <if test="condition.teacherId != null and condition.teacherId != ''">
-        AND ec.teacher_id = #{condition.teacherId}
+      <if test="condition.bizIds !=null  and condition.bizIds.size > 0">
+        and cd.biz_id in
+        <foreach close=")" collection="condition.bizIds" index="index" item="item" open="("
+          separator=",">
+          #{item}
+        </foreach>
       </if>
 
+      <if test="condition.ownerUserIds !=null  and condition.ownerUserIds.size > 0">
+        and cd.owner_user_id in
+        <foreach close=")" collection="condition.ownerUserIds" index="index" item="item" open="("
+          separator=",">
+          #{item}
+        </foreach>
+      </if>
+
+      <if test="condition.keyword != null and condition.keyword != ''">
+        and (cd.name like concat('%', #{condition.keyword},'%') OR cd.num like concat('%',
+        #{condition.keyword},'%') OR mu.name like concat('%', #{condition.keyword},'%'))
+      </if>
     </where>
+      order by cd.create_time desc
     </select>
 
 </mapper>

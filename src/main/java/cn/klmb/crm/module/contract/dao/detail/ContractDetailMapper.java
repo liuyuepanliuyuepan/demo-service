@@ -28,4 +28,6 @@ public interface ContractDetailMapper extends KlmbBaseMapper<ContractDetailDO, C
     PageDTO<ContractDetailRespVO> list(
             @Param("condition") ContractDetailQueryDTO condition,
             PageDTO<ContractDetailRespVO> pageDTO);
+
+
 }
