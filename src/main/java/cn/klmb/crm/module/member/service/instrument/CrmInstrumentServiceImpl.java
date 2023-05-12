@@ -82,6 +82,10 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
     public CrmInstrumentVO queryBulletin(BiParams biParams) {
         BiTimeUtil.BiTimeEntity biTimeEntity = BiTimeUtil.analyzeTime(biParams);
         List<String> userIds = getUserIds(biParams);
+        if (Objects.equals(biParams.getDataType(), DataTypeEnum.CUSTOMIZE.getType())
+                && CollUtil.isEmpty(userIds)) {
+            return null;
+        }
         CrmInstrumentVO crmInstrumentVO = crmInstrumentMapper.queryBulletin(biTimeEntity, userIds);
         return crmInstrumentVO;
     }
@@ -92,6 +96,10 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
         List<String> userIds = getUserIds(biParams);
         Integer rankType = biParams.getRankType();
         if (ObjectUtil.isNull(rankType)) {
+            return Collections.emptyList();
+        }
+        if (Objects.equals(biParams.getDataType(), DataTypeEnum.CUSTOMIZE.getType())
+                && CollUtil.isEmpty(userIds)) {
             return Collections.emptyList();
         }
         switch (rankType) {
@@ -122,6 +130,10 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
         klmbPage.setContent(Collections.emptyList());
         BiTimeUtil.BiTimeEntity biTimeEntity = BiTimeUtil.analyzeTime(biParams);
         List<String> userIds = getUserIds(biParams);
+        if (Objects.equals(biParams.getDataType(), DataTypeEnum.CUSTOMIZE.getType())
+                && CollUtil.isEmpty(userIds)) {
+            return klmbPage;
+        }
         Integer label = biParams.getLabel();
         switch (label) {
             case 2: {
@@ -282,6 +294,10 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
     public CrmDataSummaryVO queryDataInfo(BiParams biParams) {
         BiTimeUtil.BiTimeEntity biTimeEntity = BiTimeUtil.analyzeTime(biParams);
         List<String> userIds = getUserIds(biParams);
+        if (Objects.equals(biParams.getDataType(), DataTypeEnum.CUSTOMIZE.getType())
+                && CollUtil.isEmpty(userIds)) {
+            return null;
+        }
         CrmDataSummaryVO crmDataSummaryVO = crmInstrumentMapper.queryDataInfo(biTimeEntity,
                 userIds);
         return crmDataSummaryVO;
@@ -308,6 +324,9 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                 deptIdList.addAll(sysDeptService.queryChildDept(sysUserDO.getDeptId()));
                 deptIdList.add(sysUserDO.getDeptId());
                 userIdList.addAll(sysUserService.queryUserByDeptIds(deptIdList));
+            } else if (typeEnum == DataTypeEnum.CUSTOMIZE) {
+                userIdList = Collections.emptyList();
+                deptIdList = Collections.emptyList();
             } else {
                 deptIdList.addAll(sysDeptService.queryChildDept("0"));
                 userIdList.addAll(sysUserService.queryUserByDeptIds(deptIdList));
