@@ -117,7 +117,7 @@ public class CustomerContactReminderHandler {
                 if (ObjectUtil.isNotNull(contractDetailDO)) {
                     map.put("name", contractDetailDO.getBusinessName());
                     map.put("nextTime", nextTime);
-                    map.put("contractType", CrmEnum.BUSINESS.getRemarks());
+                    map.put("contractType", CrmEnum.CONTRACT.getRemarks());
                 }
             }
             if (StrUtil.isNotBlank(map.get("name").toString())) {
