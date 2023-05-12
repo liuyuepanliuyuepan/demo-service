@@ -8,6 +8,8 @@ import cn.hutool.json.JSONUtil;
 import cn.klmb.crm.framework.mq.message.WebSocketServer;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
+import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
+import cn.klmb.crm.module.contract.service.detail.ContractDetailService;
 import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.user.MemberUserDO;
 import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
@@ -53,11 +55,14 @@ public class CustomerContactReminderHandler {
 
     private final BusinessDetailService businessDetailService;
 
+    private final ContractDetailService contractDetailService;
+
     public CustomerContactReminderHandler(WebSocketServer webSocketServer,
             SysNotifySendService sysNotifySendService,
             MemberUserService memberUserService, MemberContactsService memberContactsService,
             SysNotifyMessageService sysNotifyMessageService, SysFeishuManager sysFeishuManager,
-            SysUserService sysUserService, BusinessDetailService businessDetailService) {
+            SysUserService sysUserService, BusinessDetailService businessDetailService,
+            ContractDetailService contractDetailService) {
         this.webSocketServer = webSocketServer;
         this.sysNotifySendService = sysNotifySendService;
         this.memberUserService = memberUserService;
@@ -66,6 +71,7 @@ public class CustomerContactReminderHandler {
         this.sysFeishuManager = sysFeishuManager;
         this.sysUserService = sysUserService;
         this.businessDetailService = businessDetailService;
+        this.contractDetailService = contractDetailService;
     }
 
     @XxlJob("customerContactReminderHandler")
@@ -101,6 +107,15 @@ public class CustomerContactReminderHandler {
                 BusinessDetailDO businessDetailDO = businessDetailService.getByBizId(contractBizId);
                 if (ObjectUtil.isNotNull(businessDetailDO)) {
                     map.put("name", businessDetailDO.getBusinessName());
+                    map.put("nextTime", nextTime);
+                    map.put("contractType", CrmEnum.BUSINESS.getRemarks());
+                }
+            }
+
+            if (StrUtil.equals(contractType, CrmEnum.CONTRACT.getType().toString())) {
+                ContractDetailDO contractDetailDO = contractDetailService.getByBizId(contractBizId);
+                if (ObjectUtil.isNotNull(contractDetailDO)) {
+                    map.put("name", contractDetailDO.getBusinessName());
                     map.put("nextTime", nextTime);
                     map.put("contractType", CrmEnum.BUSINESS.getRemarks());
                 }
