@@ -12,7 +12,9 @@ import cn.klmb.crm.framework.common.pojo.SortingField;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.entity.userstar.BusinessUserStarDO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractChangeOwnerUserVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailFullRespVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
 import cn.klmb.crm.module.contract.convert.detail.ContractDetailConvert;
 import cn.klmb.crm.module.contract.dao.detail.ContractDetailMapper;
@@ -34,6 +36,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -110,66 +113,66 @@ public class ContractDetailServiceImpl extends
 
     @Override
     public KlmbPage<ContractDetailDO> pageDefinition(ContractDetailPageReqVO reqVO) {
-        //获取当前用户id
-        String userId = reqVO.getUserId();
-        List<String> childUserIds = sysUserService.queryChildUserId(
-                userId);
-        KlmbPage<ContractDetailDO> klmbPage = KlmbPage.<ContractDetailDO>builder()
-                .pageNo(reqVO.getPageNo())
-                .pageSize(reqVO.getPageSize())
-                .sortingFields(reqVO.getSortingFields())
-                .build();
-
-        ContractDetailQueryDTO queryDTO = ContractDetailConvert.INSTANCE.convert(reqVO);
-        queryDTO.setMemberUserIds(reqVO.getMemberUserIds());
-        // 下属负责的
-        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
-            if (CollUtil.isEmpty(childUserIds)) {
-                klmbPage.setContent(Collections.EMPTY_LIST);
-                return klmbPage;
-            } else {
-                queryDTO.setOwnerUserIds(childUserIds);
-                return page(queryDTO, klmbPage);
-            }
-        }
-        // 自己负责的
-        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
-            queryDTO.setOwnerUserId(userId);
-            return page(queryDTO, klmbPage);
-        }
-        //全部
-        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
-            childUserIds.add(userId);
-            queryDTO.setOwnerUserIds(childUserIds);
-            return page(queryDTO, klmbPage);
-        }
-        // 关注的
-        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
-            List<ContractStarDO> contractStarDOList = contractStarService.list(
-                    new LambdaQueryWrapper<ContractStarDO>().eq(ContractStarDO::getUserId,
-                            userId).eq(ContractStarDO::getDeleted, false));
-            if (CollUtil.isNotEmpty(contractStarDOList)) {
-                List<String> contractIds = contractStarDOList.stream()
-                        .map(ContractStarDO::getContractId)
-                        .collect(Collectors.toList());
-                //查询 公海中是否存在这些客户,如果存在剔除掉该客户
-                if (CollUtil.isNotEmpty(contractIds)) {
-                    queryDTO.setBizIds(contractIds);
-                    return page(queryDTO, klmbPage);
-                }
-            } else {
-                klmbPage.setContent(Collections.EMPTY_LIST);
-                return klmbPage;
-            }
-        }
-        klmbPage.setContent(Collections.EMPTY_LIST);
-        return klmbPage;
+//        //获取当前用户id
+//        String userId = reqVO.getUserId();
+//        List<String> childUserIds = sysUserService.queryChildUserId(
+//                userId);
+//        KlmbPage<ContractDetailDO> klmbPage = KlmbPage.<ContractDetailDO>builder()
+//                .pageNo(reqVO.getPageNo())
+//                .pageSize(reqVO.getPageSize())
+//                .sortingFields(reqVO.getSortingFields())
+//                .build();
+//
+//        ContractDetailQueryDTO queryDTO = ContractDetailConvert.INSTANCE.convert(reqVO);
+//        queryDTO.setMemberUserIds(reqVO.getMemberUserIds());
+//        // 下属负责的
+//        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
+//            if (CollUtil.isEmpty(childUserIds)) {
+//                klmbPage.setContent(Collections.EMPTY_LIST);
+//                return klmbPage;
+//            } else {
+//                queryDTO.setOwnerUserIds(childUserIds);
+//                return page(queryDTO, klmbPage);
+//            }
+//        }
+//        // 自己负责的
+//        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
+//            queryDTO.setOwnerUserId(userId);
+//            return page(queryDTO, klmbPage);
+//        }
+//        //全部
+//        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
+//            childUserIds.add(userId);
+//            queryDTO.setOwnerUserIds(childUserIds);
+//            return page(queryDTO, klmbPage);
+//        }
+//        // 关注的
+//        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
+//            List<ContractStarDO> contractStarDOList = contractStarService.list(
+//                    new LambdaQueryWrapper<ContractStarDO>().eq(ContractStarDO::getUserId,
+//                            userId).eq(ContractStarDO::getDeleted, false));
+//            if (CollUtil.isNotEmpty(contractStarDOList)) {
+//                List<String> contractIds = contractStarDOList.stream()
+//                        .map(ContractStarDO::getContractId)
+//                        .collect(Collectors.toList());
+//                //查询 公海中是否存在这些客户,如果存在剔除掉该客户
+//                if (CollUtil.isNotEmpty(contractIds)) {
+//                    queryDTO.setBizIds(contractIds);
+//                    return page(queryDTO, klmbPage);
+//                }
+//            } else {
+//                klmbPage.setContent(Collections.EMPTY_LIST);
+//                return klmbPage;
+//            }
+//        }
+//        klmbPage.setContent(Collections.EMPTY_LIST);
+        return null;
     }
 
     @Override
     public KlmbPage<ContractDetailDO> page(ContractDetailQueryDTO queryDTO,
             KlmbPage<ContractDetailDO> klmbPage) {
-
+        //什么几把破代码啊，你自测过了吗
         LambdaQueryWrapper<ContractDetailDO> wrapper = new LambdaQueryWrapper<>();
         wrapper.in(ContractDetailDO::getMemberUserId, queryDTO.getMemberUserIds())
                 .or().like(ContractDetailDO::getName, queryDTO.getKeyword()).or()
@@ -274,6 +277,51 @@ public class ContractDetailServiceImpl extends
     }
 
     @Override
+    public ContractDetailFullRespVO page(ContractDetailPageReqVO reqVO) {
+        Integer sceneId = reqVO.getSceneId();
+        String keyword = reqVO.getKeyword();
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        List<String> childUserIds = sysUserService.queryChildUserId(
+                userId);
+        ContractDetailQueryDTO queryDTO = new ContractDetailQueryDTO();
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLContract(childUserIds, userId);
+            queryDTO.setBizIds(bizIds);
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
+            queryDTO.setOwnerUserId(userId);
+
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
+            queryDTO.setOwnerUserIds(childUserIds);
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
+//            List<BusinessUserStarDO> businessUserStarDOS = businessUserStarService.list(
+//                    new LambdaQueryWrapper<BusinessUserStarDO>().eq(BusinessUserStarDO::getUserId,
+//                            userId).eq(BusinessUserStarDO::getDeleted, false));
+//            if (CollUtil.isNotEmpty(businessUserStarDOS)) {
+//                List<String> collect = businessUserStarDOS.stream()
+//                        .map(BusinessUserStarDO::getBusinessId).collect(
+//                                Collectors.toList());
+//                queryDTO.setBizIds(collect);
+//                klmbPage = super.page(queryDTO, klmbPage);
+//                //查询符合条件的商机总金额
+//                businessDetailDOS = super.list(queryDTO);
+            }
+
+        return null;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public void removeByBizIds(List<String> bizIds) {
         super.removeByBizIds(bizIds);
@@ -310,4 +358,37 @@ public class ContractDetailServiceImpl extends
         }
         return success;
     }
+
+    /**
+     * 获取当前用户下的全部合同的bizId
+     *
+     * @param childUserIds
+     * @param userId
+     * @return
+     */
+    private List<String> getALLContract(List<String> childUserIds, String userId) {
+        List<String> bizIds = new ArrayList<>();
+        //根据用户集合查询该用户们负责的商机
+        List<ContractDetailDO> contractDetailList = super.list(
+                new LambdaQueryWrapper<ContractDetailDO>().in(ContractDetailDO::getOwnerUserId,
+                        childUserIds).eq(ContractDetailDO::getDeleted, false));
+
+        if (CollUtil.isNotEmpty(contractDetailList)) {
+            bizIds = CollUtil.unionAll(
+                    contractDetailList.stream().map(ContractDetailDO::getBizId)
+                            .collect(Collectors.toList()), bizIds);
+        }
+        //根据当前用户查询团队成员表中商机id,根据商机id查询客户负责人id
+        List<MemberTeamDO> memberTeamDOList = memberTeamService.list(
+                new LambdaQueryWrapper<MemberTeamDO>().eq(MemberTeamDO::getUserId, userId)
+                        .eq(MemberTeamDO::getType, CrmEnum.CONTRACT.getType())
+                        .eq(MemberTeamDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(memberTeamDOList)) {
+            bizIds = CollUtil.unionAll(memberTeamDOList.stream().map(MemberTeamDO::getTypeId)
+                    .collect(Collectors.toList()), bizIds);
+        }
+        return bizIds;
+    }
+
+
 }
