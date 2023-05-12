@@ -3,12 +3,10 @@ package cn.klmb.crm.module.contract.service.detail;
 import static cn.klmb.crm.framework.common.exception.util.ServiceExceptionUtil.exception;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
-import cn.klmb.crm.framework.common.pojo.SortingField;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
@@ -32,11 +30,11 @@ import cn.klmb.crm.module.system.enums.config.SysConfigKeyEnum;
 import cn.klmb.crm.module.system.service.config.SysConfigService;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
@@ -86,9 +84,7 @@ public class ContractDetailServiceImpl extends
         }
         saveDO.setOwnerUserId(userId);
         saveDO.setStatus(1);
-        saveDO.setLastTime(saveDO.getEndTime());
         // todo 合同编号的规律
-        saveDO.setNum("");
         // todo 操作记录记录
         // todo 合同活动
         super.saveDO(saveDO);
@@ -105,98 +101,9 @@ public class ContractDetailServiceImpl extends
                         .name(saveDO.getName())
                         .operateType(1)
                         .offsetValue(sysConfigDO.getValue())
-                        .messageType(CrmEnum.CUSTOMER.getRemarks())
+                        .messageType(CrmEnum.CONTRACT.getRemarks())
                         .contactsType(CrmEnum.CONTRACT.getType()).build());
         return saveDO;
-    }
-
-    @Override
-    public KlmbPage<ContractDetailDO> pageDefinition(ContractDetailPageReqVO reqVO) {
-//        //获取当前用户id
-//        String userId = reqVO.getUserId();
-//        List<String> childUserIds = sysUserService.queryChildUserId(
-//                userId);
-//        KlmbPage<ContractDetailDO> klmbPage = KlmbPage.<ContractDetailDO>builder()
-//                .pageNo(reqVO.getPageNo())
-//                .pageSize(reqVO.getPageSize())
-//                .sortingFields(reqVO.getSortingFields())
-//                .build();
-//
-//        ContractDetailQueryDTO queryDTO = ContractDetailConvert.INSTANCE.convert(reqVO);
-//        queryDTO.setMemberUserIds(reqVO.getMemberUserIds());
-//        // 下属负责的
-//        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
-//            if (CollUtil.isEmpty(childUserIds)) {
-//                klmbPage.setContent(Collections.EMPTY_LIST);
-//                return klmbPage;
-//            } else {
-//                queryDTO.setOwnerUserIds(childUserIds);
-//                return page(queryDTO, klmbPage);
-//            }
-//        }
-//        // 自己负责的
-//        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
-//            queryDTO.setOwnerUserId(userId);
-//            return page(queryDTO, klmbPage);
-//        }
-//        //全部
-//        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
-//            childUserIds.add(userId);
-//            queryDTO.setOwnerUserIds(childUserIds);
-//            return page(queryDTO, klmbPage);
-//        }
-//        // 关注的
-//        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
-//            List<ContractStarDO> contractStarDOList = contractStarService.list(
-//                    new LambdaQueryWrapper<ContractStarDO>().eq(ContractStarDO::getUserId,
-//                            userId).eq(ContractStarDO::getDeleted, false));
-//            if (CollUtil.isNotEmpty(contractStarDOList)) {
-//                List<String> contractIds = contractStarDOList.stream()
-//                        .map(ContractStarDO::getContractId)
-//                        .collect(Collectors.toList());
-//                //查询 公海中是否存在这些客户,如果存在剔除掉该客户
-//                if (CollUtil.isNotEmpty(contractIds)) {
-//                    queryDTO.setBizIds(contractIds);
-//                    return page(queryDTO, klmbPage);
-//                }
-//            } else {
-//                klmbPage.setContent(Collections.EMPTY_LIST);
-//                return klmbPage;
-//            }
-//        }
-//        klmbPage.setContent(Collections.EMPTY_LIST);
-        return null;
-    }
-
-    @Override
-    public KlmbPage<ContractDetailDO> page(ContractDetailQueryDTO queryDTO,
-            KlmbPage<ContractDetailDO> klmbPage) {
-        //什么几把破代码啊，你自测过了吗
-        LambdaQueryWrapper<ContractDetailDO> wrapper = new LambdaQueryWrapper<>();
-        wrapper.in(ContractDetailDO::getMemberUserId, queryDTO.getMemberUserIds())
-                .or().like(ContractDetailDO::getName, queryDTO.getKeyword()).or()
-                .like(ContractDetailDO::getNum, queryDTO.getKeyword());
-        wrapper.in(ContractDetailDO::getOwnerUserId, queryDTO.getOwnerUserIds());
-        // 创建分页
-        PageDTO<ContractDetailDO> page = new PageDTO<>(klmbPage.getPageNo(),
-                klmbPage.getPageSize());
-        // 排序字段
-        if (!CollectionUtil.isEmpty(klmbPage.getSortingFields())) {
-            page.addOrder(klmbPage.getSortingFields().stream()
-                    .map(sortingField -> SortingField.ORDER_ASC.equals(sortingField.getOrder())
-                            ? OrderItem.asc(sortingField.getField())
-                            : OrderItem.desc(sortingField.getField()))
-                    .collect(Collectors.toList()));
-        } else {
-            page.addOrder(OrderItem.desc("create_time"));
-        }
-        // 创建查询条件
-        PageDTO<ContractDetailDO> pageResult = super.page(page, wrapper);
-
-        return KlmbPage.<ContractDetailDO>builder().pageNo((int) pageResult.getCurrent())
-                .pageSize((int) pageResult.getSize()).content(pageResult.getRecords())
-                .totalPages((int) pageResult.getPages()).totalElements(pageResult.getTotal())
-                .build();
     }
 
     @Override
@@ -283,6 +190,7 @@ public class ContractDetailServiceImpl extends
                 .pageNo(reqVO.getPageNo())
                 .pageSize(reqVO.getPageSize())
                 .build();
+        klmbPage.setContent(Collections.emptyList());
         //获取当前用户id
         String userId = WebFrameworkUtils.getLoginUserId();
         if (StrUtil.isBlank(userId)) {
@@ -294,18 +202,39 @@ public class ContractDetailServiceImpl extends
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
             childUserIds.add(userId);
             List<String> bizIds = getALLContract(childUserIds, userId);
-            queryDTO.setBizIds(bizIds);
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                queryDTO.setKeyword(reqVO.getKeyword());
+                PageDTO<ContractDetailRespVO> pageResult = mapper.list(queryDTO,
+                        new PageDTO<>(klmbPage.getPageNo(), klmbPage.getPageSize()));
+                klmbPage = KlmbPage.<ContractDetailRespVO>builder()
+                        .pageNo((int) pageResult.getCurrent())
+                        .pageSize((int) pageResult.getSize())
+                        .content(pageResult.getRecords())
+                        .totalPages((int) pageResult.getPages())
+                        .totalElements(pageResult.getTotal())
+                        .build();
+                List<ContractDetailRespVO> contractDetailRespVOS = mapper.listV1(queryDTO);
+                if (CollUtil.isNotEmpty(contractDetailRespVOS)) {
+                    contractMoney = contractDetailRespVOS.stream()
+                            .map(ContractDetailRespVO::getMoney)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                }
+            }
+        }
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
+            queryDTO.setOwnerUserId(userId);
+            queryDTO.setKeyword(reqVO.getKeyword());
             PageDTO<ContractDetailRespVO> pageResult = mapper.list(queryDTO,
                     new PageDTO<>(klmbPage.getPageNo(), klmbPage.getPageSize()));
-
-            KlmbPage<ContractDetailRespVO> page = KlmbPage.<ContractDetailRespVO>builder()
+            klmbPage = KlmbPage.<ContractDetailRespVO>builder()
                     .pageNo((int) pageResult.getCurrent())
                     .pageSize((int) pageResult.getSize())
                     .content(pageResult.getRecords())
                     .totalPages((int) pageResult.getPages())
                     .totalElements(pageResult.getTotal())
                     .build();
-            fullRespVO.setKlmbPage(page);
             List<ContractDetailRespVO> contractDetailRespVOS = mapper.listV1(queryDTO);
             if (CollUtil.isNotEmpty(contractDetailRespVOS)) {
                 contractMoney = contractDetailRespVOS.stream()
@@ -313,14 +242,29 @@ public class ContractDetailServiceImpl extends
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             }
-            fullRespVO.setContractMoney(contractMoney);
-        }
-        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
-            queryDTO.setOwnerUserId(userId);
         }
 
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
             queryDTO.setOwnerUserIds(childUserIds);
+            queryDTO.setKeyword(reqVO.getKeyword());
+            if (CollUtil.isNotEmpty(queryDTO.getOwnerUserIds())) {
+                PageDTO<ContractDetailRespVO> pageResult = mapper.list(queryDTO,
+                        new PageDTO<>(klmbPage.getPageNo(), klmbPage.getPageSize()));
+                klmbPage = KlmbPage.<ContractDetailRespVO>builder()
+                        .pageNo((int) pageResult.getCurrent())
+                        .pageSize((int) pageResult.getSize())
+                        .content(pageResult.getRecords())
+                        .totalPages((int) pageResult.getPages())
+                        .totalElements(pageResult.getTotal())
+                        .build();
+                List<ContractDetailRespVO> contractDetailRespVOS = mapper.listV1(queryDTO);
+                if (CollUtil.isNotEmpty(contractDetailRespVOS)) {
+                    contractMoney = contractDetailRespVOS.stream()
+                            .map(ContractDetailRespVO::getMoney)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                }
+            }
+
         }
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
             List<ContractStarDO> contractStarDOS = contractStarService.list(
@@ -331,8 +275,27 @@ public class ContractDetailServiceImpl extends
                         .map(ContractStarDO::getContractId).collect(
                                 Collectors.toList());
                 queryDTO.setBizIds(collect);
+                queryDTO.setKeyword(reqVO.getKeyword());
+                PageDTO<ContractDetailRespVO> pageResult = mapper.list(queryDTO,
+                        new PageDTO<>(klmbPage.getPageNo(), klmbPage.getPageSize()));
+                klmbPage = KlmbPage.<ContractDetailRespVO>builder()
+                        .pageNo((int) pageResult.getCurrent())
+                        .pageSize((int) pageResult.getSize())
+                        .content(pageResult.getRecords())
+                        .totalPages((int) pageResult.getPages())
+                        .totalElements(pageResult.getTotal())
+                        .build();
+                List<ContractDetailRespVO> contractDetailRespVOS = mapper.listV1(queryDTO);
+                if (CollUtil.isNotEmpty(contractDetailRespVOS)) {
+                    contractMoney = contractDetailRespVOS.stream()
+                            .map(ContractDetailRespVO::getMoney)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+                }
             }
         }
+        fullRespVO.setKlmbPage(klmbPage);
+        fullRespVO.setContractMoney(contractMoney);
         return fullRespVO;
     }
 
