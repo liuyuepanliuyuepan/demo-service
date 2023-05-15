@@ -10,7 +10,6 @@ import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
-import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractChangeOwnerUserVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailFullRespVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO;
@@ -19,7 +18,10 @@ import cn.klmb.crm.module.contract.dto.detail.ContractDetailQueryDTO;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
 import cn.klmb.crm.module.contract.entity.star.ContractStarDO;
 import cn.klmb.crm.module.contract.enums.ContractErrorCodeConstants;
+import cn.klmb.crm.module.contract.service.product.ContractProductService;
 import cn.klmb.crm.module.contract.service.star.ContractStarService;
+import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
 import cn.klmb.crm.module.system.entity.config.SysConfigDO;
@@ -36,6 +38,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -58,15 +61,19 @@ public class ContractDetailServiceImpl extends
     private final SysConfigService sysConfigService;
     private final MemberTeamService memberTeamService;
 
+    private final ContractProductService contractProductService;
+
     public ContractDetailServiceImpl(XxlJobApiUtils xxlJobApiUtils,
             @Lazy SysUserService sysUserService,
             ContractDetailMapper mapper, @Lazy ContractStarService contractStarService,
-            SysConfigService sysConfigService, @Lazy MemberTeamService memberTeamService) {
+            SysConfigService sysConfigService, @Lazy MemberTeamService memberTeamService,
+            ContractProductService contractProductService) {
         this.xxlJobApiUtils = xxlJobApiUtils;
         this.sysUserService = sysUserService;
         this.contractStarService = contractStarService;
         this.sysConfigService = sysConfigService;
         this.memberTeamService = memberTeamService;
+        this.contractProductService = contractProductService;
         this.mapper = mapper;
     }
 
@@ -107,79 +114,53 @@ public class ContractDetailServiceImpl extends
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void changeOwnerUser(ContractChangeOwnerUserVO crmChangeOwnerUserVO) {
-        // 修改负责人
-        if (crmChangeOwnerUserVO.getBizIds().size() == 0) {
+    public void changeOwnerUser(CrmChangeOwnerUserBO changOwnerUserBO) {
+        //逻辑分为两步 1. 变更负责人  2. 将原负责人移出 或者转为团队成员 3.同时变更定时任务
+        List<String> bizIds = changOwnerUserBO.getBizIds();
+        if (CollUtil.isEmpty(bizIds)) {
             return;
         }
-        crmChangeOwnerUserVO.getBizIds().forEach(e -> {
-            ContractDetailDO contract = super.getByBizId(e);
-            // 旧的负责人
-            String oldOwnerUserId = contract.getOwnerUserId();
-
-            if (contract.getStatus() == 8) {
-                throw exception(ContractErrorCodeConstants.CONTRACT_TRANSFER_ERROR);
-            }
-            SysConfigDO sysConfigDO = sysConfigService.getByConfigKey(
-                    SysConfigKeyEnum.CONTRACT_REMINDER.getType());
-            // 删除之前的定时任务
-            xxlJobApiUtils.changeTask(
-                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                            .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                            .bizId(e).operateType(3)
-                            .messageType(CrmEnum.CONTRACT.getRemarks())
-                            .contactsType(CrmEnum.CONTRACT.getType()).build());
-
-            contract.setOwnerUserId(crmChangeOwnerUserVO.getOwnerUserId());
-            // todo 操作记录
-            super.updateDO(contract);
-            // 新增定时任务
-            xxlJobApiUtils.changeTask(
-                    XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
-                            .executorHandler("customerContactReminderHandler").author("liuyuepan")
-                            .ownerUserId(contract.getOwnerUserId())
-                            .bizId(contract.getBizId()).nextTime(contract.getEndTime())
-                            .name(contract.getName())
-                            .operateType(1)
-                            .messageType(CrmEnum.CUSTOMER.getRemarks())
-                            .offsetValue(sysConfigDO.getValue())
-                            .contactsType(CrmEnum.CONTRACT.getType()).build());
-            // todo 团队成员的增加和删除
-            LambdaQueryWrapper<MemberTeamDO> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(MemberTeamDO::getTypeId, e);
-            wrapper.eq(MemberTeamDO::getType, CrmEnum.CONTRACT.getType());
-            wrapper.eq(MemberTeamDO::getUserId, oldOwnerUserId);
-            wrapper.eq(MemberTeamDO::getDeleted, false);
-            MemberTeamDO old = memberTeamService.getOne(wrapper);
-            if (2 == crmChangeOwnerUserVO.getTransferType()) {
-                // 当前合同 增加该成员未团队
-                if (ObjectUtil.isNotNull(old)) {
-                    old.setPower(crmChangeOwnerUserVO.getPower());
+        bizIds.forEach(bizId -> {
+            ContractDetailDO contractDetailDO = super.getByBizId(bizId);
+            String oldOwnerUserId = contractDetailDO.getOwnerUserId();
+            if (!StrUtil.equals(oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                //添加新负责人
+                memberTeamService.addSingleMember(CrmEnum.CONTRACT.getType(), bizId,
+                        changOwnerUserBO.getOwnerUserId(), 3,
+                        null);
+                if (Objects.equals(2, changOwnerUserBO.getTransferType()) && !StrUtil.equals(
+                        oldOwnerUserId, changOwnerUserBO.getOwnerUserId())) {
+                    memberTeamService.addSingleMember(CrmEnum.CONTRACT.getType(), bizId,
+                            oldOwnerUserId, changOwnerUserBO.getPower(),
+                            changOwnerUserBO.getExpiresTime());
                 }
-                memberTeamService.updateDO(old);
-            } else {
-                // 移出成员团队
-                memberTeamService.removeById(old);
+                contractDetailDO.setOwnerUserId(changOwnerUserBO.getOwnerUserId());
+                super.updateDO(contractDetailDO);
+
+                if (Objects.equals(1, changOwnerUserBO.getTransferType())) {
+                    MemberTeamSaveBO memberTeamSaveBO = new MemberTeamSaveBO();
+                    memberTeamSaveBO.setUserIds(
+                            Collections.singletonList(oldOwnerUserId));
+                    memberTeamSaveBO.setBizIds(Collections.singletonList(bizId));
+                    memberTeamSaveBO.setType(CrmEnum.CONTRACT.getType());
+                    memberTeamService.deleteMember(memberTeamSaveBO);
+                }
+
+                //更新定时任务
+                xxlJobApiUtils.changeTaskOwnerUser(
+                        XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm")
+                                .title("crm执行器")
+                                .executorHandler("customerContactReminderHandler")
+                                .author("liuyuepan")
+                                .ownerUserId(changOwnerUserBO.getOwnerUserId())
+                                .bizId(bizId)
+                                .contactsType(CrmEnum.CONTRACT.getType()).build());
+
             }
-            // 保存新的 先查存在不存在
-            LambdaQueryWrapper<MemberTeamDO> wrapper1 = new LambdaQueryWrapper<>();
-            wrapper1.eq(MemberTeamDO::getTypeId, e);
-            wrapper1.eq(MemberTeamDO::getType, CrmEnum.CONTRACT.getType());
-            wrapper1.eq(MemberTeamDO::getUserId, crmChangeOwnerUserVO.getOwnerUserId());
-            wrapper1.eq(MemberTeamDO::getDeleted, false);
-            MemberTeamDO existOwn = memberTeamService.getOne(wrapper);
-            if (ObjectUtil.isNotNull(existOwn)) {
-                existOwn.setPower(3);
-                memberTeamService.updateDO(existOwn);
-            } else {
-                MemberTeamDO memberTeamDO = MemberTeamDO.builder()
-                        .power(3).type(CrmEnum.CONTRACT.getType()).typeId(e)
-                        .userId(crmChangeOwnerUserVO.getOwnerUserId())
-                        .build();
-                memberTeamService.saveDO(memberTeamDO);
-            }
+
         });
+
+
     }
 
     @Override
@@ -300,9 +281,17 @@ public class ContractDetailServiceImpl extends
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void removeByBizIds(List<String> bizIds) {
-        super.removeByBizIds(bizIds);
+        if (CollUtil.isEmpty(bizIds)) {
+            return;
+        }
+        List<ContractDetailDO> entities = this.listByBizIds(bizIds);
+        if (CollUtil.isEmpty(entities)) {
+            return;
+        }
+        super.removeBatchByIds(entities);
+        //同时删除商机产品关系集合
+        contractProductService.removeContractProduct(bizIds);
         bizIds.forEach(e -> {
             xxlJobApiUtils.changeTask(
                     XxlJobChangeTaskDTO.builder().appName("xxl-job-executor-crm").title("crm执行器")
@@ -311,7 +300,6 @@ public class ContractDetailServiceImpl extends
                             .messageType(CrmEnum.CONTRACT.getRemarks())
                             .contactsType(CrmEnum.CONTRACT.getType()).build());
         });
-
     }
 
     @Override

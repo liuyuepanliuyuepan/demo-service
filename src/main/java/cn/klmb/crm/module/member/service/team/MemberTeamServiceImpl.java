@@ -12,6 +12,8 @@ import cn.klmb.crm.framework.common.util.servlet.ApplicationContextHolder;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
 import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
 import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
+import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
+import cn.klmb.crm.module.contract.service.detail.ContractDetailService;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamReqVO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MembersTeamSelectVO;
@@ -174,6 +176,17 @@ public class MemberTeamServiceImpl extends
                 return new Object[]{businessDetailDO.getOwnerUserId(),
                         businessDetailDO.getBusinessName()};
             }
+
+            case 6: {
+                ContractDetailDO contractDetailDO = ApplicationContextHolder.getBean(
+                                ContractDetailService.class)
+                        .lambdaQuery()
+                        .select(ContractDetailDO::getOwnerUserId, ContractDetailDO::getName)
+                        .eq(ContractDetailDO::getBizId, typeId)
+                        .one();
+                return new Object[]{contractDetailDO.getOwnerUserId(),
+                        contractDetailDO.getName()};
+            }
             default: {
                 return new Object[0];
             }
@@ -281,13 +294,15 @@ public class MemberTeamServiceImpl extends
                     memberTeamSaveBO.setType(CrmEnum.BUSINESS.getType());
                     deleteMember(new MemberTeamSaveBO(businessIds, memberTeamSaveBO));
                 }
-//                if (crmMemberSaveBO.getChangeType().contains(3)) {
-//                    LambdaQueryWrapper<CrmContract> queryWrapper = new LambdaQueryWrapper<>();
-//                    queryWrapper.eq(CrmContract::getCustomerId, typeId);
-//                    queryWrapper.select(CrmContract::getContractId);
-//                    List<Integer> ids = ApplicationContextHolder.getBean(ICrmContractService.class).listObjs(queryWrapper, TypeUtils::castToInt);
-//                    deleteMember(CrmEnum.CONTRACT, new CrmMemberSaveBO(ids, crmMemberSaveBO));
-//                }
+                if (memberTeamSaveBO.getChangeType().contains(3)) {
+                    LambdaQueryWrapper<ContractDetailDO> queryWrapper = new LambdaQueryWrapper<>();
+                    queryWrapper.eq(ContractDetailDO::getMemberUserId, bizId);
+                    queryWrapper.select(ContractDetailDO::getBizId);
+                    List<String> contractIds = ApplicationContextHolder.getBean(
+                                    ContractDetailService.class)
+                            .listObjs(queryWrapper, TypeUtils::castToString);
+                    deleteMember(new MemberTeamSaveBO(contractIds, memberTeamSaveBO));
+                }
             }
             deleteMembers(type, bizId, memberTeamSaveBO.getUserIds());
         }
