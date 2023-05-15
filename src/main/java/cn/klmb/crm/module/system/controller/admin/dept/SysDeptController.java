@@ -112,6 +112,17 @@ public class SysDeptController {
         return success(SysDeptConvert.INSTANCE.convert(list));
     }
 
+    @GetMapping({"/list_v2"})
+    @ApiOperation(value = "获取本部门与下级部门列表", notes = "用于【首页自定义查询部门】界面")
+    @PermitAll
+    public CommonResult<List<SysDeptRespVO>> listV2(SysDeptListReqVO reqVO) {
+        SysDeptQueryDTO queryDTO = SysDeptConvert.INSTANCE.convert(reqVO);
+        List<SysDeptDO> list = sysDeptService.listV2(queryDTO);
+        list.sort(Comparator.comparing(SysDeptDO::getSort));
+        return success(SysDeptConvert.INSTANCE.convert(list));
+    }
+
+
     @GetMapping({"/list-all-simple"})
     @ApiOperation(value = "获取部门精简信息列表", notes = "只包含被开启的部门，主要用于前端的下拉选项")
     public CommonResult<List<SysDeptSimpleRespVO>> listAllSimple() {

@@ -25,6 +25,7 @@ import cn.klmb.crm.module.system.enums.dept.SysDeptIdEnum;
 import cn.klmb.crm.module.system.service.user.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.springframework.context.annotation.Lazy;
@@ -43,6 +44,7 @@ public class SysDeptServiceImpl extends
         SysDeptService {
 
     private final SysUserService sysUserService;
+
 
     public SysDeptServiceImpl(SysDeptMapper mapper, @Lazy SysUserService sysUserService) {
         this.sysUserService = sysUserService;
@@ -178,5 +180,18 @@ public class SysDeptServiceImpl extends
     @Override
     public List<String> queryChildDept(String parentId) {
         return RecursionUtil.getChildList(list(), "treeParentId", parentId, "bizId", "bizId");
+    }
+
+    @Override
+    public List<SysDeptDO> listV2(SysDeptQueryDTO queryDTO) {
+        //获取当前用户的当前部门
+        String loginUserDeptId = sysUserService.getLoginUserDeptId();
+        if (StrUtil.isNotBlank(loginUserDeptId)) {
+            List<String> deptIds = this.queryChildDept(loginUserDeptId);
+            deptIds.add(loginUserDeptId);
+            List<SysDeptDO> sysDeptDOS = super.listByBizIds(deptIds);
+            return sysDeptDOS;
+        }
+        return Collections.emptyList();
     }
 }

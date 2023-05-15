@@ -48,5 +48,14 @@ public interface SysDeptService extends KlmbBaseTreeService<SysDeptDO, SysDeptQu
      */
     List<String> queryChildDept(String parentId);
 
+
+    /**
+     * 获取本部门与下级部门列表
+     *
+     * @param queryDTO 查询条件
+     * @return 表单列表
+     */
+    List<SysDeptDO> listV2(SysDeptQueryDTO queryDTO);
+
 }
 
