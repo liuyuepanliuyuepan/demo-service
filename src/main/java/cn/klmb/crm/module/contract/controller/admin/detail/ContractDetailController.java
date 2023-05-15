@@ -4,8 +4,7 @@ import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
-import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
-import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractChangeOwnerUserVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDeleteReqVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailFullRespVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO;
@@ -15,14 +14,10 @@ import cn.klmb.crm.module.contract.convert.detail.ContractDetailConvert;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
 import cn.klmb.crm.module.contract.service.detail.ContractDetailService;
 import cn.klmb.crm.module.contract.service.product.ContractProductService;
-import cn.klmb.crm.module.contract.service.star.ContractStarService;
+import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
 import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
-import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
-import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.system.enums.CrmEnum;
-import cn.klmb.crm.module.system.service.dept.SysDeptService;
-import cn.klmb.crm.module.system.service.user.SysUserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiImplicitParams;
@@ -54,29 +49,13 @@ public class ContractDetailController {
 
     private final ContractDetailService contractDetailService;
     private final ContractProductService contractProductService;
-    private final BusinessDetailService businessDetailService;
-    private final MemberUserService memberUserService;
-    private final MemberContactsService memberContactsService;
-    private final SysUserService sysUserService;
-    private final ContractStarService contractStarService;
-    private final SysDeptService sysDeptService;
     private final MemberTeamService memberTeamService;
 
 
     public ContractDetailController(ContractDetailService contractDetailService,
-            ContractProductService contractProductService,
-           MemberUserService memberUserService,
-            MemberContactsService memberContactsService, SysUserService sysUserService,
-            ContractStarService contractStarService, SysDeptService sysDeptService,
-            MemberTeamService memberTeamService, BusinessDetailService businessDetailService) {
+            ContractProductService contractProductService, MemberTeamService memberTeamService) {
         this.contractDetailService = contractDetailService;
         this.contractProductService = contractProductService;
-        this.businessDetailService = businessDetailService;
-        this.memberUserService = memberUserService;
-        this.memberContactsService = memberContactsService;
-        this.sysUserService = sysUserService;
-        this.contractStarService = contractStarService;
-        this.sysDeptService = sysDeptService;
         this.memberTeamService = memberTeamService;
     }
 
@@ -108,6 +87,14 @@ public class ContractDetailController {
         return success(true);
     }
 
+    @PostMapping(value = "/batch-delete")
+    @ApiOperation(value = "批量删除")
+    @PreAuthorize("@ss.hasPermission('contract:detail:post')")
+    public CommonResult<Boolean> deleteByBizId(@Valid @RequestBody ContractDeleteReqVO reqVO) {
+        contractDetailService.removeByBizIds(reqVO.getBizIds());
+        return success(true);
+    }
+
     @PutMapping(value = "/update")
     @ApiOperation(value = "更新")
     @PreAuthorize("@ss.hasPermission('contract:detail:update')")
@@ -125,12 +112,12 @@ public class ContractDetailController {
         return success(true);
     }
 
-    @PostMapping(value = "/changeOwnerUser")
-    @ApiOperation(value = "修改合同负责人")
-    @PreAuthorize("@ss.hasPermission('contract:detail:update')")
+    @PostMapping("/change-owner-user")
+    @ApiOperation("修改合同负责人")
+    @PreAuthorize("@ss.hasPermission('contract:detail:post')")
     public CommonResult<Boolean> changeOwnerUser(
-            @Valid @RequestBody ContractChangeOwnerUserVO crmChangeOwnerUserVO) {
-        contractDetailService.changeOwnerUser(crmChangeOwnerUserVO);
+            @RequestBody CrmChangeOwnerUserBO crmChangeOwnerUserBO) {
+        contractDetailService.changeOwnerUser(crmChangeOwnerUserBO);
         return success(true);
     }
 
