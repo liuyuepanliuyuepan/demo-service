@@ -88,22 +88,29 @@ public class BiParams {
     @ApiModelProperty("查询类型，跟进记录需要(2客户,3联系人,5商机)")
     private Integer queryType;
 
-    @ApiModelProperty("crm类型(2客户,3联系人,5商机,19跟进记录)")
+    @ApiModelProperty("crm类型,销售简报需要(2客户,3联系人,5商机,19跟进记录,20跟进客户数)")
     private Integer label;
 
-//
-//
-//    @ApiModelProperty("排序方式")
-//    private Integer order;
-//
-//    @ApiModelProperty("排序字段")
-//    private String sortField;
-//
-//    private Integer checkStatus;
-//
-//    private Integer subUser;
+    @ApiModelProperty(value = "成交状态 0 未成交 1 已成交")
+    private Integer dealStatus;
 
-//    private Integer day;
+    @ApiModelProperty(value = "是否从公海池领取")
+    private Boolean receive;
+
+    @ApiModelProperty(value = "商机状态(1进行中的商机,2赢单商机,3输单商机,4无效商机)")
+    private String businessStatus;
+
+    @ApiModelProperty(value = "跟进状态(0未跟进1已跟进)")
+    private Integer followup;
+
+
+
+
+
+
+
+
+
 
 
 }

@@ -459,4 +459,26 @@
 
   </select>
 
+  <select id="newActivityCustomer" resultType="java.lang.String">
+    SELECT
+    mu.biz_id
+    FROM
+    member_user AS mu
+    WHERE
+    DATE_FORMAT(mu.create_time,#{time.sqlDateFormat})
+    <choose>
+      <when test="time.cycleNum==1">
+        = #{time.beginTime}
+      </when>
+      <otherwise>
+        BETWEEN #{time.beginTime} and #{time.finalTime}
+      </otherwise>
+    </choose>
+    AND owner_user_id in
+    <foreach close=")" collection="userIds" index="i" item="id" open="(" separator=",">
+      #{id}
+    </foreach>
+    AND deleted = false
+  </select>
+
 </mapper>
