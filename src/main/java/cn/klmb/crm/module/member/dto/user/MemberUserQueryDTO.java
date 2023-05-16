@@ -58,5 +58,24 @@ public class MemberUserQueryDTO extends KlmbBaseQueryDTO {
     @DtoFieldQuery
     private String preOwnerUserId;
 
+    /**
+     * 成交状态
+     */
+    @DtoFieldQuery
+    private Integer dealStatus;
+
+    /**
+     * 领取状态
+     */
+    @DtoFieldQuery(queryType = Operator.IN, fieldName = "isReceive")
+    private List<Integer> receiveStatus;
+
+
+    /**
+     * 跟进状态
+     */
+    @DtoFieldQuery
+    private Integer followup;
+
 
 }

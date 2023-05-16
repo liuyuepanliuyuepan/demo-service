@@ -97,4 +97,16 @@ public interface CrmInstrumentMapper {
             List<String> userIds);
 
 
+    /**
+     * 按条件查询客户ID
+     *
+     * @param biTimeEntity
+     * @param userIds
+     * @return
+     */
+    List<String> newActivityCustomer(@Param("time") BiTimeUtil.BiTimeEntity biTimeEntity,
+            @Param("userIds")
+            List<String> userIds);
+
+
 }

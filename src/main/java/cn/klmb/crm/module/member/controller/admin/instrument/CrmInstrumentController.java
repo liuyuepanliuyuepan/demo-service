@@ -57,7 +57,7 @@ public class CrmInstrumentController {
 
 
     @GetMapping("/query-bulletin-info")
-    @ApiOperation(value = "查询销售简报详情", notes = "必传字段dataType、endTime、label、queryType、startTime、pageNo、pageSize、search")
+    @ApiOperation(value = "查询销售简报详情", notes = "必传字段dataType、endTime、label、queryType、startTime、pageNo、pageSize、search;数据汇总详情必传字段dataType、endTime、label、startTime、pageNo、pageSize、dealStatus、receive、businessStatus、followup")
     @PreAuthorize("@ss.hasPermission('member:crm-instrument:query')")
     public CommonResult<KlmbPage<?>> queryBulletinInfo(BiParams biParams) {
         KlmbPage<?> page = crmInstrumentService.queryBulletinInfo(biParams);
@@ -70,6 +70,8 @@ public class CrmInstrumentController {
     public CommonResult<CrmDataSummaryVO> queryDataInfo(BiParams biParams) {
         return success(crmInstrumentService.queryDataInfo(biParams));
     }
+
+    //数据汇总详情
 
 
 }

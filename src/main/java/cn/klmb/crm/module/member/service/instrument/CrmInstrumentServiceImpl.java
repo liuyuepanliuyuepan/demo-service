@@ -154,6 +154,12 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                 MemberUserQueryDTO memberUserQueryDTO = new MemberUserQueryDTO();
                 memberUserQueryDTO.setBizIds(newCustomer);
                 memberUserQueryDTO.setKeyword(biParams.getSearch());
+                if (ObjectUtil.isNotNull(biParams.getDealStatus())) {
+                    memberUserQueryDTO.setDealStatus(biParams.getDealStatus());
+                }
+                if (biParams.getReceive()) {
+                    memberUserQueryDTO.setReceiveStatus(Arrays.asList(1, 2));
+                }
                 KlmbPage<MemberUserDO> page = memberUserService.page(memberUserQueryDTO,
                         klmbMemberUserPage);
                 List<MemberUserDO> content = page.getContent();
@@ -225,7 +231,9 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                 BusinessDetailQueryDTO businessDetailQueryDTO = new BusinessDetailQueryDTO();
                 businessDetailQueryDTO.setBizIds(newBusiness);
                 businessDetailQueryDTO.setBusinessName(biParams.getSearch());
-
+                if (ObjectUtil.isNotNull(biParams.getBusinessStatus())) {
+                    businessDetailQueryDTO.setBusinessStatus(biParams.getBusinessStatus());
+                }
                 KlmbPage<BusinessDetailDO> page = businessDetailService.page(businessDetailQueryDTO,
                         klmbBusinessDetailPage);
                 List<BusinessDetailDO> content = page.getContent();
@@ -288,6 +296,44 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                 }
                 return convert;
             }
+
+            case 20: {
+                //获取跟进客户Id
+                List<String> newActivityCustomer = crmInstrumentMapper.newActivityCustomer(
+                        biTimeEntity,
+                        userIds);
+                if (CollUtil.isEmpty(newActivityCustomer)) {
+                    return klmbPage;
+                }
+                KlmbPage<MemberUserDO> klmbMemberUserPage = KlmbPage.<MemberUserDO>builder()
+                        .pageNo(biParams.getPageNo())
+                        .pageSize(biParams.getPageSize())
+                        .sortingFields(biParams.getSortingFields())
+                        .build();
+                MemberUserQueryDTO memberUserQueryDTO = new MemberUserQueryDTO();
+                memberUserQueryDTO.setBizIds(newActivityCustomer);
+                memberUserQueryDTO.setKeyword(biParams.getSearch());
+                if (ObjectUtil.isNotNull(biParams.getFollowup())) {
+                    memberUserQueryDTO.setFollowup(biParams.getFollowup());
+                }
+                KlmbPage<MemberUserDO> page = memberUserService.page(memberUserQueryDTO,
+                        klmbMemberUserPage);
+                List<MemberUserDO> content = page.getContent();
+                if (CollUtil.isNotEmpty(content)) {
+                    content.forEach(e -> {
+                        SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                        if (ObjectUtil.isNotNull(sysUserDO)) {
+                            e.setOwnerUserName(sysUserDO.getNickname());
+                        }
+                        if (StrUtil.isNotBlank(e.getPreOwnerUserId())) {
+                            SysUserDO userDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                            e.setPreOwnerUserName(
+                                    ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
+                        }
+                    });
+                }
+                return MemberUserConvert.INSTANCE.convert(page);
+            }
             default: {
                 return klmbPage;
             }
@@ -304,9 +350,8 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                     .allCustomer(0L).businessMoney(new BigDecimal("0.00")).dealCustomer(0L)
                     .putInPoolNum(0L).receiveNum(0L).endBusiness(0L).loseBusiness(0L).build();
         }
-        CrmDataSummaryVO crmDataSummaryVO = crmInstrumentMapper.queryDataInfo(biTimeEntity,
+        return crmInstrumentMapper.queryDataInfo(biTimeEntity,
                 userIds);
-        return crmDataSummaryVO;
     }
 
 
