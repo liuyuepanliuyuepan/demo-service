@@ -3,6 +3,7 @@ package cn.klmb.crm.module.contract.service.detail;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailFullRespVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO;
 import cn.klmb.crm.module.contract.dto.detail.ContractDetailQueryDTO;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
@@ -54,4 +55,12 @@ public interface ContractDetailService extends KlmbBaseService<ContractDetailDO,
      * @param bizId
      */
     void star(String bizId);
+
+    /**
+     * 根据bizId查询合同详细信息
+     *
+     * @param bizId
+     * @return
+     */
+    ContractDetailRespVO findDetailByBizId(String bizId);
 }
