@@ -1,8 +1,13 @@
 package cn.klmb.crm.module.contract.controller.admin.detail.vo;
 
-import lombok.*;
+import cn.klmb.crm.module.contract.controller.admin.product.vo.ContractProductRespVO;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import java.time.LocalDateTime;
-import io.swagger.annotations.*;
+import java.util.List;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @ApiModel("管理后台 - 合同详情 Response VO")
 @Data
@@ -51,5 +56,12 @@ public class ContractDetailRespVO extends ContractDetailBaseVO {
      */
     @ApiModelProperty(value = "是否标星")
     private Boolean star;
+
+
+    /**
+     * 合同产品关系集合
+     */
+    @ApiModelProperty(value = "合同产品关系集合")
+    private List<ContractProductRespVO> contractProductRespList;
 
 }

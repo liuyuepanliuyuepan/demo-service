@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.contract.service.product;
 
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
+import cn.klmb.crm.module.contract.controller.admin.product.vo.ContractProductRespVO;
 import cn.klmb.crm.module.contract.controller.admin.product.vo.ContractProductSaveReqVO;
 import cn.klmb.crm.module.contract.dto.product.ContractProductQueryDTO;
 import cn.klmb.crm.module.contract.entity.product.ContractProductDO;
@@ -30,4 +31,13 @@ public interface ContractProductService extends
      * @param contractIds
      */
     void removeContractProduct(List<String> contractIds);
+
+
+    /**
+     * 根据合同id查询产品与合同关系
+     *
+     * @param contractId 合同id
+     * @return
+     */
+    List<ContractProductRespVO> getContractProductByContractId(String contractId);
 }

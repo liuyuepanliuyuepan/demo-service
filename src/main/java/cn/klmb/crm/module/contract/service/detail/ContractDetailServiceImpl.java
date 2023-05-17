@@ -349,6 +349,10 @@ public class ContractDetailServiceImpl extends
                         .eq(ContractStarDO::getUserId, userId)
                         .eq(ContractStarDO::getDeleted, false));
         respVO.setStar(CollUtil.isNotEmpty(contractStarList));
+        //根据合同id查询合同与产品的关系集合
+        respVO.setContractProductRespList(
+                contractProductService.getContractProductByContractId(
+                        bizId));
         return respVO;
     }
 
