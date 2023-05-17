@@ -36,6 +36,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.PageDTO;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -205,7 +206,7 @@ public class ContractDetailServiceImpl extends
             }
         }
         if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
-            queryDTO.setOwnerUserId(userId);
+            queryDTO.setOwnerUserIds(Arrays.asList(userId));
             queryDTO.setKeyword(reqVO.getKeyword());
             PageDTO<ContractDetailRespVO> pageResult = mapper.list(queryDTO,
                     new PageDTO<>(klmbPage.getPageNo(), klmbPage.getPageSize()));
