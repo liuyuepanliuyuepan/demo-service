@@ -203,6 +203,7 @@ public class SysUserController {
         if (StrUtil.isBlank(userId)) {
             throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
         }
+        List<String> childUserIds = sysUserService.queryChildUserId(userId);
         SysUserDO sysUserDO = sysUserService.getByBizId(userId);
         if (ObjectUtil.isNotNull(sysUserDO)) {
             String deptId = sysUserDO.getDeptId();
@@ -211,8 +212,13 @@ public class SysUserController {
             queryDTO.setDeptIds(queryChildDept);
             allUserList = sysUserService.list(queryDTO);
             if (CollUtil.isNotEmpty(allUserList)) {
-                allUserIds = allUserList.stream().map(SysUserDO::getBizId)
-                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(childUserIds)) {
+                    allUserIds = CollUtil.unionAll(allUserList.stream().map(SysUserDO::getBizId)
+                            .collect(Collectors.toList()), childUserIds);
+                } else {
+                    allUserIds = allUserList.stream().map(SysUserDO::getBizId)
+                            .collect(Collectors.toList());
+                }
             }
             //查询系统内置角色
             List<SysRoleDO> sysRoleDOS = sysRoleService.list(
