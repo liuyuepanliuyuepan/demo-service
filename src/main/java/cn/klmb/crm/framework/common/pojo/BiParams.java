@@ -103,6 +103,12 @@ public class BiParams {
     @ApiModelProperty(value = "跟进状态(0未跟进1已跟进)")
     private Integer followup;
 
+    @ApiModelProperty(value = "列表中最后一个业务id", required = true)
+    private String lastBizId = null;
+
+    @ApiModelProperty(value = "是否为正序，默认true", required = true)
+    private Boolean asc = true;
+
 
 
 

@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.member.convert.contacts;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsPageReqVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsRespVO;
 import cn.klmb.crm.module.member.controller.admin.contacts.vo.MemberContactsSaveReqVO;
@@ -35,6 +36,8 @@ public interface MemberContactsConvert {
     MemberContactsQueryDTO convert(MemberContactsPageReqVO reqVO);
 
     List<MemberContactsSimpleRespVO> convert01(List<MemberContactsDO> beans);
+
+    KlmbScrollPage<MemberContactsRespVO> convert(KlmbScrollPage<MemberContactsDO> page);
 
 
 }
