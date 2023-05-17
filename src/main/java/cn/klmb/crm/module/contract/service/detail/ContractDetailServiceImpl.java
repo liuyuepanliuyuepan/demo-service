@@ -275,6 +275,18 @@ public class ContractDetailServiceImpl extends
                 }
             }
         }
+        List<ContractDetailRespVO> content = klmbPage.getContent();
+        if (CollUtil.isNotEmpty(content)) {
+            content.forEach(e -> {
+                List<ContractStarDO> contractStarList = contractStarService.list(
+                        new LambdaQueryWrapper<ContractStarDO>().eq(
+                                        ContractStarDO::getContractId, e.getBizId())
+                                .eq(ContractStarDO::getUserId, userId)
+                                .eq(ContractStarDO::getDeleted, false));
+                e.setStar(CollUtil.isNotEmpty(contractStarList));
+            });
+        }
+
         fullRespVO.setKlmbPage(klmbPage);
         fullRespVO.setContractMoney(contractMoney);
         return fullRespVO;
