@@ -39,5 +39,13 @@ public interface ContractDetailMapper extends KlmbBaseMapper<ContractDetailDO, C
     List<ContractDetailRespVO> listV1(
             @Param("condition") ContractDetailQueryDTO condition);
 
+    /**
+     * 根据bizId查询合同详细信息
+     *
+     * @param bizId
+     * @return
+     */
+    ContractDetailRespVO findDetailByBizId(@Param("bizId") String bizId);
+
 
 }

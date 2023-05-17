@@ -81,5 +81,24 @@
     </where>
     order by cd.create_time desc
   </select>
+  <select id="findDetailByBizId"
+    resultType="cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO">
+    SELECT cd.*,
+           mu.`name`        AS memberUserName,
+           bd.business_name AS businessName,
+           mc.`name`        AS contactsName,
+           su1.nickname     AS creatorName,
+           su2.nickname     AS ownerUserName,
+           su3.nickname     AS companyUserName
+    FROM `contract_detail` cd
+           LEFT JOIN member_user mu ON cd.member_user_id = mu.biz_id
+           LEFT JOIN business_detail bd ON cd.business_id = bd.biz_id
+           LEFT JOIN member_contacts mc ON mc.biz_id = cd.contacts_id
+           LEFT JOIN sys_user su1 ON su1.biz_id = cd.creator
+           LEFT JOIN sys_user su2 ON su2.biz_id = cd.owner_user_id
+           LEFT JOIN sys_user su3 ON su3.biz_id = cd.company_user_id
+    where cd.deleted = FALSE
+      and cd.biz_id = #{bizId}
+  </select>
 
 </mapper>

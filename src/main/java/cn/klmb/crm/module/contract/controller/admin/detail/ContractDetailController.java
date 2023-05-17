@@ -127,8 +127,7 @@ public class ContractDetailController {
             @ApiImplicitParam(name = "bizId", value = "业务id", dataTypeClass = String.class, paramType = "path")})
     @PreAuthorize("@ss.hasPermission('contract:detail:query')")
     public CommonResult<ContractDetailRespVO> getByBizId(@PathVariable String bizId) {
-        ContractDetailDO saveDO = contractDetailService.getByBizId(bizId);
-        return success(ContractDetailConvert.INSTANCE.convert(saveDO));
+        return success(contractDetailService.findDetailByBizId(bizId));
     }
 
     @GetMapping({"/page"})

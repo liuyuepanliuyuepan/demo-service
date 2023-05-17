@@ -336,6 +336,23 @@ public class ContractDetailServiceImpl extends
     }
 
     @Override
+    public ContractDetailRespVO findDetailByBizId(String bizId) {
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        ContractDetailRespVO respVO = mapper.findDetailByBizId(bizId);
+        List<ContractStarDO> contractStarList = contractStarService.list(
+                new LambdaQueryWrapper<ContractStarDO>().eq(
+                                ContractStarDO::getContractId, bizId)
+                        .eq(ContractStarDO::getUserId, userId)
+                        .eq(ContractStarDO::getDeleted, false));
+        respVO.setStar(CollUtil.isNotEmpty(contractStarList));
+        return respVO;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateDO(ContractDetailDO entity) {
         ContractDetailDO contractDetailDO = super.getByBizId(entity.getBizId());
