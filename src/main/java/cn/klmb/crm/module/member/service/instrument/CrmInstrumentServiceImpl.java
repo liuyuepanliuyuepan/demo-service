@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.common.pojo.BiAuthority;
 import cn.klmb.crm.framework.common.pojo.BiParams;
 import cn.klmb.crm.framework.common.util.data.BiTimeUtil;
@@ -157,7 +158,7 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
                 if (ObjectUtil.isNotNull(biParams.getDealStatus())) {
                     memberUserQueryDTO.setDealStatus(biParams.getDealStatus());
                 }
-                if (biParams.getReceive()) {
+                if (ObjectUtil.isNotNull(biParams.getReceive()) && biParams.getReceive()) {
                     memberUserQueryDTO.setReceiveStatus(Arrays.asList(1, 2));
                 }
                 KlmbPage<MemberUserDO> page = memberUserService.page(memberUserQueryDTO,
@@ -352,6 +353,223 @@ public class CrmInstrumentServiceImpl implements CrmInstrumentService {
         }
         return crmInstrumentMapper.queryDataInfo(biTimeEntity,
                 userIds);
+    }
+
+    @Override
+    public KlmbScrollPage<?> queryBulletinInfoV2(BiParams biParams) {
+        KlmbScrollPage<Object> klmbScrollPage = new KlmbScrollPage<>();
+        klmbScrollPage.setContent(Collections.emptyList());
+        BiTimeUtil.BiTimeEntity biTimeEntity = BiTimeUtil.analyzeTime(biParams);
+        List<String> userIds = getUserIds(biParams);
+        if (Objects.equals(biParams.getDataType(), DataTypeEnum.CUSTOMIZE.getType())
+                && CollUtil.isEmpty(userIds)) {
+            return klmbScrollPage;
+        }
+        Integer label = biParams.getLabel();
+        switch (label) {
+            case 2: {
+                //新增客户详情
+                List<String> newCustomer = crmInstrumentMapper.newCustomer(biTimeEntity, userIds);
+                if (CollUtil.isEmpty(newCustomer)) {
+                    return klmbScrollPage;
+                }
+                KlmbScrollPage<MemberUserDO> klmbMemberUserPage = KlmbScrollPage.<MemberUserDO>builder()
+                        .lastBizId(biParams.getLastBizId())
+                        .pageSize(biParams.getPageSize())
+                        .asc(biParams.getAsc())
+                        .build();
+                MemberUserQueryDTO memberUserQueryDTO = new MemberUserQueryDTO();
+                memberUserQueryDTO.setBizIds(newCustomer);
+                memberUserQueryDTO.setKeyword(biParams.getSearch());
+                if (ObjectUtil.isNotNull(biParams.getDealStatus())) {
+                    memberUserQueryDTO.setDealStatus(biParams.getDealStatus());
+                }
+                if (ObjectUtil.isNotNull(biParams.getReceive()) && biParams.getReceive()) {
+                    memberUserQueryDTO.setReceiveStatus(Arrays.asList(1, 2));
+                }
+                KlmbScrollPage<MemberUserDO> page = memberUserService.pageScroll(memberUserQueryDTO,
+                        klmbMemberUserPage);
+                List<MemberUserDO> content = page.getContent();
+                if (CollUtil.isNotEmpty(content)) {
+                    content.forEach(e -> {
+                        SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                        if (ObjectUtil.isNotNull(sysUserDO)) {
+                            e.setOwnerUserName(sysUserDO.getNickname());
+                        }
+                        if (StrUtil.isNotBlank(e.getPreOwnerUserId())) {
+                            SysUserDO userDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                            e.setPreOwnerUserName(
+                                    ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
+                        }
+                    });
+                }
+                return MemberUserConvert.INSTANCE.convert(page);
+            }
+
+            case 3: {
+                List<String> newContacts = crmInstrumentMapper.newContacts(biTimeEntity, userIds);
+                if (CollUtil.isEmpty(newContacts)) {
+                    return klmbScrollPage;
+                }
+                KlmbScrollPage<MemberContactsDO> klmbMemberContactsPage = KlmbScrollPage.<MemberContactsDO>builder()
+                        .lastBizId(biParams.getLastBizId())
+                        .pageSize(biParams.getPageSize())
+                        .asc(biParams.getAsc())
+                        .build();
+
+                MemberContactsQueryDTO memberContactsQueryDTO = new MemberContactsQueryDTO();
+                memberContactsQueryDTO.setBizIds(newContacts);
+                memberContactsQueryDTO.setKeyword(biParams.getSearch());
+                KlmbScrollPage<MemberContactsDO> page = memberContactsService.pageScroll(
+                        memberContactsQueryDTO,
+                        klmbMemberContactsPage);
+
+                List<MemberContactsDO> content = page.getContent();
+                if (CollUtil.isNotEmpty(content)) {
+                    content.forEach(e -> {
+                        MemberUserDO memberUserDO = memberUserService.getByBizId(e.getCustomerId());
+                        if (ObjectUtil.isNotNull(memberUserDO)) {
+                            e.setCustomerName(memberUserDO.getName());
+                            e.setIsFirstContacts(
+                                    StrUtil.equals(memberUserDO.getContactsId(), e.getBizId()));
+                        }
+                        if (StrUtil.isNotBlank(e.getParentContactsId())) {
+                            MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                                    e.getParentContactsId());
+                            e.setParentContactsName(memberContactsDO.getName());
+                        }
+                        SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                        if (ObjectUtil.isNotNull(sysUserDO)) {
+                            e.setOwnerUserName(sysUserDO.getNickname());
+                        }
+                    });
+                }
+                return MemberContactsConvert.INSTANCE.convert(page);
+            }
+
+            case 5: {
+                List<String> newBusiness = crmInstrumentMapper.newBusiness(biTimeEntity, userIds);
+                if (CollUtil.isEmpty(newBusiness)) {
+                    return klmbScrollPage;
+                }
+                KlmbScrollPage<BusinessDetailDO> klmbBusinessDetailPage = KlmbScrollPage.<BusinessDetailDO>builder()
+                        .lastBizId(biParams.getLastBizId())
+                        .pageSize(biParams.getPageSize())
+                        .asc(biParams.getAsc())
+                        .build();
+                BusinessDetailQueryDTO businessDetailQueryDTO = new BusinessDetailQueryDTO();
+                businessDetailQueryDTO.setBizIds(newBusiness);
+                businessDetailQueryDTO.setBusinessName(biParams.getSearch());
+                if (ObjectUtil.isNotNull(biParams.getBusinessStatus())) {
+                    businessDetailQueryDTO.setBusinessStatus(biParams.getBusinessStatus());
+                }
+                KlmbScrollPage<BusinessDetailDO> page = businessDetailService.pageScroll(
+                        businessDetailQueryDTO,
+                        klmbBusinessDetailPage);
+                List<BusinessDetailDO> content = page.getContent();
+                if (CollUtil.isNotEmpty(content)) {
+                    content.forEach(e -> {
+                        SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                        if (ObjectUtil.isNotNull(sysUserDO)) {
+                            e.setOwnerUserName(sysUserDO.getNickname());
+                        }
+                        if (StrUtil.isNotBlank(e.getCustomerId())) {
+                            MemberUserDO memberUserDO = memberUserService.getByBizId(
+                                    e.getCustomerId());
+                            e.setCustomerName(
+                                    ObjectUtil.isNotNull(memberUserDO) ? memberUserDO.getName()
+                                            : null);
+                        }
+                    });
+                }
+                return BusinessDetailConvert.INSTANCE.convert(page);
+            }
+
+            case 19: {
+                List<String> newActivity = crmInstrumentMapper.newActivity(biTimeEntity, userIds);
+                if (CollUtil.isEmpty(newActivity)) {
+                    return klmbScrollPage;
+                }
+                KlmbScrollPage<MemberTeamActivityDO> klmbActivityPage = KlmbScrollPage.<MemberTeamActivityDO>builder()
+                        .lastBizId(biParams.getLastBizId())
+                        .pageSize(biParams.getPageSize())
+                        .asc(biParams.getAsc())
+                        .build();
+
+                MemberTeamActivityQueryDTO memberTeamActivityQueryDTO = new MemberTeamActivityQueryDTO();
+                memberTeamActivityQueryDTO.setBizIds(newActivity);
+                memberTeamActivityQueryDTO.setActivityType(biParams.getQueryType());
+                KlmbScrollPage<MemberTeamActivityDO> page = memberTeamActivityService.pageScroll(
+                        memberTeamActivityQueryDTO, klmbActivityPage);
+
+                KlmbScrollPage<MemberTeamActivityRespVO> convert = MemberTeamActivityConvert.INSTANCE.convert(
+                        page);
+                if (ObjectUtil.isNotNull(convert) && CollUtil.isNotEmpty(convert.getContent())) {
+                    List<MemberTeamActivityRespVO> content = convert.getContent();
+                    content.forEach(e -> {
+                                List<String> imgIds = e.getImgIds();
+                                List<String> fileIds = e.getFileIds();
+                                if (CollUtil.isNotEmpty(imgIds)) {
+                                    List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(imgIds);
+                                    e.setImgInfo(sysFileDOS);
+                                }
+                                if (CollUtil.isNotEmpty(fileIds)) {
+                                    List<SysFileDO> sysFileDOS = sysFileService.listByBizIds(fileIds);
+                                    e.setFileInfo(sysFileDOS);
+                                }
+                                SysUserDO sysUserDO = sysUserService.getByBizId(e.getCreator());
+                                if (ObjectUtil.isNotNull(sysUserDO)) {
+                                    e.setCreatorName(sysUserDO.getNickname());
+                                    e.setAvatar(sysUserDO.getAvatar());
+                                }
+                            }
+                    );
+                }
+                return convert;
+            }
+
+            case 20: {
+                //获取跟进客户Id
+                List<String> newActivityCustomer = crmInstrumentMapper.newActivityCustomer(
+                        biTimeEntity,
+                        userIds);
+                if (CollUtil.isEmpty(newActivityCustomer)) {
+                    return klmbScrollPage;
+                }
+                KlmbScrollPage<MemberUserDO> klmbMemberUserPage = KlmbScrollPage.<MemberUserDO>builder()
+                        .lastBizId(biParams.getLastBizId())
+                        .pageSize(biParams.getPageSize())
+                        .asc(biParams.getAsc())
+                        .build();
+
+                MemberUserQueryDTO memberUserQueryDTO = new MemberUserQueryDTO();
+                memberUserQueryDTO.setBizIds(newActivityCustomer);
+                memberUserQueryDTO.setKeyword(biParams.getSearch());
+                if (ObjectUtil.isNotNull(biParams.getFollowup())) {
+                    memberUserQueryDTO.setFollowup(biParams.getFollowup());
+                }
+                KlmbScrollPage<MemberUserDO> page = memberUserService.pageScroll(memberUserQueryDTO,
+                        klmbMemberUserPage);
+                List<MemberUserDO> content = page.getContent();
+                if (CollUtil.isNotEmpty(content)) {
+                    content.forEach(e -> {
+                        SysUserDO sysUserDO = sysUserService.getByBizId(e.getOwnerUserId());
+                        if (ObjectUtil.isNotNull(sysUserDO)) {
+                            e.setOwnerUserName(sysUserDO.getNickname());
+                        }
+                        if (StrUtil.isNotBlank(e.getPreOwnerUserId())) {
+                            SysUserDO userDO = sysUserService.getByBizId(e.getPreOwnerUserId());
+                            e.setPreOwnerUserName(
+                                    ObjectUtil.isNotNull(userDO) ? userDO.getNickname() : null);
+                        }
+                    });
+                }
+                return MemberUserConvert.INSTANCE.convert(page);
+            }
+            default: {
+                return klmbScrollPage;
+            }
+        }
     }
 
 

@@ -3,6 +3,7 @@ package cn.klmb.crm.module.member.controller.admin.instrument;
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.common.pojo.BiParams;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
@@ -71,7 +72,13 @@ public class CrmInstrumentController {
         return success(crmInstrumentService.queryDataInfo(biParams));
     }
 
-    //数据汇总详情
+    @GetMapping("/query-bulletin-info-V2")
+    @ApiOperation(value = "查询销售简报详情(手机端适用)", notes = "必传字段dataType、endTime、label、queryType、startTime、lastBizId、pageSize、search;数据汇总详情必传字段dataType、endTime、label、startTime、lastBizId、pageSize、dealStatus、receive、businessStatus、followup")
+    @PreAuthorize("@ss.hasPermission('member:crm-instrument:query')")
+    public CommonResult<KlmbScrollPage<?>> queryBulletinInfoV2(BiParams biParams) {
+        KlmbScrollPage<?> page = crmInstrumentService.queryBulletinInfoV2(biParams);
+        return success(page);
+    }
 
 
 }

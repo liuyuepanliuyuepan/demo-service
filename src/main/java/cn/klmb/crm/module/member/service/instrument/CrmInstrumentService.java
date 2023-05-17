@@ -1,6 +1,7 @@
 package cn.klmb.crm.module.member.service.instrument;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.common.pojo.BiParams;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmCountRankVO;
 import cn.klmb.crm.module.member.controller.admin.instrument.vo.CrmDataSummaryVO;
@@ -44,5 +45,14 @@ public interface CrmInstrumentService {
      * @return CrmInstrumentVO
      */
     CrmDataSummaryVO queryDataInfo(BiParams biParams);
+
+
+    /**
+     * 销售简报的详情(手机端适用)
+     *
+     * @param biParams 参数
+     * @return data
+     */
+    KlmbScrollPage<?> queryBulletinInfoV2(BiParams biParams);
 
 }
