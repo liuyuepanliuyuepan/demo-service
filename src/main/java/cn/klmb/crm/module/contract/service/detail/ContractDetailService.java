@@ -46,4 +46,12 @@ public interface ContractDetailService extends KlmbBaseService<ContractDetailDO,
      * @param bizIds 业务id列表
      */
     void removeByBizIds(List<String> bizIds);
+
+
+    /**
+     * 合同标星
+     *
+     * @param bizId
+     */
+    void star(String bizId);
 }
