@@ -139,4 +139,14 @@ public class ContractDetailController {
         return success(page);
     }
 
+
+    @PostMapping("/star/{bizId}")
+    @ApiOperation("合同标星")
+    @PreAuthorize("@ss.hasPermission('contract:detail:post')")
+    public CommonResult<Boolean> star(@PathVariable("bizId") String bizId) {
+        contractDetailService.star(bizId);
+        return success(true);
+    }
+
+
 }

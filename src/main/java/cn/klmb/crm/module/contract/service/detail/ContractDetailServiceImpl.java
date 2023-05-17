@@ -303,6 +303,27 @@ public class ContractDetailServiceImpl extends
     }
 
     @Override
+    public void star(String bizId) {
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        LambdaQueryWrapper<ContractStarDO> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(ContractStarDO::getContractId, bizId);
+        wrapper.eq(ContractStarDO::getUserId, userId);
+        wrapper.eq(ContractStarDO::getDeleted, false);
+        ContractStarDO star = contractStarService.getOne(wrapper);
+        if (star == null) {
+            star = new ContractStarDO();
+            star.setContractId(bizId);
+            star.setUserId(userId);
+            contractStarService.save(star);
+        } else {
+            contractStarService.removeById(star.getId());
+        }
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public boolean updateDO(ContractDetailDO entity) {
         ContractDetailDO contractDetailDO = super.getByBizId(entity.getBizId());
