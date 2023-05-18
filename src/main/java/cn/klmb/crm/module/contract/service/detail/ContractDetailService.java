@@ -1,9 +1,11 @@
 package cn.klmb.crm.module.contract.service.detail;
 
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseService;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailFullRespVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailScrollPageReqVO;
 import cn.klmb.crm.module.contract.dto.detail.ContractDetailQueryDTO;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
@@ -42,6 +44,15 @@ public interface ContractDetailService extends KlmbBaseService<ContractDetailDO,
 
 
     /**
+     * 滚动分页
+     *
+     * @param reqVO
+     * @return
+     */
+    KlmbScrollPage<ContractDetailRespVO> pageScroll(ContractDetailScrollPageReqVO reqVO);
+
+
+    /**
      * 根据业务id列表删除(逻辑删除)
      *
      * @param bizIds 业务id列表
@@ -63,4 +74,12 @@ public interface ContractDetailService extends KlmbBaseService<ContractDetailDO,
      * @return
      */
     ContractDetailRespVO findDetailByBizId(String bizId);
+
+    /**
+     * 根据客户ids查询关联的合同信息
+     *
+     * @param customerIds
+     * @return
+     */
+    List<String> findDetailByCustomerIds(List<String> customerIds);
 }

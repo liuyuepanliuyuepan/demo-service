@@ -6,13 +6,18 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.service.KlmbBaseServiceImpl;
 import cn.klmb.crm.framework.job.dto.XxlJobChangeTaskDTO;
 import cn.klmb.crm.framework.job.util.XxlJobApiUtils;
 import cn.klmb.crm.framework.web.core.util.WebFrameworkUtils;
+import cn.klmb.crm.module.business.entity.detail.BusinessDetailDO;
+import cn.klmb.crm.module.business.service.detail.BusinessDetailService;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailFullRespVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailScrollPageReqVO;
+import cn.klmb.crm.module.contract.convert.detail.ContractDetailConvert;
 import cn.klmb.crm.module.contract.dao.detail.ContractDetailMapper;
 import cn.klmb.crm.module.contract.dto.detail.ContractDetailQueryDTO;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
@@ -22,9 +27,14 @@ import cn.klmb.crm.module.contract.service.product.ContractProductService;
 import cn.klmb.crm.module.contract.service.star.ContractStarService;
 import cn.klmb.crm.module.member.controller.admin.team.vo.MemberTeamSaveBO;
 import cn.klmb.crm.module.member.controller.admin.user.vo.CrmChangeOwnerUserBO;
+import cn.klmb.crm.module.member.entity.contacts.MemberContactsDO;
 import cn.klmb.crm.module.member.entity.team.MemberTeamDO;
+import cn.klmb.crm.module.member.entity.user.MemberUserDO;
+import cn.klmb.crm.module.member.service.contacts.MemberContactsService;
 import cn.klmb.crm.module.member.service.team.MemberTeamService;
+import cn.klmb.crm.module.member.service.user.MemberUserService;
 import cn.klmb.crm.module.system.entity.config.SysConfigDO;
+import cn.klmb.crm.module.system.entity.user.SysUserDO;
 import cn.klmb.crm.module.system.enums.CrmEnum;
 import cn.klmb.crm.module.system.enums.CrmSceneEnum;
 import cn.klmb.crm.module.system.enums.ErrorCodeConstants;
@@ -64,17 +74,28 @@ public class ContractDetailServiceImpl extends
 
     private final ContractProductService contractProductService;
 
+    private final MemberUserService memberUserService;
+
+    private final BusinessDetailService businessDetailService;
+
+    private final MemberContactsService memberContactsService;
+
     public ContractDetailServiceImpl(XxlJobApiUtils xxlJobApiUtils,
-            @Lazy SysUserService sysUserService,
-            ContractDetailMapper mapper, @Lazy ContractStarService contractStarService,
-            SysConfigService sysConfigService, @Lazy MemberTeamService memberTeamService,
-            ContractProductService contractProductService) {
+            @Lazy SysUserService sysUserService, ContractDetailMapper mapper,
+            @Lazy ContractStarService contractStarService, SysConfigService sysConfigService,
+            @Lazy MemberTeamService memberTeamService,
+            ContractProductService contractProductService, MemberUserService memberUserService,
+            BusinessDetailService businessDetailService,
+            MemberContactsService memberContactsService) {
         this.xxlJobApiUtils = xxlJobApiUtils;
         this.sysUserService = sysUserService;
         this.contractStarService = contractStarService;
         this.sysConfigService = sysConfigService;
         this.memberTeamService = memberTeamService;
         this.contractProductService = contractProductService;
+        this.memberUserService = memberUserService;
+        this.businessDetailService = businessDetailService;
+        this.memberContactsService = memberContactsService;
         this.mapper = mapper;
     }
 
@@ -294,6 +315,164 @@ public class ContractDetailServiceImpl extends
     }
 
     @Override
+    public KlmbScrollPage<ContractDetailRespVO> pageScroll(ContractDetailScrollPageReqVO reqVO) {
+        KlmbScrollPage<ContractDetailDO> klmbPage = KlmbScrollPage.<ContractDetailDO>builder()
+                .lastBizId(reqVO.getLastBizId()).pageSize(reqVO.getPageSize()).asc(reqVO.getAsc())
+                .build();
+        klmbPage.setContent(Collections.emptyList());
+        List<String> contractIds = Collections.EMPTY_LIST;
+        if (StrUtil.isNotBlank(reqVO.getKeyword())) {
+            //根据关键字查询客户id
+            List<String> memberUserIds = memberUserService.findMemberUserIdByName(
+                    reqVO.getKeyword());
+            //根据客户id查询合同信息
+            if (CollUtil.isNotEmpty(memberUserIds)) {
+                contractIds = this.findDetailByCustomerIds(memberUserIds);
+            }
+        }
+
+        //获取当前用户id
+        String userId = WebFrameworkUtils.getLoginUserId();
+        if (StrUtil.isBlank(userId)) {
+            throw exception(ErrorCodeConstants.USER_NOT_EXISTS);
+        }
+        List<String> childUserIds = sysUserService.queryChildUserId(userId);
+        ContractDetailQueryDTO queryDTO = ContractDetailConvert.INSTANCE.convert(reqVO);
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.ALL.getType())) {
+            childUserIds.add(userId);
+            List<String> bizIds = getALLContract(childUserIds, userId);
+            if (CollUtil.isNotEmpty(contractIds)
+                    && CollUtil.isNotEmpty(bizIds)) {
+                bizIds = (List<String>) CollUtil.intersection(contractIds, bizIds);
+            }
+            if (CollUtil.isNotEmpty(bizIds)) {
+                queryDTO.setBizIds(bizIds);
+                klmbPage = super.pageScroll(queryDTO, klmbPage);
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.SELF.getType())) {
+            List<ContractDetailDO> list = super.list(
+                    new LambdaQueryWrapper<ContractDetailDO>().eq(ContractDetailDO::getOwnerUserId,
+                            userId).eq(ContractDetailDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(list)) {
+                List<String> bizIds = list.stream().map(ContractDetailDO::getBizId)
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(contractIds) && CollUtil.isNotEmpty(bizIds)) {
+                    bizIds = (List<String>) CollUtil.intersection(contractIds, bizIds);
+                }
+                if (CollUtil.isNotEmpty(bizIds)) {
+                    queryDTO.setBizIds(bizIds);
+                    klmbPage = super.pageScroll(queryDTO, klmbPage);
+                }
+            }
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.CHILD.getType())) {
+            List<ContractDetailDO> list = super.list(
+                    new LambdaQueryWrapper<ContractDetailDO>().in(ContractDetailDO::getOwnerUserId,
+                            childUserIds).eq(ContractDetailDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(list)) {
+                List<String> bizIds = list.stream().map(ContractDetailDO::getBizId)
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(contractIds) && CollUtil.isNotEmpty(bizIds)) {
+                    bizIds = (List<String>) CollUtil.intersection(contractIds, bizIds);
+                }
+                if (CollUtil.isNotEmpty(bizIds)) {
+                    queryDTO.setBizIds(bizIds);
+                    klmbPage = super.pageScroll(queryDTO, klmbPage);
+                }
+            }
+
+        }
+
+        if (ObjectUtil.equals(reqVO.getSceneId(), CrmSceneEnum.STAR.getType())) {
+            List<ContractStarDO> contractStarDOS = contractStarService.list(
+                    new LambdaQueryWrapper<ContractStarDO>().eq(ContractStarDO::getUserId, userId)
+                            .eq(ContractStarDO::getDeleted, false));
+            if (CollUtil.isNotEmpty(contractStarDOS)) {
+                List<String> bizIds = contractStarDOS.stream().map(ContractStarDO::getContractId)
+                        .collect(Collectors.toList());
+
+                if (CollUtil.isNotEmpty(contractIds) && CollUtil.isNotEmpty(bizIds)) {
+                    bizIds = (List<String>) CollUtil.intersection(contractIds, bizIds);
+                }
+                if (CollUtil.isNotEmpty(bizIds)) {
+                    queryDTO.setBizIds(bizIds);
+                    klmbPage = super.pageScroll(queryDTO, klmbPage);
+                }
+            }
+        }
+        List<ContractDetailDO> content = klmbPage.getContent();
+        if (CollUtil.isNotEmpty(content)) {
+            for (ContractDetailDO contractDetailDO : content) {
+                //客户名称 memberUserName
+                if (StrUtil.isNotBlank(contractDetailDO.getMemberUserId())) {
+                    MemberUserDO memberUserDO = memberUserService.getByBizId(
+                            contractDetailDO.getMemberUserId());
+                    if (ObjectUtil.isNotNull(memberUserDO)) {
+                        contractDetailDO.setMemberUserName(memberUserDO.getName());
+                    }
+                }
+                //商机名称 businessName
+                if (StrUtil.isNotBlank(contractDetailDO.getBusinessId())) {
+                    BusinessDetailDO businessDetailDO = businessDetailService.getByBizId(
+                            contractDetailDO.getBusinessId());
+                    if (ObjectUtil.isNotNull(businessDetailDO)) {
+                        contractDetailDO.setBusinessName(businessDetailDO.getBusinessName());
+                    }
+                }
+                //客户签约人名称 contactsName
+                if (StrUtil.isNotBlank(contractDetailDO.getContactsId())) {
+                    MemberContactsDO memberContactsDO = memberContactsService.getByBizId(
+                            contractDetailDO.getContactsId());
+                    if (ObjectUtil.isNotNull(memberContactsDO)) {
+                        contractDetailDO.setContactsName(memberContactsDO.getName());
+                    }
+                }
+                //公司签约人名称 companyUserName
+                if (StrUtil.isNotBlank(contractDetailDO.getCompanyUserId())) {
+                    SysUserDO sysUserDO = sysUserService.getByBizId(
+                            contractDetailDO.getCompanyUserId());
+                    if (ObjectUtil.isNotNull(sysUserDO)) {
+                        contractDetailDO.setCompanyUserName(sysUserDO.getNickname());
+                    }
+                }
+                //负责人 ownerUserName
+                if (StrUtil.isNotBlank(contractDetailDO.getOwnerUserId())) {
+                    SysUserDO sysUserDO = sysUserService.getByBizId(
+                            contractDetailDO.getOwnerUserId());
+                    if (ObjectUtil.isNotNull(sysUserDO)) {
+                        contractDetailDO.setOwnerUserName(sysUserDO.getNickname());
+                    }
+                }
+                //创建人名称  creatorName
+                if (StrUtil.isNotBlank(contractDetailDO.getCreator())) {
+                    SysUserDO sysUserDO = sysUserService.getByBizId(contractDetailDO.getCreator());
+                    if (ObjectUtil.isNotNull(sysUserDO)) {
+                        contractDetailDO.setCreatorName(sysUserDO.getNickname());
+                    }
+                }
+                //是否标星  star
+                List<ContractStarDO> contractStarList = contractStarService.list(
+                        new LambdaQueryWrapper<ContractStarDO>().eq(ContractStarDO::getContractId,
+                                        contractDetailDO.getBizId()).eq(ContractStarDO::getUserId, userId)
+                                .eq(ContractStarDO::getDeleted, false));
+                contractDetailDO.setStar(CollUtil.isNotEmpty(contractStarList));
+            }
+
+
+        }
+
+        KlmbScrollPage<ContractDetailRespVO> respPage = new KlmbScrollPage<>();
+        respPage = ContractDetailConvert.INSTANCE.convert(klmbPage);
+        if (CollUtil.isEmpty(respPage.getContent())) {
+            respPage.setContent(Collections.EMPTY_LIST);
+        }
+        return respPage;
+    }
+
+    @Override
     public void removeByBizIds(List<String> bizIds) {
         if (CollUtil.isEmpty(bizIds)) {
             return;
@@ -345,16 +524,26 @@ public class ContractDetailServiceImpl extends
         }
         ContractDetailRespVO respVO = mapper.findDetailByBizId(bizId);
         List<ContractStarDO> contractStarList = contractStarService.list(
-                new LambdaQueryWrapper<ContractStarDO>().eq(
-                                ContractStarDO::getContractId, bizId)
+                new LambdaQueryWrapper<ContractStarDO>().eq(ContractStarDO::getContractId, bizId)
                         .eq(ContractStarDO::getUserId, userId)
                         .eq(ContractStarDO::getDeleted, false));
         respVO.setStar(CollUtil.isNotEmpty(contractStarList));
         //根据合同id查询合同与产品的关系集合
         respVO.setContractProductRespList(
-                contractProductService.getContractProductByContractId(
-                        bizId));
+                contractProductService.getContractProductByContractId(bizId));
         return respVO;
+    }
+
+    @Override
+    public List<String> findDetailByCustomerIds(List<String> customerIds) {
+        List<String> collect = Collections.EMPTY_LIST;
+        List<ContractDetailDO> list = super.list(
+                new LambdaQueryWrapper<ContractDetailDO>().in(ContractDetailDO::getMemberUserId,
+                        customerIds).eq(ContractDetailDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(list)) {
+            collect = list.stream().map(ContractDetailDO::getBizId).collect(Collectors.toList());
+        }
+        return collect;
     }
 
     @Override

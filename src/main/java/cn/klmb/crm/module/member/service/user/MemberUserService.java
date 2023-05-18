@@ -132,4 +132,12 @@ public interface MemberUserService extends KlmbBaseService<MemberUserDO, MemberU
      */
     void uploadExcel(MemberUserImportReqVO reqVO) throws IOException;
 
+    /**
+     * 模糊查询客户名称
+     *
+     * @param name
+     * @return
+     */
+    List<String> findMemberUserIdByName(String name);
+
 }
