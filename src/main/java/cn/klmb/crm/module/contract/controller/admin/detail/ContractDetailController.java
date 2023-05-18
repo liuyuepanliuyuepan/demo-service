@@ -2,6 +2,7 @@ package cn.klmb.crm.module.contract.controller.admin.detail;
 
 import static cn.klmb.crm.framework.common.pojo.CommonResult.success;
 
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
 import cn.klmb.crm.framework.base.core.pojo.UpdateStatusReqVO;
 import cn.klmb.crm.framework.common.pojo.CommonResult;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDeleteReqVO;
@@ -9,6 +10,7 @@ import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailFull
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailSaveReqVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailScrollPageReqVO;
 import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailUpdateReqVO;
 import cn.klmb.crm.module.contract.convert.detail.ContractDetailConvert;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
@@ -145,6 +147,19 @@ public class ContractDetailController {
     public CommonResult<Boolean> star(@PathVariable("bizId") String bizId) {
         contractDetailService.star(bizId);
         return success(true);
+    }
+
+
+    @GetMapping({"/page-scroll"})
+    @ApiOperation(value = "合同滚动分页", notes = "只支持根据bizId顺序进行正、倒序查询")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "lastBizId", value = "业务id", paramType = "query", dataTypeClass = String.class),
+            @ApiImplicitParam(name = "pageSize", value = "每页数量，默认10", paramType = "query", dataTypeClass = Integer.class),
+            @ApiImplicitParam(name = "asc", value = "是否为正序", paramType = "query", dataTypeClass = Boolean.class)})
+    @PreAuthorize("@ss.hasPermission('contract:detail:query')")
+    public CommonResult<KlmbScrollPage<ContractDetailRespVO>> pageScroll(
+            @Valid ContractDetailScrollPageReqVO reqVO) {
+        return success(contractDetailService.pageScroll(reqVO));
     }
 
 

@@ -138,10 +138,4 @@ public class ContractDetailQueryDTO extends KlmbBaseQueryDTO {
     private List<String> memberUserIds;
 
 
-    /**
-     * 关键字查询
-     */
-    private String keyword;
-
-
 }

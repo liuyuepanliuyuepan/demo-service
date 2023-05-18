@@ -1,7 +1,12 @@
 package cn.klmb.crm.module.contract.convert.detail;
 
 import cn.klmb.crm.framework.base.core.pojo.KlmbPage;
-import cn.klmb.crm.module.contract.controller.admin.detail.vo.*;
+import cn.klmb.crm.framework.base.core.pojo.KlmbScrollPage;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailPageReqVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailRespVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailSaveReqVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailScrollPageReqVO;
+import cn.klmb.crm.module.contract.controller.admin.detail.vo.ContractDetailUpdateReqVO;
 import cn.klmb.crm.module.contract.dto.detail.ContractDetailQueryDTO;
 import cn.klmb.crm.module.contract.entity.detail.ContractDetailDO;
 import java.util.List;
@@ -29,5 +34,9 @@ public interface ContractDetailConvert {
     ContractDetailRespVO convert(ContractDetailDO saveDO);
 
     ContractDetailQueryDTO convert(ContractDetailPageReqVO reqVO);
+
+    KlmbScrollPage<ContractDetailRespVO> convert(KlmbScrollPage<ContractDetailDO> page);
+
+    ContractDetailQueryDTO convert(ContractDetailScrollPageReqVO bean);
 
 }

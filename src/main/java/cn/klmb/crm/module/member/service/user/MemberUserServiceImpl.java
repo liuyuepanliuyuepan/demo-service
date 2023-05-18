@@ -793,4 +793,17 @@ public class MemberUserServiceImpl extends
 
 
     }
+
+    @Override
+    public List<String> findMemberUserIdByName(String name) {
+        List<String> collect = Collections.EMPTY_LIST;
+        List<MemberUserDO> list = super.list(
+                new LambdaQueryWrapper<MemberUserDO>().like(MemberUserDO::getName, name)
+                        .eq(MemberUserDO::getDeleted, false));
+        if (CollUtil.isNotEmpty(list)) {
+            collect = list.stream().map(MemberUserDO::getBizId)
+                    .collect(Collectors.toList());
+        }
+        return collect;
+    }
 }
