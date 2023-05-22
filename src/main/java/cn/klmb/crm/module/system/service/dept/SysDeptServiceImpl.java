@@ -200,10 +200,13 @@ public class SysDeptServiceImpl extends
                     List<String> collect1 = CollUtil.intersection(deptIds, collect).stream()
                             .distinct().collect(Collectors.toList());
                     if (CollUtil.isNotEmpty(collect1)) {
-                        List<SysDeptDO> sysDeptDOS = super.listByBizIds(deptIds);
+                        List<SysDeptDO> sysDeptDOS = super.listByBizIds(collect1);
                         return sysDeptDOS;
                     }
                 }
+            } else {
+                List<SysDeptDO> sysDeptDOS = super.listByBizIds(deptIds);
+                return sysDeptDOS;
             }
         }
         return Collections.emptyList();

@@ -212,8 +212,8 @@ public class SysUserController {
             queryDTO.setDeptIds(queryChildDept);
             allUserList = sysUserService.list(queryDTO);
             if (CollUtil.isNotEmpty(allUserList)) {
-                allUserIds = allUserList.stream().map(SysUserDO::getBizId)
-                        .collect(Collectors.toList());
+                allUserIds = CollUtil.unionAll(allUserList.stream().map(SysUserDO::getBizId)
+                        .collect(Collectors.toList()), childUserIds);
             }
             if (StrUtil.isNotBlank(queryDTO.getRealname()) && CollUtil.isNotEmpty(
                     childUserIds)) {
