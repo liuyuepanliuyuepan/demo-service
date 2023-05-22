@@ -212,12 +212,18 @@ public class SysUserController {
             queryDTO.setDeptIds(queryChildDept);
             allUserList = sysUserService.list(queryDTO);
             if (CollUtil.isNotEmpty(allUserList)) {
-                if (CollUtil.isNotEmpty(childUserIds)) {
-                    allUserIds = CollUtil.unionAll(allUserList.stream().map(SysUserDO::getBizId)
-                            .collect(Collectors.toList()), childUserIds);
-                } else {
-                    allUserIds = allUserList.stream().map(SysUserDO::getBizId)
-                            .collect(Collectors.toList());
+                allUserIds = allUserList.stream().map(SysUserDO::getBizId)
+                        .collect(Collectors.toList());
+            }
+            if (StrUtil.isNotBlank(queryDTO.getRealname()) && CollUtil.isNotEmpty(
+                    childUserIds)) {
+                List<SysUserDO> list = sysUserService.list(
+                        new LambdaQueryWrapper<SysUserDO>().in(SysUserDO::getBizId,
+                                        childUserIds).eq(SysUserDO::getDeleted, false)
+                                .like(SysUserDO::getRealname, queryDTO.getRealname()));
+                if (CollUtil.isNotEmpty(list)) {
+                    allUserIds = CollUtil.unionAll(list.stream().map(SysUserDO::getBizId)
+                            .collect(Collectors.toList()), allUserIds);
                 }
             }
             //查询系统内置角色

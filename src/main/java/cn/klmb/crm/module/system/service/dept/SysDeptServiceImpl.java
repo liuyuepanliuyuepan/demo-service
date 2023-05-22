@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -189,8 +190,21 @@ public class SysDeptServiceImpl extends
         if (StrUtil.isNotBlank(loginUserDeptId)) {
             List<String> deptIds = this.queryChildDept(loginUserDeptId);
             deptIds.add(loginUserDeptId);
-            List<SysDeptDO> sysDeptDOS = super.listByBizIds(deptIds);
-            return sysDeptDOS;
+            if (StrUtil.isNotBlank(queryDTO.getName())) {
+                List<SysDeptDO> list = super.list(
+                        new LambdaQueryWrapper<SysDeptDO>().like(SysDeptDO::getName,
+                                queryDTO.getName()).eq(SysDeptDO::getDeleted, false));
+                if (CollUtil.isNotEmpty(list)) {
+                    List<String> collect = list.stream().map(SysDeptDO::getBizId)
+                            .collect(Collectors.toList());
+                    List<String> collect1 = CollUtil.intersection(deptIds, collect).stream()
+                            .distinct().collect(Collectors.toList());
+                    if (CollUtil.isNotEmpty(collect1)) {
+                        List<SysDeptDO> sysDeptDOS = super.listByBizIds(deptIds);
+                        return sysDeptDOS;
+                    }
+                }
+            }
         }
         return Collections.emptyList();
     }
