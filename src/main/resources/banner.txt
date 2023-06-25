@@ -7,4 +7,4 @@
    \ \__\\ \__\ \_______\ \__\    \ \__\ \_______\
     \|__| \|__|\|_______|\|__|     \|__|\|_______|
 
-  KLMB Framework Version: ${crm.info.version} - [Spring Boot Version: ${spring-boot.version}]
+  KLMB Framework Version: ${demo.info.version} - [Spring Boot Version: ${spring-boot.version}]

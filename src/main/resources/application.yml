@@ -2,7 +2,7 @@ server:
   port: 8080
 spring:
   application:
-    name: crm-service
+    name: demo-service
 
   main:
     allow-circular-references: true # 允许循环依赖，因为项目是三层架构，无法避免这个情况。
@@ -42,7 +42,7 @@ mybatis-plus:
       logic-delete-value: 1 # 逻辑已删除值(默认为 1)
       logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
     banner: false
-  type-aliases-package: ${crm.info.base-package}.module.*.entity
+  type-aliases-package: ${demo.info.base-package}.module.*.entity
 
 --- #################### 监控相关配置 ####################
 
@@ -52,14 +52,14 @@ logging:
     name: ${user.home}/logs/${spring.application.name}.log # 日志文件名，全路径
   level:
     # 配置自己写的 MyBatis Mapper 打印日志
-    cn.klmb.crm.module: debug
+    cn.klmb.demo.module: debug
 debug: false
 
 --- #################### 快乐萌宝相关配置 ####################
-crm:
+demo:
   info:
     version: 2.0.0
-    base-package: cn.klmb.crm
+    base-package: cn.klmb.demo
   web:
     admin-ui:
       url: http://klmb.cn # Admin 管理后台 UI 的地址
@@ -82,11 +82,11 @@ crm:
     enable1: true
     title: 管理后台
     description: 提供管理员管理的所有功能
-    version: ${crm.info.version}
-    base-package: ${crm.info.base-package}
+    version: ${demo.info.version}
+    base-package: ${demo.info.base-package}
     base-path: # basePath地址，接口调用不符时，需要指定
   codegen:
-    base-package: ${crm.info.base-package}
+    base-package: ${demo.info.base-package}
     db-schemas: ${spring.datasource.druid.db-schema}
 debug: false
 
