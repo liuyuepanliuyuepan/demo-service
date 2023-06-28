@@ -19,6 +19,7 @@ public class DemoJobHandler {
         XxlJobHelper.log(jobParam);
         System.out.println("hello, user..." + jobParam);
         int i = 1 / 0;
+
         return ReturnT.SUCCESS;
     }
 }
